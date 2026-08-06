@@ -62,7 +62,7 @@
       --color-Formation: #F48FB1;
       --color-TT: #E57373;
       --color-LAD: #1E22CE;
-      --color-CAR: #92B4F8;
+      --color-CAR: #BB86FC;
       --color-ALE: #388E3C;
       --color-ARA: #81C784;
       --color-CGR: #00796B;
@@ -73,7 +73,7 @@
       --color-HBG: #CFD8DC;
       --color-VLD: #948C4E;
       --color-UCH: #06B6D4;
-      --color-ZAL: #FF8B8B;
+      --color-ZAL: #6A1B9A;
       --color-CTX: #00838F;
       --color-COM: #AD1457;
       --color-Autres: #2E7D32;
@@ -539,7 +539,7 @@
 
     <!-- ONGLETS DE NAVIGATION -->
     <div class="tabs" id="main-tabs" style="display: none;">
-      <button class="tab-btn" id="tab-presence" onclick="switchTab('view-presence')" style="display: none;">👥 Présence Jour</button>
+      <button class="tab-btn" id="tab-presence" onclick="switchTab('view-presence')" style="display: none;">👥 Présence Équipe</button>
       <button class="tab-btn" id="tab-personal" onclick="switchTab('view-personal')">Mon Calendrier</button>
       <button class="tab-btn" id="tab-team" onclick="switchTab('view-team')">Vue Équipe</button>
       <button class="tab-btn" id="tab-annual" onclick="switchTab('view-annual')">📅 Bilan Annuel</button>
@@ -1260,12 +1260,11 @@
     document.getElementById('tab-annual').style.display = 'block';
     populateDropdowns();
 
+    document.getElementById('tab-presence').style.display = 'block';
     if (userObj && userObj.isManager) {
       document.getElementById('tab-kpi').style.display = 'block';
-      document.getElementById('tab-presence').style.display = 'block';
     } else {
       document.getElementById('tab-kpi').style.display = 'none';
-      document.getElementById('tab-presence').style.display = 'none';
     }
     switchTab('view-personal');
   }
@@ -1390,7 +1389,7 @@
   }
 
   function switchTab(viewId) {
-    if (viewId === 'view-kpi' || viewId === 'view-presence') {
+    if (viewId === 'view-kpi') {
       const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
       if (!userObj || !userObj.isManager) {
         alert("Accès refusé : Cette page est réservée aux profils Manager.");
@@ -1501,7 +1500,7 @@
 
   function renderTeamPresence() {
     const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
-    if (!userObj || !userObj.isManager) return;
+    if (!userObj) return;
     const container = document.getElementById('presence-list-container');
     container.innerHTML = '';
     const teamMembers = ALL_MEMBERS.filter(m => m.pit === userObj.pit);
@@ -2044,17 +2043,6 @@
                   halfDiv.textContent = slot === 'am' ? 'M' : 'A';
                 }
 
-                // Permettre la modif si on est la personne elle-même ou un manager
-                const currentUserObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
-                if (member.firstName === currentUser || (currentUserObj && currentUserObj.isManager)) {
-                  halfDiv.onclick = (e) => {
-                    e.stopPropagation();
-                    setStatus(dateKey, member.firstName, selectedTool, slot);
-                    if (db) db.ref('planning').set(calendarData);
-                    else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
-                    renderTeamCalendar(year, month);
-                  };
-                }
 
                 halvesCont.appendChild(halfDiv);
               });
@@ -2069,16 +2057,6 @@
                 td.textContent = st;
               }
 
-              const currentUserObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
-              if (member.firstName === currentUser || (currentUserObj && currentUserObj.isManager)) {
-                td.onclick = () => {
-                  setStatus(dateKey, member.firstName, selectedTool);
-                  if (db) db.ref('planning').set(calendarData);
-                  else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
-                  renderTeamCalendar(year, month);
-                };
-                td.style.cursor = 'pointer';
-              }
             }
           }
 
