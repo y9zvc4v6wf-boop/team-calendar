@@ -640,7 +640,7 @@
 
     <!-- VUE : PRÉSENCE DU JOUR -->
     <div id="view-presence" class="view">
-      <div class="form-box" style="max-width: 650px; text-align: left;">
+      <div class="form-box" style="max-width: 1100px; text-align: left;">
         <h2>👥 Présence aujourd'hui et demain - Équipe</h2>
         <p style="color: var(--text-muted); margin-bottom: 12px;">État des présences pour aujourd'hui et demain.</p>
         <div id="presence-list-container"></div>
@@ -1513,11 +1513,15 @@
       { label: "Aujourd'hui", date: new Date() },
       { label: 'Demain', date: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1) }
     ];
+    const daysContainer = document.createElement('div');
+    daysContainer.style.display = 'grid';
+    daysContainer.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
+    daysContainer.style.gap = '12px';
     datesToDisplay.forEach(({ label, date }) => {
       const dateFormatted = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'full' }).format(date);
       const dateKey = formatDateKeyStatic(date);
       const section = document.createElement('div');
-      section.style.marginBottom = '16px';
+      section.style.minWidth = '0';
       const title = document.createElement('h3');
       title.style.fontSize = '0.95rem';
       title.style.margin = '0 0 8px 0';
@@ -1553,8 +1557,9 @@
         listDiv.appendChild(card);
       });
       section.appendChild(listDiv);
-      container.appendChild(section);
+      daysContainer.appendChild(section);
     });
+    container.appendChild(daysContainer);
   }
 
   function renderAnnualReport() {
