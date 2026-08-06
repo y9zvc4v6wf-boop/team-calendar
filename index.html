@@ -5,24 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Planning Équipe — TT, Congés & KPI</title>
 
-  <!-- Application immédiate du thème mémorisé (évite le flash visuel au chargement) -->
-  <script>
-    (function () {
-      try {
-        var saved = localStorage.getItem('theme_preference');
-        var theme = (saved === 'light' || saved === 'gray') ? saved : 'dark';
-        document.documentElement.setAttribute('data-theme', theme);
-      } catch (e) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      }
-    })();
-  </script>
-
-  <!-- Police -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
   <!-- Firebase Web SDK (v8 Compat) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -31,543 +13,366 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    :root, [data-theme="dark"] {
-      --bg: #0a0e1a;
-      --card: #151d30;
-      --card-hover: #1a2440;
-      --input-bg: #0e1424;
-      --accent: #6366f1;
-      --accent-hover: #818cf8;
-      --accent-soft: rgba(99, 102, 241, 0.16);
-      --accent-contrast: #ffffff;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --border: #263049;
-      --border-soft: #1c2438;
-      --weekend-bg: #0a0e1a;
-      --danger: #f43f5e;
-      --danger-soft: rgba(244, 63, 94, 0.14);
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.24);
-      --shadow-md: 0 6px 20px -6px rgba(0,0,0,0.45);
-      --shadow-lg: 0 20px 45px -12px rgba(0,0,0,0.55);
-      --scrollbar-thumb: #2a3550;
-      --badge-neutral-bg: #334155;
-      --badge-neutral-text: #e2e8f0;
-      --status-text-color: #ffffff;
-
-      /* Couleurs des statuts (Mode Sombre) */
-      --color-CA: #D32F2F;
-      --color-JDR: #C2185B;
-      --color-Formation: #F48FB1;
-      --color-TT: #E57373;
-      --color-LAD: #1976D2;
-      --color-CAR: #BB86FC;
-      --color-ALE: #388E3C;
-      --color-ARA: #81C784;
-      --color-CGR: #00796B;
-      --color-SPA: #4DB6AC;
-      --color-NKE: #F57C00;
-      --color-WAT: #FBC02D;
-      --color-LVL: #90A4AE;
-      --color-HBG: #CFD8DC;
-      --color-VLD: #84CC16;
-      --color-UCH: #06B6D4;
-      --color-ZAL: #6A1B9A;
-      --color-CTX: #00838F;
-      --color-COM: #AD1457;
-      --color-Autres: #2E7D32;
-
-      --pit-archi: #0ea5e9;
-      --pit-cac: #10b981;
-      --pit-tbm: #f59e0b;
-      --pit-prep: #ef4444;
-    }
-
-    /* MODE GRIS */
-    [data-theme="gray"] {
-      --bg: #1e222b;
-      --card: #272c38;
-      --card-hover: #313745;
-      --input-bg: #222631;
-      --accent: #78829c;
-      --accent-hover: #939db8;
-      --accent-soft: rgba(120, 130, 156, 0.2);
-      --accent-contrast: #ffffff;
-      --text: #e4e7ec;
-      --text-muted: #9aa2b1;
-      --text-dim: #6b7280;
-      --border: #383f50;
-      --border-soft: #2f3544;
-      --weekend-bg: #191c23;
-      --danger: #e5534b;
-      --danger-soft: rgba(229, 83, 75, 0.15);
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-      --shadow-md: 0 6px 20px -6px rgba(0,0,0,0.5);
-      --shadow-lg: 0 20px 45px -12px rgba(0,0,0,0.6);
-      --scrollbar-thumb: #414a5e;
-      --badge-neutral-bg: #414a5e;
-      --badge-neutral-text: #f3f4f6;
-      --status-text-color: #ffffff;
-
-      --color-CA: #b45309;
-      --color-JDR: #92400e;
-      --color-Formation: #6d28d9;
-      --color-TT: #0f766e;
-      --color-LAD: #3f6212;
-      --color-CAR: #5b21b6;
-      --color-ALE: #9f1239;
-      --color-ARA: #065f46;
-      --color-CGR: #86198f;
-      --color-SPA: #0369a1;
-      --color-NKE: #be123c;
-      --color-WAT: #1d4ed8;
-      --color-LVL: #b45309;
-      --color-HBG: #3730a3;
-      --color-VLD: #166534;
-      --color-UCH: #7c2d12;
-      --color-ZAL: #475569;
-      --color-CTX: #4338ca;
-      --color-COM: #0f766e;
-      --color-Autres: #4b5563;
-
-      --pit-archi: #0284c7;
-      --pit-cac: #059669;
-      --pit-tbm: #d97706;
-      --pit-prep: #dc2626;
-    }
-
-    /* MODE CLAIR */
-    [data-theme="light"] {
-      --bg: #f4f6fb;
-      --card: #ffffff;
-      --card-hover: #f8f9fd;
-      --input-bg: #f8f9fd;
-      --accent: #4f46e5;
-      --accent-hover: #4338ca;
-      --accent-soft: rgba(79, 70, 229, 0.09);
-      --accent-contrast: #ffffff;
-      --text: #101425;
-      --text-muted: #55607a;
-      --text-dim: #8791a8;
-      --border: #e3e6f0;
-      --border-soft: #ebeef5;
-      --weekend-bg: #eef0f7;
-      --danger: #e11d48;
-      --danger-soft: rgba(225, 29, 72, 0.08);
-      --shadow-sm: 0 1px 2px rgba(30,41,59,0.06);
-      --shadow-md: 0 8px 24px -8px rgba(30,41,59,0.14);
-      --shadow-lg: 0 24px 48px -16px rgba(30,41,59,0.18);
-      --scrollbar-thumb: #d6dbe8;
-      --badge-neutral-bg: #e2e8f0;
-      --badge-neutral-text: #334155;
-      --status-text-color: #1e293b;
-
-      --color-CA: #FFCDD2;
-      --color-JDR: #F8BBD0;
-      --color-Formation: #F48FB1;
-      --color-TT: #FFAB91;
-      --color-LAD: #BBDEFB;
-      --color-CAR: #90CAF9;
-      --color-ALE: #E1BEE7;
-      --color-ARA: #CE93D8;
-      --color-CGR: #C8E6C9;
-      --color-SPA: #A5D6A7;
-      --color-NKE: #B2DFDB;
-      --color-WAT: #80CBC4;
-      --color-LVL: #FFE0B2;
-      --color-HBG: #FFF9C4;
-      --color-VLD: #CFD8DC;
-      --color-UCH: #B0BEC5;
-      --color-ZAL: #E8D0FF;
-      --color-CTX: #B2EBF2;
-      --color-COM: #F8BBD0;
-      --color-Autres: #C8E6C9;
-
-      --pit-archi: #0ea5e9;
-      --pit-cac: #10b981;
-      --pit-tbm: #f59e0b;
-      --pit-prep: #ef4444;
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #1e40af;
+      --text: #ffffff;
+      --border: #334155;
+      --weekend-bg: #0f172a;
+      
+      /* Couleurs des statuts */
+      --color-CA: #c2410c;
+      --color-JDR: #b45309;
+      --color-TT: #0369a1;
+      --color-LAD: #4d7c0f;
+      --color-CAR: #6d28d9;
+      --color-ALE: #be123c;
+      --color-ARA: #047857;
+      --color-CGR: #a21caf;
+      --color-SPA: #0284c7;
+      --color-NKE: #e11d48;
+      --color-WAT: #2563eb;
+      --color-LVL: #d97706;
+      --color-HBG: #4338ca;
+      --color-VLD: #15803d;
     }
 
     * { box-sizing: border-box; }
-
-    ::selection { background: var(--accent-soft); color: var(--text); }
-
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 6px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-    html { color-scheme: dark; }
-    [data-theme="light"] { color-scheme: light; }
-    [data-theme="gray"] { color-scheme: dark; }
-
     body {
-      font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-family: Calibri, sans-serif;
       background: var(--bg);
       color: var(--text);
       margin: 0;
-      padding: 8px;
-      transition: background-color 0.25s ease, color 0.25s ease;
-      -webkit-font-smoothing: antialiased;
+      padding: 20px;
     }
 
     .container {
-      max-width: 1350px;
+      max-width: 1300px;
       margin: 0 auto;
     }
-
-    a { color: var(--accent); }
 
     header {
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
+      gap: 15px;
       background: var(--card);
-      padding: 10px 16px;
-      border-radius: 10px;
-      margin-bottom: 10px;
+      padding: 15px 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
       border: 1px solid var(--border);
-      box-shadow: var(--shadow-sm);
     }
 
     .user-greeting {
-      font-weight: 700;
-      font-size: 1rem;
-      color: var(--text);
+      font-weight: bold;
+      font-size: 1.1rem;
+      color: #ffffff;
       display: flex;
       align-items: center;
       gap: 8px;
-      letter-spacing: -0.01em;
     }
 
     .manager-badge {
-      background: linear-gradient(135deg, #f5b729, #eab308);
+      background: #eab308;
       color: #1e293b;
-      font-size: 0.6rem;
+      font-size: 0.7rem;
       padding: 2px 6px;
       border-radius: 4px;
       text-transform: uppercase;
-      font-weight: 800;
-      letter-spacing: 0.03em;
+      font-weight: bold;
     }
 
     .nav-controls {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
     }
 
     select, input[type="text"], input[type="password"] {
-      padding: 6px 8px;
+      padding: 10px;
       border-radius: 6px;
       border: 1px solid var(--border);
-      background: var(--input-bg);
+      background: var(--bg);
       color: var(--text);
-      font-family: inherit;
-      font-size: 0.85rem;
+      font-size: 1rem;
       width: 100%;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.25s ease;
-    }
-    select:focus, input[type="text"]:focus, input[type="password"]:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-soft);
     }
 
     button {
-      padding: 6px 10px;
+      padding: 8px 14px;
       border-radius: 6px;
       border: 1px solid var(--border);
-      background: var(--input-bg);
+      background: #0f172a;
       color: var(--text);
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 14px;
       cursor: pointer;
-      transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease, color 0.15s ease;
     }
 
-    button:hover { border-color: var(--accent); color: var(--accent-hover); }
-    button:active { transform: translateY(1px); }
+    button:hover { border-color: var(--accent); }
 
     .month-title {
-      font-size: 1rem;
-      font-weight: 700;
-      min-width: 130px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      min-width: 160px;
       text-align: center;
       text-transform: capitalize;
-      letter-spacing: -0.01em;
     }
 
     .tabs {
       display: flex;
-      gap: 6px;
-      margin-bottom: 10px;
+      gap: 10px;
+      margin-bottom: 20px;
       flex-wrap: wrap;
     }
 
     .tab-btn {
       flex: 1;
-      padding: 8px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      min-width: 110px;
-      background: var(--card);
-      border-radius: 8px;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      min-width: 150px;
     }
-
+    
     .tab-btn.active {
       background: var(--accent);
-      color: var(--accent-contrast);
+      color: white;
       border-color: var(--accent);
-      box-shadow: var(--shadow-sm);
-    }
-    .tab-btn.danger { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
-    .tab-btn.danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
-
-    .sticky-header-section {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: var(--bg);
-      padding-top: 2px;
-      padding-bottom: 6px;
-      margin-bottom: 8px;
     }
 
+    .tab-btn.danger { background: #e11d48; color: white; border-color: #be123c; }
+    .tab-btn.danger:hover { background: #be123c; }
+
+    /* AUTH & FORMULAIRES */
     .form-box {
+      background: var(--card);
+      padding: 30px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      max-width: 400px;
+      margin: 40px auto;
+      text-align: center;
+    }
+    .form-box h2 { margin-top: 0; color: #ffffff; }
+    .form-box p { color: #ffffff; font-size: 0.9rem; margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; text-align: left; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; color: #ffffff; }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      text-align: left;
+      cursor: pointer;
+      color: #ffffff;
+    }
+    .checkbox-group input {
+      width: auto;
+      transform: scale(1.2);
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--accent); color: white; width: 100%; padding: 12px;
+      font-weight: bold; border: none; border-radius: 6px; font-size: 1rem; margin-top: 10px;
+    }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary {
+      background: transparent; color: var(--text); width: 100%; padding: 12px;
+      font-weight: bold; border: 1px solid var(--border); border-radius: 6px; margin-top: 10px;
+    }
+    .btn-outline {
+      background: transparent; color: #ffffff; border: 1px solid var(--accent);
+      width: 100%; padding: 12px; font-weight: bold; border-radius: 6px; margin-top: 10px;
+    }
+    .btn-outline:hover { background: rgba(30, 64, 175, 0.15); }
+
+    /* BARRE D'OUTILS */
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; padding: 15px;
+      background: var(--card); border-radius: 12px; border: 1px solid var(--border); align-items: center;
+    }
+    .toolbar span { font-weight: bold; margin-right: 5px; width: 100%; margin-bottom: 5px; color: #ffffff; }
+    .tool-btn {
+      padding: 6px 12px; font-weight: bold; border: 2px solid transparent;
+      transition: transform 0.1s, border-color 0.2s; font-size: 0.85rem; color: #ffffff;
+    }
+    .tool-btn.active { border-color: #fff; transform: scale(1.08); box-shadow: 0 0 8px rgba(255,255,255,0.4); }
+
+    /* Couleurs Boutons & Badges */
+    .tool-CA  { background: var(--color-CA); }
+    .tool-JDR { background: var(--color-JDR); }
+    .tool-TT  { background: var(--color-TT); }
+    .tool-LAD { background: var(--color-LAD); }
+    .tool-CAR { background: var(--color-CAR); }
+    .tool-ALE { background: var(--color-ALE); }
+    .tool-ARA { background: var(--color-ARA); }
+    .tool-CGR { background: var(--color-CGR); }
+    .tool-SPA { background: var(--color-SPA); }
+    .tool-NKE { background: var(--color-NKE); }
+    .tool-WAT { background: var(--color-WAT); }
+    .tool-LVL { background: var(--color-LVL); }
+    .tool-HBG { background: var(--color-HBG); }
+    .tool-VLD { background: var(--color-VLD); }
+    .tool-PRESENT { background: #334155; border: 1px solid #475569; }
+
+    .bg-CA  { background: var(--color-CA); }
+    .bg-JDR { background: var(--color-JDR); }
+    .bg-TT  { background: var(--color-TT); }
+    .bg-LAD { background: var(--color-LAD); }
+    .bg-CAR { background: var(--color-CAR); }
+    .bg-ALE { background: var(--color-ALE); }
+    .bg-ARA { background: var(--color-ARA); }
+    .bg-CGR { background: var(--color-CGR); }
+    .bg-SPA { background: var(--color-SPA); }
+    .bg-NKE { background: var(--color-NKE); }
+    .bg-WAT { background: var(--color-WAT); }
+    .bg-LVL { background: var(--color-LVL); }
+    .bg-HBG { background: var(--color-HBG); }
+    .bg-VLD { background: var(--color-VLD); }
+
+    /* GRILLES */
+    .calendar-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+    }
+    .day-header { text-align: center; font-weight: bold; padding: 8px; color: #ffffff; }
+    .day-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      min-height: 85px; padding: 6px; display: flex; flex-direction: column;
+      justify-content: space-between; cursor: pointer; transition: transform 0.1s, border-color 0.2s;
+    }
+    .day-card:hover { border-color: var(--accent); }
+    .day-card.weekend { background: var(--weekend-bg); opacity: 0.5; cursor: not-allowed; }
+    
+    .day-card.today {
+      border: 2px solid var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 
+        0 4px 14px rgba(30, 64, 175, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      background: linear-gradient(135deg, rgba(30, 41, 59, 1) 0%, rgba(30, 64, 175, 0.15) 100%);
+      z-index: 2;
+    }
+
+    .day-num { font-weight: bold; font-size: 0.85rem; margin-bottom: 2px; color: #ffffff; }
+    
+    .status-badge {
+      font-size: 0.75rem; padding: 2px 4px; border-radius: 4px; text-align: center;
+      font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    /* Demi-journées */
+    .halves-container {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex-grow: 1;
+    }
+    .day-half {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px dashed var(--border);
+      border-radius: 4px;
+      padding: 2px 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      min-height: 24px;
+      font-size: 0.7rem;
+      color: #ffffff;
+    }
+    .day-half:hover {
+      border-color: var(--accent);
+      background: rgba(30, 64, 175, 0.15);
+    }
+
+    /* Application stricte des couleurs de fond sur les demi-journées */
+    .day-half.bg-CA  { background: var(--color-CA) !important; border-color: var(--color-CA); }
+    .day-half.bg-JDR { background: var(--color-JDR) !important; border-color: var(--color-JDR); }
+    .day-half.bg-TT  { background: var(--color-TT) !important; border-color: var(--color-TT); }
+    .day-half.bg-LAD { background: var(--color-LAD) !important; border-color: var(--color-LAD); }
+    .day-half.bg-CAR { background: var(--color-CAR) !important; border-color: var(--color-CAR); }
+    .day-half.bg-ALE { background: var(--color-ALE) !important; border-color: var(--color-ALE); }
+    .day-half.bg-ARA { background: var(--color-ARA) !important; border-color: var(--color-ARA); }
+    .day-half.bg-CGR { background: var(--color-CGR) !important; border-color: var(--color-CGR); }
+    .day-half.bg-SPA { background: var(--color-SPA) !important; border-color: var(--color-SPA); }
+    .day-half.bg-NKE { background: var(--color-NKE) !important; border-color: var(--color-NKE); }
+    .day-half.bg-WAT { background: var(--color-WAT) !important; border-color: var(--color-WAT); }
+    .day-half.bg-LVL { background: var(--color-LVL) !important; border-color: var(--color-LVL); }
+    .day-half.bg-HBG { background: var(--color-HBG) !important; border-color: var(--color-HBG); }
+    .day-half.bg-VLD { background: var(--color-VLD) !important; border-color: var(--color-VLD); }
+
+    .team-subnav {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 15px;
+      background: var(--card); padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border); flex-wrap: wrap;
+    }
+    .team-subnav button.active { background: var(--accent); color: white; font-weight: bold; }
+    
+    .team-table-wrapper {
+      overflow-x: auto; background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 15px;
+    }
+    .month-section { margin-bottom: 25px; }
+    .month-section-title { font-size: 1.1rem; font-weight: bold; color: #ffffff; text-transform: capitalize; margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { border: 1px solid var(--border); padding: 6px 2px; text-align: center; min-width: 36px; color: #ffffff; }
+    th { background: #0f172a; color: #ffffff; }
+    th.weekend-header, td.weekend-cell { background: rgba(15, 23, 42, 0.6); color: #ffffff; }
+    
+    th.today-header { 
+      background: var(--accent); 
+      color: white; 
+      font-weight: bold; 
+      border: 2px solid var(--accent);
+      box-shadow: 0 2px 8px rgba(30, 64, 175, 0.4);
+    }
+    td.today-cell { 
+      background: rgba(30, 64, 175, 0.15); 
+      border: 2px solid var(--accent);
+      box-shadow: inset 0 0 6px rgba(30, 64, 175, 0.4);
+    }
+
+    .member-col { text-align: left; padding-left: 12px; font-weight: bold; min-width: 160px; position: sticky; left: 0; background: var(--card); z-index: 2; color: #ffffff; }
+    .member-pit { font-size: 0.75rem; color: #ffffff; font-weight: normal; }
+    .mini-badge {
+      font-weight: bold; padding: 1px 3px; border-radius: 3px; font-size: 0.65rem;
+      color: white; text-shadow: 0 1px 1px rgba(0,0,0,0.4); display: inline-block; width: 100%;
+    }
+
+    /* Styles spécifiques page KPI */
+    .kpi-charts-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .chart-box {
       background: var(--card);
       padding: 20px;
       border-radius: 12px;
       border: 1px solid var(--border);
-      max-width: 420px;
-      margin: 20px auto;
+    }
+    .chart-box h3 {
+      color: white;
       text-align: center;
-      box-shadow: var(--shadow-md);
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 1.1rem;
     }
-    .form-box h2 { margin-top: 0; color: var(--text); font-size: 1.2rem; }
-    .form-box p { color: var(--text-muted); font-size: 0.82rem; margin-bottom: 12px; }
-    .form-group { margin-bottom: 10px; text-align: left; }
-    .form-group label { display: block; margin-bottom: 3px; font-weight: 600; font-size: 0.78rem; color: var(--text-muted); }
-    
-    .checkbox-group {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 10px; text-align: left; cursor: pointer; color: var(--text); font-size: 0.85rem;
+    @media (max-width: 850px) {
+      .kpi-charts-container { grid-template-columns: 1fr; }
     }
-    .checkbox-group input { width: auto; transform: scale(1.1); cursor: pointer; accent-color: var(--accent); }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: #fff; width: 100%; padding: 8px;
-      font-weight: 700; border: none; border-radius: 6px; font-size: 0.9rem; margin-top: 6px;
-    }
-    .btn-secondary { background: transparent; color: var(--text); width: 100%; padding: 8px; font-weight: 700; border: 1px solid var(--border); border-radius: 6px; margin-top: 6px; }
-    .btn-outline { background: transparent; color: var(--accent); border: 1px solid var(--accent); width: 100%; padding: 8px; font-weight: 700; border-radius: 6px; margin-top: 6px; }
-
-    .toolbar {
-      display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 0; padding: 8px 12px;
-      background: var(--card); border-radius: 10px; border: 1px solid var(--border); align-items: center;
-      box-shadow: var(--shadow-sm);
-    }
-    .toolbar span { font-weight: 700; margin-right: 4px; width: 100%; margin-bottom: 2px; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
-    .tool-btn {
-      padding: 4px 8px; font-weight: 700; border: 2px solid transparent; font-size: 0.75rem; color: var(--status-text-color);
-      box-shadow: var(--shadow-sm); border-radius: 6px;
-    }
-    .tool-btn:hover { filter: brightness(1.12); color: var(--status-text-color); }
-    .tool-btn.active { border-color: rgba(120,120,120,0.5); transform: scale(1.05); box-shadow: 0 0 0 2px var(--accent-soft); }
-
-    /* Couleurs Boutons & Badges */
-    .tool-CA, .bg-CA, .day-half.bg-CA { background: var(--color-CA) !important; color: var(--status-text-color); }
-    .tool-JDR, .bg-JDR, .day-half.bg-JDR { background: var(--color-JDR) !important; color: var(--status-text-color); }
-    .tool-Formation, .bg-Formation, .day-half.bg-Formation { background: var(--color-Formation) !important; color: var(--status-text-color); }
-    .tool-TT, .bg-TT, .day-half.bg-TT { background: var(--color-TT) !important; color: var(--status-text-color); }
-    .tool-LAD, .bg-LAD, .day-half.bg-LAD { background: var(--color-LAD) !important; color: var(--status-text-color); }
-    .tool-CAR, .bg-CAR, .day-half.bg-CAR { background: var(--color-CAR) !important; color: var(--status-text-color); }
-    .tool-ALE, .bg-ALE, .day-half.bg-ALE { background: var(--color-ALE) !important; color: var(--status-text-color); }
-    .tool-ARA, .bg-ARA, .day-half.bg-ARA { background: var(--color-ARA) !important; color: var(--status-text-color); }
-    .tool-CGR, .bg-CGR, .day-half.bg-CGR { background: var(--color-CGR) !important; color: var(--status-text-color); }
-    .tool-SPA, .bg-SPA, .day-half.bg-SPA { background: var(--color-SPA) !important; color: var(--status-text-color); }
-    .tool-NKE, .bg-NKE, .day-half.bg-NKE { background: var(--color-NKE) !important; color: var(--status-text-color); }
-    .tool-WAT, .bg-WAT, .day-half.bg-WAT { background: var(--color-WAT) !important; color: var(--status-text-color); }
-    .tool-LVL, .bg-LVL, .day-half.bg-LVL { background: var(--color-LVL) !important; color: var(--status-text-color); }
-    .tool-HBG, .bg-HBG, .day-half.bg-HBG { background: var(--color-HBG) !important; color: var(--status-text-color); }
-    .tool-VLD, .bg-VLD, .day-half.bg-VLD { background: var(--color-VLD) !important; color: var(--status-text-color); }
-    .tool-UCH, .bg-UCH, .day-half.bg-UCH { background: var(--color-UCH) !important; color: var(--status-text-color); }
-    .tool-ZAL, .bg-ZAL, .day-half.bg-ZAL { background: var(--color-ZAL) !important; color: var(--status-text-color); }
-    .tool-CTX, .bg-CTX, .day-half.bg-CTX { background: var(--color-CTX) !important; color: var(--status-text-color); }
-    .tool-COM, .bg-COM, .day-half.bg-COM { background: var(--color-COM) !important; color: var(--status-text-color); }
-    .tool-Autres, .bg-Autres, .day-half.bg-Autres { background: var(--color-Autres) !important; color: var(--status-text-color); }
-    .tool-PRESENT { background: var(--badge-neutral-bg); color: var(--badge-neutral-text) !important; border: 1px solid var(--border); }
-
-    /* GRILLES DE CALENDRIER STANDARD (1 MOIS) */
-    .calendar-grid {
-      display: grid; grid-template-columns: 26px repeat(7, 1fr); gap: 3px; align-items: stretch;
-    }
-    .week-number-header {
-      text-align: center; font-weight: 700; padding: 4px 1px; color: var(--text-dim); font-size: 0.65rem; text-transform: uppercase;
-    }
-    .week-number-cell {
-      display: flex; align-items: center; justify-content: center;
-      background: var(--input-bg); border: 1px solid var(--border-soft); border-radius: 4px;
-      font-size: 0.6rem; font-weight: 700; color: var(--text-dim); writing-mode: vertical-rl; transform: rotate(180deg);
-      padding: 2px 1px; min-height: 55px; letter-spacing: 0.05em;
-    }
-    .day-header { text-align: center; font-weight: 700; padding: 4px; color: var(--text-dim); font-size: 0.7rem; text-transform: uppercase; }
-    .day-card {
-      background: var(--card); border: 1px solid var(--border); border-radius: 6px;
-      min-height: 55px; padding: 3px 4px; display: flex; flex-direction: column;
-      justify-content: space-between; cursor: pointer;
-      transition: transform 0.1s ease, border-color 0.12s ease, box-shadow 0.12s ease;
-    }
-    .day-card:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
-    .day-card.weekend { background: var(--weekend-bg); opacity: 0.55; cursor: not-allowed; }
-    .day-card.weekend:hover { transform: none; box-shadow: none; border-color: var(--border); }
-    .day-card.holiday { background: rgba(180, 83, 9, 0.14); border-color: rgba(180, 83, 9, 0.5); }
-    
-    .day-card.today {
-      border: 2px solid var(--accent);
-      background: linear-gradient(135deg, var(--card-hover) 0%, var(--accent-soft) 100%);
-      z-index: 2;
-    }
-
-    .day-num { font-weight: 700; font-size: 0.75rem; margin-bottom: 1px; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
-    
-    .halves-container {
-      display: flex; flex-direction: column; gap: 2px; flex-grow: 1;
-    }
-    .day-half {
-      background: var(--input-bg); border: 1px dashed var(--border); border-radius: 3px;
-      padding: 1px 2px; display: flex; align-items: center; justify-content: center; cursor: pointer;
-      min-height: 18px; font-size: 0.65rem; color: var(--text-muted);
-    }
-    .day-half:hover { border-color: var(--accent); background: var(--accent-soft); }
-
-    /* ========================================================
-       VUES COMPACTES : 3 MOIS ET ANNUEL (SANS SCROLL VERTICAL)
-       ======================================================== */
-    .personal-multi-container {
-      display: grid;
-      gap: 6px;
-    }
-    .personal-multi-container.months-3 {
-      grid-template-columns: repeat(3, 1fr);
-    }
-    .personal-multi-container.months-12 {
-      grid-template-columns: repeat(4, 1fr);
-      gap: 4px;
-    }
-    @media (max-width: 1200px) {
-      .personal-multi-container.months-3 { grid-template-columns: 1fr; }
-      .personal-multi-container.months-12 { grid-template-columns: repeat(3, 1fr); }
-    }
-    @media (max-width: 900px) {
-      .personal-multi-container.months-12 { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    .personal-multi-container .month-section {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px;
-      margin-bottom: 0 !important;
-      box-shadow: var(--shadow-sm);
-    }
-    .personal-multi-container .month-section-title {
-      font-size: 0.8rem;
-      font-weight: 700;
-      margin-bottom: 4px;
-      text-align: center;
-    }
-    .personal-multi-container .calendar-grid {
-      grid-template-columns: 20px repeat(7, 1fr);
-      gap: 2px;
-    }
-    .personal-multi-container .week-number-header,
-    .personal-multi-container .day-header {
-      padding: 2px 1px;
-      font-size: 0.55rem;
-    }
-    .personal-multi-container .week-number-cell {
-      min-height: 32px;
-      font-size: 0.5rem;
-      padding: 1px 0;
-    }
-    .personal-multi-container .day-card {
-      min-height: 32px;
-      padding: 2px 2px;
-    }
-    .personal-multi-container .day-num {
-      font-size: 0.65rem;
-      margin-bottom: 0;
-    }
-    .personal-multi-container .day-half {
-      min-height: 10px;
-      font-size: 0.5rem;
-      padding: 0;
-    }
-    .personal-multi-container .status-badge {
-      font-size: 0.55rem;
-      padding: 1px 2px;
-    }
-
-    .team-subnav {
-      display: flex; align-items: center; gap: 6px; margin-bottom: 0;
-      background: var(--card); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); flex-wrap: wrap;
-      box-shadow: var(--shadow-sm);
-    }
-    .team-subnav button.active { background: var(--accent); color: var(--accent-contrast); font-weight: 700; border-color: var(--accent); }
-    
-    .team-table-wrapper { background: transparent; border: none; padding: 0; box-shadow: none; overflow-x: auto; }
-    .month-section { margin-bottom: 15px; }
-    .month-section-title { font-size: 0.95rem; font-weight: 700; color: var(--text); text-transform: capitalize; margin-bottom: 6px; }
-    
-    table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
-    th, td { border: 1px solid var(--border-soft); padding: 4px 2px; text-align: center; min-width: 30px; color: var(--text); vertical-align: middle; }
-    th { background: var(--input-bg); color: var(--text-muted); font-weight: 700; font-size: 0.68rem; text-transform: uppercase; }
-    th.weekend-header, td.weekend-cell { background: var(--weekend-bg); color: var(--text-dim); }
-    th.holiday-header, td.holiday-cell { background: rgba(180, 83, 9, 0.16); color: var(--text); }
-    
-    th.today-header { background: var(--accent); color: #fff; font-weight: bold; border: 2px solid var(--accent); }
-    td.today-cell { background: var(--accent-soft); border: 2px solid var(--accent); }
-
-    .member-col { text-align: left; padding-left: 8px; font-weight: 700; min-width: 140px; position: sticky; left: 0; background: var(--card); z-index: 2; font-size: 0.8rem; }
-    .member-pit { font-size: 0.65rem; color: var(--text-dim); font-weight: normal; }
-
-    #team-table-container table { border-collapse: separate; border-spacing: 2px; }
-    #team-table-container th, #team-table-container td { border-radius: 4px; }
-
-    .kpi-charts-container {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;
-    }
-    .chart-box {
-      background: var(--card); padding: 10px; border-radius: 10px; border: 1px solid var(--border);
-      max-height: 270px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-sm);
-    }
-    .chart-box h3 { color: var(--text); text-align: center; margin: 0 0 6px 0; font-size: 0.85rem; font-weight: 700; }
-    .chart-box canvas { max-height: 190px !important; }
 
     .storage-banner {
-      background: var(--card); border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px; font-size: 0.75rem;
-      margin-bottom: 10px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      background: #334155; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem;
+      margin-bottom: 15px; color: #ffffff; display: flex; justify-content: space-between;
     }
-
-    .theme-toggle-btn {
-      display: flex; align-items: center; gap: 5px; padding: 4px 8px 4px 4px; border-radius: 999px;
-      border: 1px solid var(--border); background: var(--input-bg); color: var(--text-muted); font-size: 0.72rem; font-weight: 700; flex-shrink: 0;
-    }
-    .theme-toggle-btn:hover { border-color: var(--accent); color: var(--accent-hover); }
-    .theme-toggle-icon { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--accent-soft); font-size: 0.75rem; }
 
     .view { display: none; }
-    .view.active { display: block; animation: viewFadeIn 0.2s ease; }
+    .view.active { display: block; }
 
-    @keyframes viewFadeIn {
-      from { opacity: 0; transform: translateY(2px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
   </style>
 </head>
 <body>
@@ -575,15 +380,12 @@
   <div class="container">
     <div class="storage-banner">
       <span id="storage-info">Connexion en cours...</span>
-      <button type="button" class="theme-toggle-btn" id="theme-toggle" onclick="toggleTheme()" title="Changer d'apparence">
-        <span class="theme-toggle-icon" id="theme-toggle-icon">🌙</span>
-        <span id="theme-toggle-label">Sombre</span>
-      </button>
     </div>
 
     <!-- HEADER COMMUN -->
     <header id="main-header" style="display: none;">
       <div class="user-greeting" id="header-greeting"></div>
+
       <div class="nav-controls" id="month-nav">
         <button id="prev-month">◄</button>
         <div class="month-title" id="month-display">-</div>
@@ -593,54 +395,56 @@
 
     <!-- ONGLETS DE NAVIGATION -->
     <div class="tabs" id="main-tabs" style="display: none;">
-      <button class="tab-btn" id="tab-presence" onclick="switchTab('view-presence')" style="display: none;">👥 Présence Jour</button>
       <button class="tab-btn" id="tab-personal" onclick="switchTab('view-personal')">Mon Calendrier</button>
       <button class="tab-btn" id="tab-team" onclick="switchTab('view-team')">Vue Équipe</button>
-      <button class="tab-btn" id="tab-annual" onclick="switchTab('view-annual')">📅 Bilan Annuel</button>
-      <button class="tab-btn" id="tab-kpi" onclick="switchTab('view-kpi')" style="display: none;">📊 KPI</button>
-      <button class="tab-btn" id="tab-settings" onclick="switchTab('view-settings')">⚙️ Paramètres</button>
+      <button class="tab-btn" id="tab-kpi" onclick="switchTab('view-kpi')">📊 KPI</button>
+      <button class="tab-btn" id="tab-settings" onclick="switchTab('view-settings')">⚙️ Gestion Code</button>
       <button class="tab-btn danger" onclick="logout()">Déconnexion</button>
     </div>
 
-    <!-- VUE : CONNEXION -->
+    <!-- ============================== -->
+    <!-- VUE : CONNEXION                -->
+    <!-- ============================== -->
     <div id="view-login" class="view active">
       <div class="form-box">
         <h2>🔒 Connexion</h2>
-        <p>Sélectionnez votre PIT, votre nom et entrez votre code PIN à 4 chiffres.</p>
-        <div class="form-group">
-          <label for="login-pit-filter">Filtrer par PIT :</label>
-          <select id="login-pit-filter" onchange="filterLoginNames()">
-            <option value="ALL">Tous les PITs</option>
-          </select>
-        </div>
+        <p>Sélectionnez votre nom et entrez votre code PIN à 4 chiffres.</p>
+        
         <div class="form-group">
           <label for="login-name">Sélectionnez votre nom :</label>
           <select id="login-name">
             <option value="">-- Aucun profil (Créez-en un) --</option>
           </select>
         </div>
+        
         <div class="form-group">
           <label for="login-pin">Code PIN (4 chiffres) :</label>
           <input type="password" id="login-pin" maxlength="4" placeholder="Ex: 1234" pattern="\d{4}">
         </div>
+        
         <button class="btn-primary" onclick="handleLogin()">Se connecter</button>
         <button class="btn-outline" onclick="showCreateProfile()">➕ Créer un profil</button>
-        <button class="btn-secondary" onclick="accessPublicTeamView()">👀 Voir la Vue Équipe (Public)</button>
+        <button class="btn-secondary" onclick="accessPublicTeamView()">👀 Voir la Vue Équipe & KPI (Public)</button>
       </div>
     </div>
 
-    <!-- VUE : CRÉER UN PROFIL -->
+    <!-- ============================== -->
+    <!-- VUE : CRÉER UN PROFIL          -->
+    <!-- ============================== -->
     <div id="view-create-profile" class="view">
       <div class="form-box">
         <h2>👤 Nouveau Profil</h2>
+        
         <div class="form-group">
           <label for="cp-firstname">Prénom :</label>
           <input type="text" id="cp-firstname" placeholder="Ex: Jean">
         </div>
+        
         <div class="form-group">
           <label for="cp-lastname">Nom :</label>
           <input type="text" id="cp-lastname" placeholder="Ex: Dupont">
         </div>
+        
         <div class="form-group">
           <label for="cp-pit">PIT (Équipe / Service) :</label>
           <select id="cp-pit">
@@ -650,221 +454,121 @@
             <option value="PIT TBM">PIT TBM</option>
           </select>
         </div>
+
         <label class="checkbox-group">
           <input type="checkbox" id="cp-manager">
           <strong>Je suis Manager</strong>
         </label>
+        
         <div class="form-group">
           <label for="cp-pin">Code PIN (4 chiffres) :</label>
           <input type="password" id="cp-pin" maxlength="4" placeholder="Ex: 1234">
         </div>
+        
         <button class="btn-primary" onclick="handleCreateProfile()">Créer le profil</button>
         <button class="btn-secondary" onclick="switchTab('view-login')">Annuler</button>
       </div>
     </div>
 
-    <!-- VUE : PARAMÈTRES -->
+    <!-- ============================== -->
+    <!-- VUE : GESTION (MODIFIER CODE)  -->
+    <!-- ============================== -->
     <div id="view-settings" class="view">
-      <div class="form-box" style="max-width: 480px;">
-        <h2>⚙️ Paramètres</h2>
-        <div style="margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 15px; text-align: left;">
-          <h3 style="color: var(--text); font-size: 0.9rem; margin-top: 0;">Modifier mon Code PIN</h3>
-          <div class="form-group">
-            <label for="old-pin">Ancien code :</label>
-            <input type="password" id="old-pin" maxlength="4">
-          </div>
-          <div class="form-group">
-            <label for="new-pin">Nouveau code :</label>
-            <input type="password" id="new-pin" maxlength="4">
-          </div>
-          <button class="btn-primary" onclick="changePin()">Valider la modification</button>
+      <div class="form-box">
+        <h2>⚙️ Modifier mon Code PIN</h2>
+        <div class="form-group">
+          <label for="old-pin">Ancien code :</label>
+          <input type="password" id="old-pin" maxlength="4">
         </div>
-        <div style="margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 15px; text-align: left;">
-          <h3 style="color: var(--text); font-size: 0.9rem; margin-top: 0;">Supprimer mon compte</h3>
-          <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px;">Supprimer définitivement votre profil et vos données.</p>
-          <button class="btn-secondary" style="border-color: #e11d48; color: #e11d48;" onclick="deleteMyAccount()">Supprimer mon compte</button>
+        <div class="form-group">
+          <label for="new-pin">Nouveau code :</label>
+          <input type="password" id="new-pin" maxlength="4">
         </div>
-        <div id="manager-team-deletion-section" style="display: none; text-align: left;">
-          <h3 style="color: var(--text); font-size: 0.9rem; margin-top: 0;">Gestion des comptes de mon équipe (<span id="manager-pit-name"></span>)</h3>
-          <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px;">Supprimer un membre :</p>
-          <div id="team-members-list-for-deletion" style="display: flex; flex-direction: column; gap: 6px;"></div>
-        </div>
+        <button class="btn-primary" onclick="changePin()">Valider la modification</button>
       </div>
     </div>
 
-    <!-- VUE : PRÉSENCE DU JOUR -->
-    <div id="view-presence" class="view">
-      <div class="form-box" style="max-width: 650px; text-align: left;">
-        <h2>👥 Présence du jour - Équipe</h2>
-        <p style="color: var(--text-muted); margin-bottom: 12px;">État des présences pour aujourd'hui (<span id="presence-date-text"></span>).</p>
-        <div id="presence-list-container"></div>
-      </div>
-    </div>
-
-    <!-- VUE : MON CALENDRIER -->
+    <!-- ============================== -->
+    <!-- VUE : MON CALENDRIER           -->
+    <!-- ============================== -->
     <div id="view-personal" class="view">
-      <div class="sticky-header-section">
-        <div class="team-subnav" style="margin-bottom: 6px;">
-          <span style="font-weight: bold; font-size: 0.8rem; color: var(--text-muted);">Période :</span>
-          <button id="btn-personal-1m" class="active">1 Mois</button>
-          <button id="btn-personal-3m">3 Mois (Trimestre)</button>
-          <button id="btn-personal-annual">Annuel</button>
-        </div>
-
-        <div class="toolbar">
-          <span>Sélectionner le type de jour à appliquer :</span>
-          <button class="tool-btn tool-CA active" data-status="CA">CA</button>
-          <button class="tool-btn tool-JDR" data-status="JDR">JDR</button>
-          <button class="tool-btn tool-Formation" data-status="Formation">Formation</button>
-          <button class="tool-btn tool-TT" data-status="TT">TT</button>
-          <button class="tool-btn tool-LAD" data-status="LAD">LAD</button>
-          <button class="tool-btn tool-CAR" data-status="CAR">CAR</button>
-          <button class="tool-btn tool-ALE" data-status="ALE">ALE</button>
-          <button class="tool-btn tool-ARA" data-status="ARA">ARA</button>
-          <button class="tool-btn tool-CGR" data-status="CGR">CGR</button>
-          <button class="tool-btn tool-SPA" data-status="SPA">SPA</button>
-          <button class="tool-btn tool-NKE" data-status="NKE">NKE</button>
-          <button class="tool-btn tool-WAT" data-status="WAT">WAT</button>
-          <button class="tool-btn tool-LVL" data-status="LVL">LVL</button>
-          <button class="tool-btn tool-HBG" data-status="HBG">HBG</button>
-          <button class="tool-btn tool-VLD" data-status="VLD">VLD</button>
-          <button class="tool-btn tool-UCH" data-status="UCH">UCH</button>
-          <button class="tool-btn tool-ZAL" data-status="ZAL">ZAL</button>
-          <button class="tool-btn tool-CTX" data-status="CTX">CTX</button>
-          <button class="tool-btn tool-COM" data-status="COM">COM</button>
-          <button class="tool-btn tool-Autres" data-status="Autres">Autres</button>
-          <button class="tool-btn tool-PRESENT" data-status="PRESENT">🗑️ Effacer (Bureau)</button>
-        </div>
+      <div class="toolbar">
+        <span>Sélectionner le type de jour à appliquer :</span>
+        <button class="tool-btn tool-CA active" data-status="CA">CA</button>
+        <button class="tool-btn tool-JDR" data-status="JDR">JDR</button>
+        <button class="tool-btn tool-TT" data-status="TT">TT</button>
+        <button class="tool-btn tool-LAD" data-status="LAD">LAD</button>
+        <button class="tool-btn tool-CAR" data-status="CAR">CAR</button>
+        <button class="tool-btn tool-ALE" data-status="ALE">ALE</button>
+        <button class="tool-btn tool-ARA" data-status="ARA">ARA</button>
+        <button class="tool-btn tool-CGR" data-status="CGR">CGR</button>
+        <button class="tool-btn tool-SPA" data-status="SPA">SPA</button>
+        <button class="tool-btn tool-NKE" data-status="NKE">NKE</button>
+        <button class="tool-btn tool-WAT" data-status="WAT">WAT</button>
+        <button class="tool-btn tool-LVL" data-status="LVL">LVL</button>
+        <button class="tool-btn tool-HBG" data-status="HBG">HBG</button>
+        <button class="tool-btn tool-VLD" data-status="VLD">VLD</button>
+        <button class="tool-btn tool-PRESENT" data-status="PRESENT">🗑️ Effacer (Bureau)</button>
       </div>
-      <div id="personal-grids-container"></div>
+      <div class="calendar-grid" id="personal-grid"></div>
     </div>
 
-    <!-- VUE : VUE ÉQUIPE -->
+    <!-- ============================== -->
+    <!-- VUE : VUE ÉQUIPE               -->
+    <!-- ============================== -->
     <div id="view-team" class="view">
-      <div class="sticky-header-section">
-        <button class="btn-secondary" id="btn-back-login" style="margin-bottom: 6px; width: auto; display: none;" onclick="logout()">◄ Retour à la connexion</button>
-        <div class="team-subnav">
-          <span style="font-weight: bold; font-size: 0.8rem; color: var(--text-muted);">Période :</span>
-          <button id="btn-team-1m" class="active">1 Mois</button>
-          <button id="btn-team-3m">3 Mois (Trimestre)</button>
-          <span style="font-weight: bold; font-size: 0.8rem; margin-left: 10px; color: var(--text-muted);">Filtre PIT :</span>
-          <select id="pit-select-filter" style="width: auto;">
-            <option value="ALL">Tous les PITs</option>
-          </select>
-        </div>
+      <button class="btn-secondary" id="btn-back-login" style="margin-bottom: 20px; width: auto; display: none;" onclick="logout()">◄ Retour à la connexion</button>
+      
+      <div class="team-subnav">
+        <span style="font-weight: bold; font-size: 0.9rem; color: #ffffff;">Période :</span>
+        <button id="btn-team-1m" class="active">1 Mois</button>
+        <button id="btn-team-3m">3 Mois (Trimestre)</button>
+
+        <span style="font-weight: bold; font-size: 0.9rem; margin-left: 15px; color: #ffffff;">Filtre PIT :</span>
+        <select id="pit-select-filter">
+          <option value="ALL">Tous les PITs</option>
+        </select>
       </div>
-      <div id="team-table-container"></div>
+      <div class="team-table-wrapper" id="team-table-container"></div>
     </div>
 
-    <!-- VUE : BILAN ANNUEL (COMPACT) -->
-    <div id="view-annual" class="view">
-      <div class="sticky-header-section" style="padding-bottom: 2px;">
-        <div class="team-subnav" style="padding: 4px 8px; gap: 6px;">
-          <span style="font-weight: bold; font-size: 0.78rem; color: var(--text-muted);">Année :</span>
-          <select id="annual-year" style="width: auto; padding: 3px 6px; font-size: 0.78rem;"></select>
-          <span style="font-weight: bold; font-size: 0.78rem; margin-left: 6px; color: var(--text-muted);">Personne :</span>
-          <select id="annual-person" style="width: auto; padding: 3px 6px; font-size: 0.78rem;" onchange="renderAnnualReport()"></select>
-          <button class="btn-primary" style="width: auto; margin-top: 0; padding: 4px 10px; font-size: 0.78rem;" onclick="renderAnnualReport()">Actualiser</button>
-        </div>
-      </div>
-
-      <div class="form-box" style="max-width: 720px; text-align: left; margin: 4px auto; padding: 8px 12px;">
-        <h2 style="margin: 0 0 4px 0; font-size: 0.95rem;">📅 Bilan Annuel (<span id="annual-report-year-title"></span>) — <span id="annual-report-user-name" style="color: var(--accent);"></span></h2>
-        
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px;">
-          <div style="background: var(--bg); padding: 4px; border-radius: 4px; border: 1px solid var(--border); text-align: center;">
-            <div style="font-size: 0.58rem; color: var(--text-muted); margin-bottom: 1px;">JDR</div>
-            <div id="stat-jdr-count" style="font-size: 1.1rem; font-weight: 800; color: #f59e0b; line-height: 1;">0</div>
-          </div>
-          <div style="background: var(--bg); padding: 4px; border-radius: 4px; border: 1px solid var(--border); text-align: center;">
-            <div style="font-size: 0.58rem; color: var(--text-muted); margin-bottom: 1px;">CA</div>
-            <div id="stat-ca-count" style="font-size: 1.1rem; font-weight: 800; color: #ec4899; line-height: 1;">0</div>
-          </div>
-          <div style="background: var(--bg); padding: 4px; border-radius: 4px; border: 1px solid var(--border); text-align: center;">
-            <div style="font-size: 0.58rem; color: var(--text-muted); margin-bottom: 1px;">Formation</div>
-            <div id="stat-form-count" style="font-size: 1.1rem; font-weight: 800; color: #7c3aed; line-height: 1;">0</div>
-          </div>
-          <div style="background: var(--bg); padding: 4px; border-radius: 4px; border: 1px solid var(--border); text-align: center;">
-            <div style="font-size: 0.58rem; color: var(--text-muted); margin-bottom: 1px;">Déplacements</div>
-            <div id="stat-disp-count" style="font-size: 1.1rem; font-weight: 800; color: #06b6d4; line-height: 1;">0</div>
-          </div>
-        </div>
-
-        <div class="team-table-wrapper" style="padding: 2px; max-height: 230px; overflow-y: auto;">
-          <table style="font-size: 0.72rem;">
-            <thead>
-              <tr>
-                <th style="padding: 2px;">Mois</th>
-                <th style="padding: 2px;">JDR</th>
-                <th style="padding: 2px;">CA</th>
-                <th style="padding: 2px;">Formation</th>
-                <th style="padding: 2px;">Déplacements</th>
-              </tr>
-            </thead>
-            <tbody id="annual-detail-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- VUE : KPI -->
+    <!-- ============================== -->
+    <!-- VUE : KPI (Graphiques)         -->
+    <!-- ============================== -->
     <div id="view-kpi" class="view">
-      <div class="sticky-header-section">
-        <button class="btn-secondary" id="btn-back-login-kpi" style="margin-bottom: 6px; width: auto; display: none;" onclick="logout()">◄ Retour à la connexion</button>
-        <div class="team-subnav">
-          <span style="font-weight: bold; font-size: 0.8rem; color: var(--text-muted);">Période :</span>
-          <select id="kpi-year" style="width: auto;"></select>
-          <select id="kpi-month" style="width: auto;">
-            <option value="ALL">Année Complète</option>
-            <option value="0">Janvier</option>
-            <option value="1">Février</option>
-            <option value="2">Mars</option>
-            <option value="3">Avril</option>
-            <option value="4">Mai</option>
-            <option value="5">Juin</option>
-            <option value="6">Juillet</option>
-            <option value="7">Août</option>
-            <option value="8">Septembre</option>
-            <option value="9">Octobre</option>
-            <option value="10">Novembre</option>
-            <option value="11">Décembre</option>
-          </select>
-          <span style="font-weight: bold; font-size: 0.8rem; margin-left: 6px; color: var(--text-muted);">PIT :</span>
-          <select id="kpi-pit-filter" style="width: auto;" onchange="updateKPIPersonFilter(); renderKPICharts();">
-            <option value="ALL">Tous les PITs</option>
-          </select>
-          <span style="font-weight: bold; font-size: 0.8rem; margin-left: 6px; color: var(--text-muted);">Personne :</span>
-          <select id="kpi-person-filter" style="width: auto;" onchange="renderKPICharts();">
-            <option value="ALL">Toutes les personnes</option>
-          </select>
-          <button class="btn-primary" style="width: auto; margin-top: 0; padding: 5px 12px;" onclick="renderKPICharts()">Actualiser</button>
-        </div>
+      <button class="btn-secondary" id="btn-back-login-kpi" style="margin-bottom: 20px; width: auto; display: none;" onclick="logout()">◄ Retour à la connexion</button>
+      
+      <div class="team-subnav">
+        <span style="font-weight: bold; font-size: 0.9rem; color: #ffffff;">Période (Déplacements) :</span>
+        <select id="kpi-year" style="width: auto;"></select>
+        <select id="kpi-month" style="width: auto;">
+          <option value="ALL">Année Complète</option>
+          <option value="0">Janvier</option>
+          <option value="1">Février</option>
+          <option value="2">Mars</option>
+          <option value="3">Avril</option>
+          <option value="4">Mai</option>
+          <option value="5">Juin</option>
+          <option value="6">Juillet</option>
+          <option value="7">Août</option>
+          <option value="8">Septembre</option>
+          <option value="9">Octobre</option>
+          <option value="10">Novembre</option>
+          <option value="11">Décembre</option>
+        </select>
+        <button class="btn-primary" style="width: auto; margin-top: 0; padding: 8px 16px;" onclick="renderKPICharts()">Actualiser</button>
       </div>
 
       <div class="kpi-charts-container">
+        <!-- Graphique par Personne -->
         <div class="chart-box">
           <h3>Déplacements par Personne (Jours)</h3>
           <canvas id="kpi-person-chart"></canvas>
         </div>
+        <!-- Graphique par PIT -->
         <div class="chart-box">
           <h3>Répartition par PIT (Jours)</h3>
           <canvas id="kpi-pit-chart"></canvas>
-        </div>
-        <div class="chart-box">
-          <h3>Jours JDR Posés (Par Personne)</h3>
-          <canvas id="kpi-jdr-chart"></canvas>
-        </div>
-        <div class="chart-box">
-          <h3>Jours de CA Posés (Par Personne)</h3>
-          <canvas id="kpi-ca-chart"></canvas>
-        </div>
-        <div class="chart-box">
-          <h3>Nb de déplacements / Mois & PIT</h3>
-          <canvas id="kpi-month-pit-chart"></canvas>
-        </div>
-        <div class="chart-box">
-          <h3>Coût des Déplacements par PIT (€)</h3>
-          <canvas id="kpi-cost-chart"></canvas>
         </div>
       </div>
     </div>
@@ -872,6 +576,9 @@
   </div>
 
 <script>
+  /* =========================================================================
+     1. CONFIGURATION FIREBASE & DONNÉES
+     ========================================================================= */
   const firebaseConfig = {
     apiKey: "AIzaSyBgcDyREaj8-mwazuCR4OPxwYqxPOI4m0Q",
     authDomain: "calendrier-team.firebaseapp.com",
@@ -884,170 +591,30 @@
 
   const BASE_TEAM_MEMBERS = [];
 
+  /* VARIABLES GLOBALES */
   let currentUser = null; 
   let currentDate = new Date();
+  
   let calendarData = {};
   let usersPins = {}; 
   let customMembers = []; 
   let ALL_MEMBERS = [];
+  
   let selectedTool = 'CA';
   let teamViewMonths = 1;
-  let personalViewMonths = 1;
   let selectedPit = 'ALL';
 
   let db = null;
   const banner = document.getElementById('storage-info');
 
-  const PIT_COLORS = {
-    "PIT Archi": "#0ea5e9",
-    "PIT CAC": "#10b981",
-    "PIT TBM": "#f59e0b",
-    "PIT Prep": "#ef4444"
-  };
-
-  function getPitColor(pitName) {
-    return PIT_COLORS[pitName] || "#64748b";
-  }
-
-  function getWeekNumber(date) {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-  }
-
-  function isCurrentOrNextWeek(dateObj) {
-    const now = new Date();
-    const currentDayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1;
-    const currentMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - currentDayOfWeek);
-    currentMonday.setHours(0,0,0,0);
-    
-    const nextSunday = new Date(currentMonday);
-    nextSunday.setDate(currentMonday.getDate() + 13);
-    nextSunday.setHours(23,59,59,999);
-    
-    const target = new Date(dateObj);
-    target.setHours(12,0,0,0);
-    
-    return target >= currentMonday && target <= nextSunday;
-  }
-
-  function getFrenchPublicHolidays(year) {
-    const holidays = new Set();
-    holidays.add(`${year}-01-01`);
-    holidays.add(`${year}-05-01`);
-    holidays.add(`${year}-05-08`);
-    holidays.add(`${year}-07-14`);
-    holidays.add(`${year}-08-15`);
-    holidays.add(`${year}-11-01`);
-    holidays.add(`${year}-11-11`);
-    holidays.add(`${year}-12-25`);
-
-    const a = year % 19;
-    const b = Math.floor(year / 100);
-    const c = year % 100;
-    const d = Math.floor(b / 4);
-    const e = b % 4;
-    const f = Math.floor((b + 8) / 25);
-    const g = Math.floor((b - f + 1) / 3);
-    const h = (19 * a + b - d - g + 15) % 30;
-    const i = Math.floor(c / 4);
-    const k = c % 4;
-    const l = (32 + 2 * e + 2 * i - h - k) % 7;
-    const m = Math.floor((a + 11 * h + 22 * l) / 451);
-    const month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
-    const day = ((h + l - 7 * m + 114) % 31) + 1;
-    
-    const easter = new Date(year, month, day);
-    const easterMonday = new Date(easter);
-    easterMonday.setDate(easter.getDate() + 1);
-    holidays.add(formatDateKeyStatic(easterMonday));
-
-    const ascension = new Date(easter);
-    ascension.setDate(easter.getDate() + 39);
-    holidays.add(formatDateKeyStatic(ascension));
-
-    const pentecostMonday = new Date(easter);
-    pentecostMonday.setDate(easter.getDate() + 50);
-    holidays.add(formatDateKeyStatic(pentecostMonday));
-
-    return holidays;
-  }
-
-  function formatDateKeyStatic(dateObj) {
-    const y = dateObj.getFullYear();
-    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const d = String(dateObj.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
-
-  const insideBarLabelsPlugin = {
-    id: 'insideBarLabels',
-    afterDatasetsDraw(chart, args, options) {
-      const { ctx } = chart;
-      chart.data.datasets.forEach((dataset, datasetIndex) => {
-        const meta = chart.getDatasetMeta(datasetIndex);
-        if (meta.hidden) return;
-        meta.data.forEach((bar, index) => {
-          const value = dataset.data[index];
-          if (value === undefined || value === null || value === 0) return;
-          ctx.save();
-          ctx.font = 'bold 11px Calibri, sans-serif';
-          ctx.fillStyle = document.documentElement.getAttribute('data-theme') === 'light' ? '#1e293b' : '#ffffff';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          const x = bar.tooltipPosition().x;
-          const y = (bar.y + bar.base) / 2;
-          ctx.fillText(value, x, y);
-          ctx.restore();
-        });
-      });
-    }
-  };
-
-  const DISPLACEMENT_COSTS = {
-    ALE: 220, ARA: 210, CGR: 250, HBG: 225, LVL: 200, NKE: 279, SPA: 365,
-    UCH: 249, VLD: 210, WAT: 306, ZAL: 200, CTX: 210, COM: 220, Autres: 200
-  };
-  const DISPLACEMENT_CODES = Object.keys(DISPLACEMENT_COSTS);
-
+  /* VARIABLES KPI */
+  const DISPLACEMENT_CODES = ['ARA', 'ALE', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'LCL', 'HBG', 'VLD'];
   let kpiPersonChart = null;
   let kpiPitChart = null;
-  let kpiJdrChart = null;
-  let kpiCaChart = null;
-  let kpiMonthPitChart = null;
-  let kpiCostChart = null;
 
-  function applyTheme(theme) {
-    const resolved = (theme === 'light' || theme === 'gray') ? theme : 'dark';
-    document.documentElement.setAttribute('data-theme', resolved);
-    const icon = document.getElementById('theme-toggle-icon');
-    const label = document.getElementById('theme-toggle-label');
-    if (icon && label) {
-      if (resolved === 'light') { icon.textContent = '☀️'; label.textContent = 'Clair'; }
-      else if (resolved === 'gray') { icon.textContent = '☁️'; label.textContent = 'Gris'; }
-      else { icon.textContent = '🌙'; label.textContent = 'Sombre'; }
-    }
-  }
-
-  function toggleTheme() {
-    const current = document.documentElement.getAttribute('data-theme');
-    let next = (current === 'dark') ? 'gray' : (current === 'gray' ? 'light' : 'dark');
-    try { localStorage.setItem('theme_preference', next); } catch (e) {}
-    applyTheme(next);
-    if (document.getElementById('view-kpi') && document.getElementById('view-kpi').classList.contains('active')) {
-      renderKPICharts();
-    }
-  }
-
-  let savedTheme = 'dark';
-  try { 
-    const stored = localStorage.getItem('theme_preference');
-    if (stored === 'light' || stored === 'gray') savedTheme = stored;
-  } catch (e) {}
-  applyTheme(savedTheme);
-
+  /* =========================================================================
+     2. INITIALISATION & SYNCHRONISATION
+     ========================================================================= */
   try {
     firebase.initializeApp(firebaseConfig);
     db = firebase.database();
@@ -1060,11 +627,13 @@
     if (db) {
       db.ref('planning').on('value', (snap) => {
         calendarData = snap.val() || {};
-        if(currentUser || document.getElementById('view-team').classList.contains('active') || document.getElementById('view-kpi').classList.contains('active') || document.getElementById('view-presence').classList.contains('active') || document.getElementById('view-annual').classList.contains('active')) {
+        if(currentUser || document.getElementById('view-team').classList.contains('active') || document.getElementById('view-kpi').classList.contains('active')) {
           renderViews();
         }
       });
-      db.ref('users_pins').on('value', (snap) => { usersPins = snap.val() || {}; });
+      db.ref('users_pins').on('value', (snap) => {
+        usersPins = snap.val() || {};
+      });
       db.ref('custom_users').on('value', (snap) => {
         customMembers = snap.val() || [];
         updateAllMembersList();
@@ -1072,19 +641,22 @@
     } else {
       const localCal = localStorage.getItem('team_calendar_data');
       if (localCal) try { calendarData = JSON.parse(localCal); } catch(e) {}
+      
       const localPins = localStorage.getItem('team_users_pins');
       if (localPins) try { usersPins = JSON.parse(localPins); } catch(e) {}
+
       const localUsers = localStorage.getItem('team_custom_users');
       if (localUsers) try { customMembers = JSON.parse(localUsers); } catch(e) {}
+      
       updateAllMembersList();
     }
-    populateGlobalFilters();
+    populateKPIFilters();
   }
 
   function updateAllMembersList() {
     ALL_MEMBERS = [...BASE_TEAM_MEMBERS, ...customMembers];
     populateDropdowns();
-    if(currentUser || document.getElementById('view-team').classList.contains('active') || document.getElementById('view-kpi').classList.contains('active') || document.getElementById('view-presence').classList.contains('active') || document.getElementById('view-annual').classList.contains('active')) {
+    if(currentUser || document.getElementById('view-team').classList.contains('active') || document.getElementById('view-kpi').classList.contains('active')) {
       renderViews();
     }
   }
@@ -1099,6 +671,9 @@
     else localStorage.setItem('team_custom_users', JSON.stringify(customMembers));
   }
 
+  /* =========================================================================
+     3. GESTION DU JOUR ACTUEL & STATUTS
+     ========================================================================= */
   const nowRef = new Date();
   const todayYear = nowRef.getFullYear();
   const todayMonth = nowRef.getMonth();
@@ -1110,10 +685,30 @@
            dateObj.getDate() === todayDate;
   }
 
+  // Détermine si une date se trouve dans la semaine actuelle ou la semaine prochaine
+  function isCurrentOrNextWeek(dateObj) {
+    const n = new Date(nowRef.getFullYear(), nowRef.getMonth(), nowRef.getDate());
+    const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+
+    // Obtenir le Lundi de la semaine en cours
+    let dayOfWeek = n.getDay();
+    let diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    let currentWeekMonday = new Date(n);
+    currentWeekMonday.setDate(n.getDate() + diffToMonday);
+
+    // Fin de la semaine prochaine (Dimanche de la semaine suivante)
+    let nextWeekSunday = new Date(currentWeekMonday);
+    nextWeekSunday.setDate(currentWeekMonday.getDate() + 13);
+
+    return d >= currentWeekMonday && d <= nextWeekSunday;
+  }
+
   function getStatus(dateKey, user, slot = null) {
     const dayVal = calendarData[dateKey] && calendarData[dateKey][user];
     if (!dayVal) return 'PRESENT';
-    if (typeof dayVal === 'string') return dayVal;
+    if (typeof dayVal === 'string') {
+      return dayVal;
+    }
     if (typeof dayVal === 'object') {
       if (slot) return dayVal[slot] || 'PRESENT';
       return dayVal.am || dayVal.pm || 'PRESENT';
@@ -1135,8 +730,11 @@
         obj = { am: 'PRESENT', pm: 'PRESENT' };
       }
 
-      if (tool === 'PRESENT') delete obj[slot];
-      else obj[slot] = tool;
+      if (tool === 'PRESENT') {
+        delete obj[slot];
+      } else {
+        obj[slot] = tool;
+      }
 
       if ((!obj.am || obj.am === 'PRESENT') && (!obj.pm || obj.pm === 'PRESENT')) {
         delete calendarData[dateKey][user];
@@ -1144,8 +742,11 @@
         calendarData[dateKey][user] = obj;
       }
     } else {
-      if (tool === 'PRESENT') delete calendarData[dateKey][user];
-      else calendarData[dateKey][user] = tool;
+      if (tool === 'PRESENT') {
+        delete calendarData[dateKey][user];
+      } else {
+        calendarData[dateKey][user] = tool;
+      }
     }
 
     if (Object.keys(calendarData[dateKey]).length === 0) {
@@ -1153,134 +754,44 @@
     }
   }
 
-  function populateGlobalFilters() {
-    const yearSelects = [document.getElementById('kpi-year'), document.getElementById('annual-year')];
-    const currentYear = new Date().getFullYear();
-    yearSelects.forEach(sel => {
-      if (!sel || sel.options.length > 0) return;
-      for(let y = currentYear - 1; y <= currentYear + 2; y++) {
-        const opt = document.createElement('option');
-        opt.value = y;
-        opt.textContent = y;
-        if (y === currentYear) opt.selected = true;
-        sel.appendChild(opt);
-      }
-    });
-    populateLoginPits();
-    populateKPIPits();
-  }
-
-  function populateLoginPits() {
-    const pitFilter = document.getElementById('login-pit-filter');
-    if (!pitFilter) return;
-    pitFilter.innerHTML = '<option value="ALL">Tous les PITs</option>';
-    const pits = [...new Set(ALL_MEMBERS.map(m => m.pit).filter(Boolean))];
-    pits.forEach(pit => {
-      const opt = document.createElement('option');
-      opt.value = pit;
-      opt.textContent = pit;
-      pitFilter.appendChild(opt);
-    });
-    filterLoginNames();
-  }
-
-  function filterLoginNames() {
-    const selectedPitVal = document.getElementById('login-pit-filter').value;
+  /* =========================================================================
+     4. AUTHENTIFICATION & CRÉATION DE PROFIL
+     ========================================================================= */
+  function populateDropdowns() {
     const userSelect = document.getElementById('login-name');
     userSelect.innerHTML = '';
-    let membersToDisplay = (selectedPitVal === 'ALL') ? ALL_MEMBERS : ALL_MEMBERS.filter(m => m.pit === selectedPitVal);
-
-    if (membersToDisplay.length === 0) {
+    
+    if (ALL_MEMBERS.length === 0) {
       const opt = document.createElement('option');
       opt.value = "";
-      opt.textContent = "-- Aucun profil dans ce PIT --";
+      opt.textContent = "-- Aucun profil, cliquez sur Créer un profil --";
       userSelect.appendChild(opt);
     } else {
-      membersToDisplay.forEach(user => {
+      ALL_MEMBERS.forEach(user => {
         const opt = document.createElement('option');
         opt.value = user.firstName;
         opt.textContent = `${user.firstName} ${user.lastName} (${user.pit})${user.isManager ? ' [Manager]' : ''}`;
         userSelect.appendChild(opt);
       });
     }
-  }
 
-  function populateKPIPits() {
-    const kpiPitFilter = document.getElementById('kpi-pit-filter');
-    if (!kpiPitFilter) return;
-    const currentVal = kpiPitFilter.value;
-    kpiPitFilter.innerHTML = '<option value="ALL">Tous les PITs</option>';
+    const pitSelect = document.getElementById('pit-select-filter');
+    const currentPitVal = pitSelect.value;
+    pitSelect.innerHTML = '<option value="ALL">Tous les PITs</option>';
     const pits = [...new Set(ALL_MEMBERS.map(m => m.pit).filter(Boolean))];
     pits.forEach(pit => {
       const opt = document.createElement('option');
       opt.value = pit;
       opt.textContent = pit;
-      kpiPitFilter.appendChild(opt);
+      pitSelect.appendChild(opt);
     });
-    if (pits.includes(currentVal) || currentVal === 'ALL') kpiPitFilter.value = currentVal;
-    updateKPIPersonFilter();
-  }
-
-  function updateKPIPersonFilter() {
-    const kpiPitVal = document.getElementById('kpi-pit-filter').value;
-    const kpiPersonFilter = document.getElementById('kpi-person-filter');
-    if (!kpiPersonFilter) return;
-    const currentPerson = kpiPersonFilter.value;
-    kpiPersonFilter.innerHTML = '<option value="ALL">Toutes les personnes</option>';
-    let members = (kpiPitVal === 'ALL') ? ALL_MEMBERS : ALL_MEMBERS.filter(m => m.pit === kpiPitVal);
-    members.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m.firstName;
-      opt.textContent = `${m.firstName} ${m.lastName}`;
-      kpiPersonFilter.appendChild(opt);
-    });
-    if (members.some(m => m.firstName === currentPerson)) kpiPersonFilter.value = currentPerson;
-    else kpiPersonFilter.value = 'ALL';
-  }
-
-  function populateDropdowns() {
-    populateLoginPits();
-    populateKPIPits();
-
-    const pitSelect = document.getElementById('pit-select-filter');
-    if (pitSelect) {
-      const currentPitVal = pitSelect.value;
-      pitSelect.innerHTML = '<option value="ALL">Tous les PITs</option>';
-      const pits = [...new Set(ALL_MEMBERS.map(m => m.pit).filter(Boolean))];
-      pits.forEach(pit => {
-        const opt = document.createElement('option');
-        opt.value = pit;
-        opt.textContent = pit;
-        pitSelect.appendChild(opt);
-      });
-      if (pits.includes(currentPitVal) || currentPitVal === 'ALL') pitSelect.value = currentPitVal;
-    }
-
-    const annualPerson = document.getElementById('annual-person');
-    if (annualPerson) {
-      const currentAnnPerson = annualPerson.value;
-      annualPerson.innerHTML = '';
-      let allowedMembers = ALL_MEMBERS;
-      const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
-      if (userObj && userObj.isManager) {
-        allowedMembers = ALL_MEMBERS.filter(m => m.pit === userObj.pit);
-      } else if (currentUser) {
-        allowedMembers = ALL_MEMBERS.filter(m => m.firstName === currentUser);
-      }
-      allowedMembers.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.firstName;
-        opt.textContent = `${m.firstName} ${m.lastName} (${m.pit})`;
-        annualPerson.appendChild(opt);
-      });
-      if (allowedMembers.some(m => m.firstName === currentAnnPerson)) annualPerson.value = currentAnnPerson;
-      else if (allowedMembers.length > 0) annualPerson.value = allowedMembers[0].firstName;
-    }
+    if (pits.includes(currentPitVal) || currentPitVal === 'ALL') pitSelect.value = currentPitVal;
   }
 
   function handleLogin() {
     const name = document.getElementById('login-name').value;
     const pin = document.getElementById('login-pin').value;
+    
     if (!name) { alert("Aucun utilisateur sélectionné ou aucun profil disponible."); return; }
     if (!/^\d{4}$/.test(pin)) { alert("Veuillez entrer un code PIN à 4 chiffres."); return; }
 
@@ -1291,41 +802,42 @@
         loginSuccess(name);
       }
     } else {
-      if (usersPins[name] === pin) loginSuccess(name);
-      else alert("Code PIN incorrect !");
+      if (usersPins[name] === pin) {
+        loginSuccess(name);
+      } else {
+        alert("Code PIN incorrect !");
+      }
     }
   }
 
   function loginSuccess(name) {
     currentUser = name;
     document.getElementById('login-pin').value = ''; 
+    
     const userObj = ALL_MEMBERS.find(m => m.firstName === name);
     let greetingHtml = `Bonjour, ${currentUser}`;
-    if (userObj && userObj.isManager) greetingHtml += ` <span class="manager-badge">Manager</span>`;
+    if (userObj && userObj.isManager) {
+      greetingHtml += ` <span class="manager-badge">Manager</span>`;
+    }
 
     document.getElementById('main-header').style.display = 'flex';
     document.getElementById('main-tabs').style.display = 'flex';
     document.getElementById('header-greeting').innerHTML = greetingHtml;
+    
     document.getElementById('btn-back-login').style.display = 'none'; 
     document.getElementById('btn-back-login-kpi').style.display = 'none';
 
     document.getElementById('tab-personal').style.display = 'block';
     document.getElementById('tab-settings').style.display = 'block';
     document.getElementById('tab-team').style.display = 'block';
-    document.getElementById('tab-annual').style.display = 'block';
-    populateDropdowns();
+    document.getElementById('tab-kpi').style.display = 'block';
 
-    if (userObj && userObj.isManager) {
-      document.getElementById('tab-kpi').style.display = 'block';
-      document.getElementById('tab-presence').style.display = 'block';
-    } else {
-      document.getElementById('tab-kpi').style.display = 'none';
-      document.getElementById('tab-presence').style.display = 'none';
-    }
     switchTab('view-personal');
   }
 
-  function showCreateProfile() { switchTab('view-create-profile'); }
+  function showCreateProfile() {
+    switchTab('view-create-profile');
+  }
 
   function handleCreateProfile() {
     const firstName = document.getElementById('cp-firstname').value.trim();
@@ -1334,23 +846,31 @@
     const isManager = document.getElementById('cp-manager').checked;
     const pin = document.getElementById('cp-pin').value;
 
-    if (!firstName || !lastName || !pit) { alert("Veuillez remplir le Prénom et le Nom."); return; }
-    if (!/^\d{4}$/.test(pin)) { alert("Le code PIN doit contenir exactement 4 chiffres."); return; }
+    if (!firstName || !lastName || !pit) {
+      alert("Veuillez remplir le Prénom et le Nom."); return;
+    }
+    if (!/^\d{4}$/.test(pin)) {
+      alert("Le code PIN doit contenir exactement 4 chiffres."); return;
+    }
     if (ALL_MEMBERS.some(m => m.firstName.toLowerCase() === firstName.toLowerCase())) {
-      alert("Un utilisateur avec ce prénom existe déjà !"); return;
+      alert("Un utilisateur avec ce prénom existe déjà ! Utilisez un prénom différent."); return;
     }
 
     customMembers.push({ pit, firstName, lastName, isManager });
     saveCustomUsers();
+
     usersPins[firstName] = pin;
     savePinData();
 
     document.getElementById('cp-firstname').value = '';
     document.getElementById('cp-lastname').value = '';
+    document.getElementById('cp-pit').value = 'PIT Archi';
+    document.getElementById('cp-manager').checked = false;
     document.getElementById('cp-pin').value = '';
 
-    alert("Profil créé avec succès !");
+    alert("Profil créé avec succès ! Vous pouvez maintenant vous connecter.");
     updateAllMembersList();
+    
     setTimeout(() => {
       document.getElementById('login-name').value = firstName;
       switchTab('view-login');
@@ -1361,18 +881,18 @@
     currentUser = null;
     document.getElementById('main-header').style.display = 'flex';
     document.getElementById('main-tabs').style.display = 'flex';
+    
     document.getElementById('header-greeting').textContent = `Accès Public`;
+    
     document.getElementById('btn-back-login').style.display = 'inline-block'; 
     document.getElementById('btn-back-login-kpi').style.display = 'inline-block';
 
     document.getElementById('tab-personal').style.display = 'none';
     document.getElementById('tab-settings').style.display = 'none';
-    document.getElementById('tab-presence').style.display = 'none';
-    document.getElementById('tab-kpi').style.display = 'none';
+    
     document.getElementById('tab-team').style.display = 'block';
-    document.getElementById('tab-annual').style.display = 'block';
+    document.getElementById('tab-kpi').style.display = 'block';
 
-    populateDropdowns();
     switchTab('view-team');
   }
 
@@ -1386,95 +906,46 @@
   function changePin() {
     const oldPin = document.getElementById('old-pin').value;
     const newPin = document.getElementById('new-pin').value;
+
     if (usersPins[currentUser] !== oldPin) { alert("L'ancien code est incorrect."); return; }
     if (!/^\d{4}$/.test(newPin)) { alert("Le nouveau code doit contenir 4 chiffres."); return; }
 
     usersPins[currentUser] = newPin;
     savePinData();
     alert("Votre code a été modifié avec succès !");
+    
     document.getElementById('old-pin').value = '';
     document.getElementById('new-pin').value = '';
     switchTab('view-personal');
   }
 
-  function deleteMyAccount() {
-    if (!currentUser) return;
-    if (confirm(`Êtes-vous sûr de vouloir supprimer votre compte (${currentUser}) ?`)) {
-      customMembers = customMembers.filter(m => m.firstName !== currentUser);
-      saveCustomUsers();
-      delete usersPins[currentUser];
-      savePinData();
-
-      Object.keys(calendarData).forEach(dateKey => {
-        if (calendarData[dateKey][currentUser]) {
-          delete calendarData[dateKey][currentUser];
-          if (Object.keys(calendarData[dateKey]).length === 0) delete calendarData[dateKey];
-        }
-      });
-      if (db) db.ref('planning').set(calendarData);
-      else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
-
-      alert("Votre compte a bien été supprimé.");
-      logout();
-    }
-  }
-
-  function deleteTeamMemberAccount(memberName) {
-    const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
-    if (!userObj || !userObj.isManager) return;
-
-    if (confirm(`Voulez-vous vraiment supprimer le compte de ${memberName} ?`)) {
-      customMembers = customMembers.filter(m => m.firstName !== memberName);
-      saveCustomUsers();
-      delete usersPins[memberName];
-      savePinData();
-
-      Object.keys(calendarData).forEach(dateKey => {
-        if (calendarData[dateKey][memberName]) {
-          delete calendarData[dateKey][memberName];
-          if (Object.keys(calendarData[dateKey]).length === 0) delete calendarData[dateKey];
-        }
-      });
-      if (db) db.ref('planning').set(calendarData);
-      else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
-
-      alert(`Le compte de ${memberName} a été supprimé.`);
-      updateAllMembersList();
-      renderSettingsView();
-    }
-  }
-
+  /* =========================================================================
+     5. NAVIGATION INTERNE (Mois, Onglets, Outils)
+     ========================================================================= */
   function switchTab(viewId) {
-    if (viewId === 'view-kpi' || viewId === 'view-presence') {
-      const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
-      if (!userObj || !userObj.isManager) {
-        alert("Accès refusé : Cette page est réservée aux profils Manager.");
-        return;
-      }
-    }
-
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById(viewId).classList.add('active');
 
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     if(viewId === 'view-personal') document.getElementById('tab-personal').classList.add('active');
     if(viewId === 'view-team') document.getElementById('tab-team').classList.add('active');
-    if(viewId === 'view-annual') document.getElementById('tab-annual').classList.add('active');
     if(viewId === 'view-kpi') document.getElementById('tab-kpi').classList.add('active');
-    if(viewId === 'view-presence') document.getElementById('tab-presence').classList.add('active');
     if(viewId === 'view-settings') document.getElementById('tab-settings').classList.add('active');
 
     const showNav = (viewId === 'view-personal' || viewId === 'view-team');
     document.getElementById('month-nav').style.display = showNav ? 'flex' : 'none';
     
     if (showNav || viewId === 'view-kpi') renderViews();
-    if (viewId === 'view-presence') renderTeamPresence();
-    if (viewId === 'view-settings') renderSettingsView();
-    if (viewId === 'view-annual') renderAnnualReport();
   }
 
-  document.getElementById('prev-month').onclick = () => { currentDate.setMonth(currentDate.getMonth() - 1); renderViews(); };
-  document.getElementById('next-month').onclick = () => { currentDate.setMonth(currentDate.getMonth() + 1); renderViews(); };
+  document.getElementById('prev-month').onclick = () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderViews();
+  };
+  document.getElementById('next-month').onclick = () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderViews();
+  };
 
   document.getElementById('btn-team-1m').onclick = (e) => {
     teamViewMonths = 1;
@@ -1486,27 +957,6 @@
     teamViewMonths = 3;
     e.target.classList.add('active'); document.getElementById('btn-team-1m').classList.remove('active');
     renderTeamCalendar(currentDate.getFullYear(), currentDate.getMonth());
-  };
-
-  document.getElementById('btn-personal-1m').onclick = (e) => {
-    personalViewMonths = 1;
-    document.querySelectorAll('#view-personal .team-subnav button').forEach(b => b.classList.remove('active'));
-    e.target.classList.add('active');
-    renderPersonalCalendar(currentDate.getFullYear(), currentDate.getMonth());
-  };
-
-  document.getElementById('btn-personal-3m').onclick = (e) => {
-    personalViewMonths = 3;
-    document.querySelectorAll('#view-personal .team-subnav button').forEach(b => b.classList.remove('active'));
-    e.target.classList.add('active');
-    renderPersonalCalendar(currentDate.getFullYear(), currentDate.getMonth());
-  };
-
-  document.getElementById('btn-personal-annual').onclick = (e) => {
-    personalViewMonths = 'ANNUAL';
-    document.querySelectorAll('#view-personal .team-subnav button').forEach(b => b.classList.remove('active'));
-    e.target.classList.add('active');
-    renderPersonalCalendar(currentDate.getFullYear(), currentDate.getMonth());
   };
 
   document.getElementById('pit-select-filter').addEventListener('change', (e) => {
@@ -1523,226 +973,61 @@
     };
   });
 
-  function renderSettingsView() {
-    const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
-    const managerSection = document.getElementById('manager-team-deletion-section');
-    if (userObj && userObj.isManager) {
-      managerSection.style.display = 'block';
-      document.getElementById('manager-pit-name').textContent = userObj.pit;
-      const teamListContainer = document.getElementById('team-members-list-for-deletion');
-      teamListContainer.innerHTML = '';
-      const teamMembers = ALL_MEMBERS.filter(m => m.pit === userObj.pit && m.firstName !== currentUser);
-      if (teamMembers.length === 0) {
-        teamListContainer.innerHTML = '<p style="font-size: 0.78rem; color: var(--text-dim);">Aucun autre membre.</p>';
-      } else {
-        teamMembers.forEach(member => {
-          const row = document.createElement('div');
-          row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.alignItems = 'center';
-          row.style.background = 'var(--bg)'; row.style.padding = '4px 8px'; row.style.borderRadius = '6px'; row.style.border = '1px solid var(--border)';
-          const nameSpan = document.createElement('span');
-          nameSpan.style.fontSize = '0.8rem'; nameSpan.textContent = `${member.firstName} ${member.lastName}`;
-          const delBtn = document.createElement('button');
-          delBtn.className = 'btn-secondary'; delBtn.style.width = 'auto'; delBtn.style.padding = '2px 6px'; delBtn.style.fontSize = '0.7rem';
-          delBtn.style.borderColor = '#e11d48'; delBtn.style.color = '#e11d48'; delBtn.textContent = 'Supprimer';
-          delBtn.onclick = () => deleteTeamMemberAccount(member.firstName);
-          row.appendChild(nameSpan); row.appendChild(delBtn);
-          teamListContainer.appendChild(row);
-        });
-      }
-    } else {
-      managerSection.style.display = 'none';
+  /* =========================================================================
+     6. KPI - CALCULS & GRAPHIQUES (CHART.JS)
+     ========================================================================= */
+  function populateKPIFilters() {
+    const yearSelect = document.getElementById('kpi-year');
+    if(yearSelect.options.length > 0) return;
+    
+    const currentYear = new Date().getFullYear();
+    for(let y = currentYear - 1; y <= currentYear + 2; y++) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      if (y === currentYear) opt.selected = true;
+      yearSelect.appendChild(opt);
     }
   }
 
-  function renderTeamPresence() {
-    const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
-    if (!userObj || !userObj.isManager) return;
-
-    const dateFormatted = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'full' }).format(nowRef);
-    document.getElementById('presence-date-text').textContent = dateFormatted;
-    const yearStr = todayYear;
-    const monthStr = String(todayMonth + 1).padStart(2, '0');
-    const dayStr = String(todayDate).padStart(2, '0');
-    const todayKey = `${yearStr}-${monthStr}-${dayStr}`;
-
-    const container = document.getElementById('presence-list-container');
-    container.innerHTML = '';
-    const teamMembers = ALL_MEMBERS.filter(m => m.pit === userObj.pit);
-    if (teamMembers.length === 0) {
-      container.innerHTML = '<p style="color: var(--text-dim);">Aucun membre dans votre équipe.</p>';
-      return;
-    }
-
-    const listDiv = document.createElement('div');
-    listDiv.style.display = 'flex'; listDiv.style.flexDirection = 'column'; listDiv.style.gap = '6px';
-
-    teamMembers.forEach(member => {
-      const card = document.createElement('div');
-      card.style.background = 'var(--bg)'; card.style.padding = '8px 10px'; card.style.borderRadius = '6px';
-      card.style.border = '1px solid var(--border)'; card.style.display = 'flex'; card.style.justifyContent = 'space-between'; card.style.alignItems = 'center';
-
-      const infoDiv = document.createElement('div');
-      infoDiv.style.fontSize = '0.85rem';
-      infoDiv.innerHTML = `<strong>${member.firstName} ${member.lastName}</strong> <span class="member-pit">(${member.pit})</span>`;
-
-      const statusDiv = document.createElement('div');
-      const statusVal = calendarData[todayKey] && calendarData[todayKey][member.firstName];
-
-      if (!statusVal || statusVal === 'PRESENT') {
-        statusDiv.innerHTML = `<span class="status-badge" style="background: var(--badge-neutral-bg); color: var(--badge-neutral-text); padding: 2px 5px;">Bureau (Présent)</span>`;
-      } else if (typeof statusVal === 'string') {
-        statusDiv.innerHTML = `<span class="status-badge bg-${statusVal}" style="padding: 2px 5px;">${statusVal}</span>`;
-      } else if (typeof statusVal === 'object') {
-        let amStat = statusVal.am || 'PRESENT';
-        let pmStat = statusVal.pm || 'PRESENT';
-        statusDiv.innerHTML = `
-          <div style="display: flex; gap: 4px; align-items: center; font-size: 0.72rem;">
-            <span>Matin : <strong class="${amStat !== 'PRESENT' ? 'status-badge bg-' + amStat : ''}" style="padding: 1px 3px; border-radius: 3px;">${amStat}</strong></span>
-            <span>|</span>
-            <span>Après-midi : <strong class="${pmStat !== 'PRESENT' ? 'status-badge bg-' + pmStat : ''}" style="padding: 1px 3px; border-radius: 3px;">${pmStat}</strong></span>
-          </div>
-        `;
-      }
-      card.appendChild(infoDiv); card.appendChild(statusDiv);
-      listDiv.appendChild(card);
-    });
-    container.appendChild(listDiv);
-  }
-
-  function renderAnnualReport() {
-    if (!document.getElementById('view-annual').classList.contains('active')) return;
-
-    const year = document.getElementById('annual-year').value;
-    let selectedPerson = document.getElementById('annual-person').value;
-    if (!selectedPerson && currentUser) selectedPerson = currentUser;
-    if (!selectedPerson && ALL_MEMBERS.length > 0) selectedPerson = ALL_MEMBERS[0].firstName;
-
-    document.getElementById('annual-report-year-title').textContent = year;
-    document.getElementById('annual-report-user-name').textContent = selectedPerson || 'Utilisateur';
-
-    let totalJdr = 0, totalCa = 0, totalForm = 0, totalDisp = 0;
-    let monthlyData = [];
-    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-    for (let m = 0; m < 12; m++) monthlyData.push({ jdr: 0, ca: 0, form: 0, disp: 0 });
-
-    Object.keys(calendarData).forEach(dateKey => {
-      const [dYear, dMonthStr] = dateKey.split('-');
-      if (parseInt(dYear) !== parseInt(year)) return;
-      const dMonthInt = parseInt(dMonthStr) - 1;
-      const dayData = calendarData[dateKey];
-      const status = dayData[selectedPerson];
-      if (!status) return;
-
-      let jdrCount = 0, caCount = 0, formCount = 0, dispCount = 0;
-      if (typeof status === 'string') {
-        if (status === 'JDR') jdrCount = 1;
-        else if (status === 'CA') caCount = 1;
-        else if (status === 'Formation') formCount = 1;
-        else if (DISPLACEMENT_CODES.includes(status)) dispCount = 1;
-      } else if (typeof status === 'object' && status !== null) {
-        if (status.am === 'JDR') jdrCount += 0.5;
-        else if (status.am === 'CA') caCount += 0.5;
-        else if (status.am === 'Formation') formCount += 0.5;
-        else if (DISPLACEMENT_CODES.includes(status.am)) dispCount += 0.5;
-
-        if (status.pm === 'JDR') jdrCount += 0.5;
-        else if (status.pm === 'CA') caCount += 0.5;
-        else if (status.pm === 'Formation') formCount += 0.5;
-        else if (DISPLACEMENT_CODES.includes(status.pm)) dispCount += 0.5;
-      }
-
-      totalJdr += jdrCount; totalCa += caCount; totalForm += formCount; totalDisp += dispCount;
-      monthlyData[dMonthInt].jdr += jdrCount;
-      monthlyData[dMonthInt].ca += caCount;
-      monthlyData[dMonthInt].form += formCount;
-      monthlyData[dMonthInt].disp += dispCount;
-    });
-
-    document.getElementById('stat-jdr-count').textContent = totalJdr;
-    document.getElementById('stat-ca-count').textContent = totalCa;
-    document.getElementById('stat-form-count').textContent = totalForm;
-    document.getElementById('stat-disp-count').textContent = totalDisp;
-
-    const tbody = document.getElementById('annual-detail-tbody');
-    tbody.innerHTML = '';
-    monthNames.forEach((monthName, idx) => {
-      const mStat = monthlyData[idx];
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="text-align: left; padding: 2px 4px; font-weight: bold;">${monthName}</td>
-        <td style="color: #f59e0b; font-weight: bold; padding: 2px;">${mStat.jdr}</td>
-        <td style="color: #ec4899; font-weight: bold; padding: 2px;">${mStat.ca}</td>
-        <td style="color: #7c3aed; font-weight: bold; padding: 2px;">${mStat.form}</td>
-        <td style="color: #06b6d4; font-weight: bold; padding: 2px;">${mStat.disp}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function calculateKPIData(selectedYear, selectedMonth, selectedPitFilter, selectedPersonFilter) {
-    let personStats = {}, pitStats = {}, jdrPersonStats = {}, caPersonStats = {}, monthPitStats = {}, pitCosts = {};
-    const pits = [...new Set(ALL_MEMBERS.map(m => m.pit).filter(Boolean))];
+  function calculateKPIData(selectedYear, selectedMonth) {
+    let personStats = {};
+    let pitStats = {};
 
     ALL_MEMBERS.forEach(m => {
-      if (selectedPitFilter !== 'ALL' && m.pit !== selectedPitFilter) return;
-      if (selectedPersonFilter !== 'ALL' && m.firstName !== selectedPersonFilter) return;
       personStats[m.firstName] = 0;
-      jdrPersonStats[m.firstName] = 0;
-      caPersonStats[m.firstName] = 0;
-    });
-
-    pits.forEach(pit => {
-      if (selectedPitFilter !== 'ALL' && pit !== selectedPitFilter) return;
-      pitStats[pit] = 0;
-      monthPitStats[pit] = new Array(12).fill(0);
-      pitCosts[pit] = 0;
+      if (!pitStats[m.pit]) pitStats[m.pit] = 0;
     });
 
     Object.keys(calendarData).forEach(dateKey => {
-      const [dYear, dMonthStr] = dateKey.split('-');
+      const [dYear, dMonthStr, dDay] = dateKey.split('-');
+      
       if (parseInt(dYear) !== parseInt(selectedYear)) return;
-      const dMonthInt = parseInt(dMonthStr) - 1;
-      if (selectedMonth !== 'ALL' && dMonthInt !== parseInt(selectedMonth)) return;
+      if (selectedMonth !== 'ALL' && (parseInt(dMonthStr) - 1) !== parseInt(selectedMonth)) return;
 
       const dayData = calendarData[dateKey];
       Object.keys(dayData).forEach(user => {
-        const userObj = ALL_MEMBERS.find(m => m.firstName === user);
-        if (!userObj) return;
-        if (selectedPitFilter !== 'ALL' && userObj.pit !== selectedPitFilter) return;
-        if (selectedPersonFilter !== 'ALL' && user !== selectedPersonFilter) return;
-
         const status = dayData[user];
-        let dispDays = 0, costToAdd = 0, jdrDays = 0, caDays = 0;
+        let daysToAdd = 0;
 
         if (typeof status === 'string') {
-          if (DISPLACEMENT_CODES.includes(status)) { dispDays = 1; costToAdd = DISPLACEMENT_COSTS[status] || 0; }
-          else if (status === 'JDR') jdrDays = 1;
-          else if (status === 'CA') caDays = 1;
-        } else if (typeof status === 'object' && status !== null) {
-          if (DISPLACEMENT_CODES.includes(status.am)) { dispDays += 0.5; costToAdd += (DISPLACEMENT_COSTS[status.am] || 0) * 0.5; }
-          else if (status.am === 'JDR') jdrDays += 0.5;
-          else if (status.am === 'CA') caDays += 0.5;
-
-          if (DISPLACEMENT_CODES.includes(status.pm)) { dispDays += 0.5; costToAdd += (DISPLACEMENT_COSTS[status.pm] || 0) * 0.5; }
-          else if (status.pm === 'JDR') jdrDays += 0.5;
-          else if (status.pm === 'CA') caDays += 0.5;
+          if (DISPLACEMENT_CODES.includes(status)) daysToAdd = 1;
+        } else if (typeof status === 'object') {
+          if (DISPLACEMENT_CODES.includes(status.am)) daysToAdd += 0.5;
+          if (DISPLACEMENT_CODES.includes(status.pm)) daysToAdd += 0.5;
         }
 
-        if (personStats[user] !== undefined) {
-          personStats[user] += dispDays;
-          jdrPersonStats[user] += jdrDays;
-          caPersonStats[user] += caDays;
-          const pit = userObj.pit;
-          if (pitStats[pit] !== undefined) {
-            pitStats[pit] += dispDays;
-            monthPitStats[pit][dMonthInt] = (monthPitStats[pit][dMonthInt] || 0) + dispDays;
-            pitCosts[pit] += costToAdd;
+        if (daysToAdd > 0 && personStats[user] !== undefined) {
+          personStats[user] += daysToAdd;
+          const userObj = ALL_MEMBERS.find(m => m.firstName === user);
+          if (userObj) {
+            pitStats[userObj.pit] += daysToAdd;
           }
         }
       });
     });
 
-    return { personStats, pitStats, jdrPersonStats, caPersonStats, monthPitStats, pitCosts, pits };
+    return { personStats, pitStats };
   }
 
   function renderKPICharts() {
@@ -1750,232 +1035,216 @@
     
     const year = document.getElementById('kpi-year').value;
     const month = document.getElementById('kpi-month').value;
-    const pitFilter = document.getElementById('kpi-pit-filter').value;
-    const personFilter = document.getElementById('kpi-person-filter').value;
 
-    const { personStats, pitStats, jdrPersonStats, caPersonStats, monthPitStats, pitCosts, pits } = calculateKPIData(year, month, pitFilter, personFilter);
+    const { personStats, pitStats } = calculateKPIData(year, month);
 
     if (kpiPersonChart) kpiPersonChart.destroy();
     if (kpiPitChart) kpiPitChart.destroy();
-    if (kpiJdrChart) kpiJdrChart.destroy();
-    if (kpiCaChart) kpiCaChart.destroy();
-    if (kpiMonthPitChart) kpiMonthPitChart.destroy();
-    if (kpiCostChart) kpiCostChart.destroy();
 
-    const rootStyles = getComputedStyle(document.documentElement);
-    Chart.defaults.color = rootStyles.getPropertyValue('--text-muted').trim() || '#cbd5e1';
-    Chart.defaults.borderColor = rootStyles.getPropertyValue('--border-soft').trim() || '#334155';
+    const personLabels = Object.keys(personStats);
+    const personData = Object.values(personStats);
 
-    const personColors = Object.keys(personStats).map(user => {
-      const uObj = ALL_MEMBERS.find(m => m.firstName === user);
-      return uObj ? getPitColor(uObj.pit) : '#3b82f6';
-    });
+    const ctxPerson = document.getElementById('kpi-person-chart').getContext('2d');
+    
+    Chart.defaults.color = '#cbd5e1'; 
+    Chart.defaults.borderColor = '#334155';
 
-    kpiPersonChart = new Chart(document.getElementById('kpi-person-chart').getContext('2d'), {
+    kpiPersonChart = new Chart(ctxPerson, {
       type: 'bar',
-      data: { labels: Object.keys(personStats), datasets: [{ label: 'Jours de déplacement', data: Object.values(personStats), backgroundColor: personColors, borderWidth: 1, borderRadius: 4 }] },
-      options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } },
-      plugins: [insideBarLabelsPlugin]
+      data: {
+        labels: personLabels,
+        datasets: [{
+          label: 'Jours de déplacement',
+          data: personData,
+          backgroundColor: 'rgba(37, 99, 235, 0.8)',
+          borderColor: 'rgba(37, 99, 235, 1)',
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { 
+            beginAtZero: true, 
+            ticks: { stepSize: 1 }
+          }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
     });
 
     const pitLabels = Object.keys(pitStats);
-    kpiPitChart = new Chart(document.getElementById('kpi-pit-chart').getContext('2d'), {
+    const pitData = Object.values(pitStats);
+
+    const ctxPit = document.getElementById('kpi-pit-chart').getContext('2d');
+    kpiPitChart = new Chart(ctxPit, {
       type: 'doughnut',
-      data: { labels: pitLabels, datasets: [{ label: 'Jours de déplacement', data: Object.values(pitStats), backgroundColor: pitLabels.map(pit => getPitColor(pit)), borderColor: '#1e293b', borderWidth: 2 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+      data: {
+        labels: pitLabels,
+        datasets: [{
+          label: 'Jours de déplacement',
+          data: pitData,
+          backgroundColor: [
+            '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', 
+            '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1'
+          ],
+          borderColor: '#1e293b',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'right' }
+        }
+      }
     });
+  }
 
-    kpiJdrChart = new Chart(document.getElementById('kpi-jdr-chart').getContext('2d'), {
-      type: 'bar',
-      data: { labels: Object.keys(jdrPersonStats), datasets: [{ label: 'Jours JDR', data: Object.values(jdrPersonStats), backgroundColor: '#818cf8', borderWidth: 1, borderRadius: 4 }] },
-      options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } },
-      plugins: [insideBarLabelsPlugin]
-    });
 
-    kpiCaChart = new Chart(document.getElementById('kpi-ca-chart').getContext('2d'), {
-      type: 'bar',
-      data: { labels: Object.keys(caPersonStats), datasets: [{ label: 'Jours CA', data: Object.values(caPersonStats), backgroundColor: '#f472b6', borderWidth: 1, borderRadius: 4 }] },
-      options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } },
-      plugins: [insideBarLabelsPlugin]
-    });
+  /* =========================================================================
+     7. MOTEUR DU CALENDRIER
+     ========================================================================= */
+  function applyStatus(dateStr, slot = null) {
+    if (!currentUser) return; 
+    setStatus(dateStr, currentUser, selectedTool, slot);
 
-    const monthLabels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
-    let monthDatasets = pits.map(pit => ({
-      label: pit, data: monthPitStats[pit], backgroundColor: getPitColor(pit), borderWidth: 1, borderRadius: 3
-    }));
-
-    kpiMonthPitChart = new Chart(document.getElementById('kpi-month-pit-chart').getContext('2d'), {
-      type: 'bar',
-      data: { labels: monthLabels, datasets: monthDatasets },
-      options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { position: 'bottom' } } }
-    });
-
-    const costLabels = Object.keys(pitCosts);
-    kpiCostChart = new Chart(document.getElementById('kpi-cost-chart').getContext('2d'), {
-      type: 'bar',
-      data: { labels: costLabels, datasets: [{ label: 'Coût (€)', data: Object.values(pitCosts), backgroundColor: costLabels.map(p => getPitColor(p)), borderWidth: 1, borderRadius: 4 }] },
-      options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } },
-      plugins: [insideBarLabelsPlugin]
-    });
+    if (db) {
+      db.ref('planning').set(calendarData);
+    } else {
+      localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
+      renderViews();
+    }
   }
 
   function renderViews() {
-    const activeView = document.querySelector('.view.active');
-    if (!activeView) return;
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
 
-    document.getElementById('month-display').textContent = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(currentDate);
+    const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
+    document.getElementById('month-display').textContent = monthFormatter.format(currentDate);
 
-    if (activeView.id === 'view-personal') renderPersonalCalendar(currentDate.getFullYear(), currentDate.getMonth());
-    else if (activeView.id === 'view-team') renderTeamCalendar(currentDate.getFullYear(), currentDate.getMonth());
-    else if (activeView.id === 'view-kpi') renderKPICharts();
-    else if (activeView.id === 'view-annual') renderAnnualReport();
-    else if (activeView.id === 'view-presence') renderTeamPresence();
+    if(document.getElementById('view-personal').classList.contains('active')) renderPersonalCalendar(year, month);
+    if(document.getElementById('view-team').classList.contains('active')) renderTeamCalendar(year, month);
+    if(document.getElementById('view-kpi').classList.contains('active')) renderKPICharts();
   }
 
   function renderPersonalCalendar(year, month) {
-    const container = document.getElementById('personal-grids-container');
-    container.innerHTML = '';
+    const grid = document.getElementById('personal-grid');
+    grid.innerHTML = '';
 
-    const holidays = getFrenchPublicHolidays(year);
-    let monthsToRender = 1;
-    let containerClass = 'personal-grids-container';
+    const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    daysOfWeek.forEach(d => {
+      const header = document.createElement('div');
+      header.className = 'day-header';
+      header.textContent = d;
+      grid.appendChild(header);
+    });
 
-    if (personalViewMonths === 3) {
-      monthsToRender = 3;
-      containerClass = 'personal-multi-container months-3';
-    } else if (personalViewMonths === 'ANNUAL') {
-      monthsToRender = 12;
-      containerClass = 'personal-multi-container months-12';
-      month = 0; // Commencer en janvier pour l'annuel
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    
+    let startingDay = firstDayOfMonth.getDay();
+    startingDay = startingDay === 0 ? 6 : startingDay - 1;
+
+    for (let i = 0; i < startingDay; i++) {
+      const emptyCard = document.createElement('div');
+      emptyCard.className = 'day-card weekend';
+      grid.appendChild(emptyCard);
     }
 
-    container.className = containerClass;
+    for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+      const dateObj = new Date(year, month, day);
+      const card = document.createElement('div');
+      card.className = 'day-card';
 
-    for (let i = 0; i < monthsToRender; i++) {
-      let targetDate = new Date(year, month + i, 1);
-      let mYear = targetDate.getFullYear();
-      let mMonth = targetDate.getMonth();
+      const yearStr = dateObj.getFullYear();
+      const monthStr = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dayStr = String(dateObj.getDate()).padStart(2, '0');
+      const dateKey = `${yearStr}-${monthStr}-${dayStr}`;
 
-      const monthSection = document.createElement('div');
-      monthSection.className = 'month-section';
+      if (isToday(dateObj)) card.classList.add('today');
 
-      const monthTitle = document.createElement('div');
-      monthTitle.className = 'month-section-title';
-      monthTitle.textContent = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: (personalViewMonths === 'ANNUAL' ? undefined : 'numeric') }).format(targetDate);
-      monthSection.appendChild(monthTitle);
-
-      const grid = document.createElement('div');
-      grid.className = 'calendar-grid';
-
-      const wkHeader = document.createElement('div');
-      wkHeader.className = 'week-number-header';
-      wkHeader.textContent = 'S';
-      grid.appendChild(wkHeader);
-
-      const dayNames = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-      dayNames.forEach(d => {
-        const dHead = document.createElement('div');
-        dHead.className = 'day-header';
-        dHead.textContent = d;
-        grid.appendChild(dHead);
-      });
-
-      const firstDayOfMonth = new Date(mYear, mMonth, 1);
-      const lastDayOfMonth = new Date(mYear, mMonth + 1, 0);
-      let startDayOfWeek = firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1;
-      let totalDays = lastDayOfMonth.getDate();
-      let currentDayCount = 1;
-      let totalRows = Math.ceil((startDayOfWeek + totalDays) / 7);
-
-      for (let r = 0; r < totalRows; r++) {
-        let sampleRowDate = new Date(mYear, mMonth, currentDayCount - startDayOfWeek + (r * 7));
-        const wkCell = document.createElement('div');
-        wkCell.className = 'week-number-cell';
-        wkCell.textContent = `S${getWeekNumber(sampleRowDate)}`;
-        grid.appendChild(wkCell);
-
-        for (let c = 0; c < 7; c++) {
-          const cell = document.createElement('div');
-          cell.className = 'day-card';
-
-          if ((r === 0 && c < startDayOfWeek) || currentDayCount > totalDays) {
-            cell.style.visibility = 'hidden';
-            grid.appendChild(cell);
-            continue;
-          }
-
-          const dayDate = new Date(mYear, mMonth, currentDayCount);
-          const dateKey = formatDateKeyStatic(dayDate);
-          const isWeekend = (c >= 5);
-          const isHoliday = holidays.has(dateKey);
-          const isTodayDate = isToday(dayDate);
-
-          if (isWeekend) cell.classList.add('weekend');
-          if (isHoliday) cell.classList.add('holiday');
-          if (isTodayDate) cell.classList.add('today');
-
-          const numDiv = document.createElement('div');
-          numDiv.className = 'day-num';
-          numDiv.innerHTML = `<span>${currentDayCount}</span>`;
-          if (isHoliday) {
-            const hBadge = document.createElement('span');
-            hBadge.className = 'holiday-badge-mini';
-            hBadge.textContent = 'F';
-            numDiv.appendChild(hBadge);
-          }
-          cell.appendChild(numDiv);
-
-          if (!isWeekend) {
-            const useHalves = isCurrentOrNextWeek(dayDate);
-            if (useHalves) {
-              const halvesCont = document.createElement('div');
-              halvesCont.className = 'halves-container';
-
-              ['am', 'pm'].forEach(slot => {
-                const halfDiv = document.createElement('div');
-                halfDiv.className = 'day-half';
-                const st = getStatus(dateKey, currentUser, slot);
-                if (st !== 'PRESENT') {
-                  halfDiv.classList.add(`bg-${st}`);
-                  halfDiv.textContent = st;
-                } else {
-                  halfDiv.textContent = slot === 'am' ? 'M' : 'A';
-                }
-
-                halfDiv.onclick = (e) => {
-                  e.stopPropagation();
-                  setStatus(dateKey, currentUser, selectedTool, slot);
-                  if (db) db.ref('planning').set(calendarData);
-                  else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
-                  renderPersonalCalendar(year, month);
-                };
-                halvesCont.appendChild(halfDiv);
-              });
-              cell.appendChild(halvesCont);
-            } else {
-              const st = getStatus(dateKey, currentUser);
-              if (st !== 'PRESENT') {
-                cell.classList.add(`bg-${st}`);
-                const badge = document.createElement('div');
-                badge.className = 'status-badge';
-                badge.textContent = st;
-                cell.appendChild(badge);
-              }
-              cell.onclick = () => {
-                setStatus(dateKey, currentUser, selectedTool);
-                if (db) db.ref('planning').set(calendarData);
-                else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
-                renderPersonalCalendar(year, month);
-              };
-            }
-          }
-
-          grid.appendChild(cell);
-          currentDayCount++;
-        }
+      const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+      if (isWeekend) {
+        card.classList.add('weekend');
       }
-      monthSection.appendChild(grid);
-      container.appendChild(monthSection);
+
+      const numDiv = document.createElement('div');
+      numDiv.className = 'day-num';
+      numDiv.textContent = day;
+      card.appendChild(numDiv);
+
+      if (!isWeekend) {
+        // Condition : Si c'est la semaine actuelle ou la semaine suivante, on découpe en Matin / Après-midi
+        if (isCurrentOrNextWeek(dateObj)) {
+          const halvesContainer = document.createElement('div');
+          halvesContainer.className = 'halves-container';
+
+          ['am', 'pm'].forEach((slot, index) => {
+            const halfDiv = document.createElement('div');
+            halfDiv.className = 'day-half';
+            const slotLabel = index === 0 ? 'Matin' : 'Après-midi';
+            
+            const currentStatus = getStatus(dateKey, currentUser, slot);
+            if (currentStatus && currentStatus !== 'PRESENT') {
+              halfDiv.className += ` bg-${currentStatus}`;
+              const badge = document.createElement('span');
+              badge.className = 'status-badge';
+              badge.textContent = currentStatus;
+              halfDiv.appendChild(badge);
+            } else {
+              halfDiv.textContent = slotLabel;
+            }
+
+            halfDiv.onclick = (e) => {
+              e.stopPropagation();
+              applyStatus(dateKey, slot);
+            };
+
+            halvesContainer.appendChild(halfDiv);
+          });
+          card.appendChild(halvesContainer);
+        } else {
+          // Pour les semaines plus éloignées : vue journée entière
+          const wholeDayDiv = document.createElement('div');
+          wholeDayDiv.style.flexGrow = '1';
+          wholeDayDiv.style.display = 'flex';
+          wholeDayDiv.style.alignItems = 'center';
+          wholeDayDiv.style.justifyContent = 'center';
+          wholeDayDiv.style.fontSize = '0.85rem';
+          wholeDayDiv.style.fontWeight = 'bold';
+
+          const currentStatus = getStatus(dateKey, currentUser, null);
+          if (currentStatus && currentStatus !== 'PRESENT') {
+            wholeDayDiv.className = `status-badge bg-${currentStatus}`;
+            wholeDayDiv.style.padding = '4px 8px';
+            wholeDayDiv.style.margin = 'auto';
+            wholeDayDiv.textContent = currentStatus;
+          } else {
+            wholeDayDiv.style.color = '#64748b';
+            wholeDayDiv.textContent = 'Bureau';
+          }
+
+          card.onclick = () => {
+            applyStatus(dateKey, null);
+          };
+
+          card.appendChild(wholeDayDiv);
+        }
+      } else {
+        const placeholder = document.createElement('div');
+        placeholder.style.fontSize = '0.8rem';
+        placeholder.style.color = '#ffffff';
+        placeholder.style.textAlign = 'center';
+        placeholder.textContent = 'Week-end';
+        card.appendChild(placeholder);
+      }
+
+      grid.appendChild(card);
     }
   }
 
@@ -1983,35 +1252,33 @@
     const container = document.getElementById('team-table-container');
     container.innerHTML = '';
 
-    let membersToDisplay = ALL_MEMBERS;
+    let monthsToRender = [];
+    for (let i = 0; i < teamViewMonths; i++) {
+      const d = new Date(year, month + i, 1);
+      monthsToRender.push({ year: d.getFullYear(), month: d.getMonth() });
+    }
+
+    let filteredMembers = ALL_MEMBERS;
     if (selectedPit !== 'ALL') {
-      membersToDisplay = ALL_MEMBERS.filter(m => m.pit === selectedPit);
+      filteredMembers = ALL_MEMBERS.filter(m => m.pit === selectedPit);
     }
 
-    if (membersToDisplay.length === 0) {
-      container.innerHTML = '<p style="color: var(--text-dim); text-align: center; padding: 20px;">Aucun membre à afficher.</p>';
-      return;
-    }
+    monthsToRender.forEach(mObj => {
+      const mYear = mObj.year;
+      const mMonth = mObj.month;
 
-    let monthsToRender = teamViewMonths;
-    for (let i = 0; i < monthsToRender; i++) {
-      let targetDate = new Date(year, month + i, 1);
-      let mYear = targetDate.getFullYear();
-      let mMonth = targetDate.getMonth();
-      let holidays = getFrenchPublicHolidays(mYear);
-
-      const monthSection = document.createElement('div');
-      monthSection.className = 'month-section';
+      const section = document.createElement('div');
+      section.className = 'month-section';
 
       const monthTitle = document.createElement('div');
       monthTitle.className = 'month-section-title';
-      monthTitle.textContent = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(targetDate);
-      monthSection.appendChild(monthTitle);
+      const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
+      monthTitle.textContent = monthFormatter.format(new Date(mYear, mMonth, 1));
+      section.appendChild(monthTitle);
 
-      const wrapper = document.createElement('div');
-      wrapper.className = 'team-table-wrapper';
-
+      const tableWrapper = document.createElement('div');
       const table = document.createElement('table');
+
       const thead = document.createElement('thead');
       const headerRow = document.createElement('tr');
 
@@ -2020,129 +1287,71 @@
       memberTh.textContent = 'Membre';
       headerRow.appendChild(memberTh);
 
-      const lastDay = new Date(mYear, mMonth + 1, 0).getDate();
-
-      // Création de l'en-tête (Numéros des jours)
-      for (let d = 1; d <= lastDay; d++) {
-        const dayDate = new Date(mYear, mMonth, d);
-        const dateKey = formatDateKeyStatic(dayDate);
-        const isWeekend = (dayDate.getDay() === 0 || dayDate.getDay() === 6);
-        const isHoliday = holidays.has(dateKey);
-        const isTodayDate = isToday(dayDate);
-
+      const daysInMonth = new Date(mYear, mMonth + 1, 0).getDate();
+      for (let day = 1; day <= daysInMonth; day++) {
         const th = document.createElement('th');
-        th.textContent = d;
-        if (isWeekend) th.classList.add('weekend-header');
-        if (isHoliday) th.classList.add('holiday-header');
-        if (isTodayDate) th.classList.add('today-header');
-
+        const dateObj = new Date(mYear, mMonth, day);
+        th.textContent = day;
+        if (dateObj.getDay() === 0 || dateObj.getDay() === 6) {
+          th.className = 'weekend-header';
+        }
+        if (isToday(dateObj)) {
+          th.className += ' today-header';
+        }
         headerRow.appendChild(th);
       }
-      
       thead.appendChild(headerRow);
       table.appendChild(thead);
 
       const tbody = document.createElement('tbody');
-
-      // Création des lignes pour chaque membre
-      membersToDisplay.forEach(member => {
+      filteredMembers.forEach(member => {
         const tr = document.createElement('tr');
+        const tdMember = document.createElement('td');
+        tdMember.className = 'member-col';
+        tdMember.innerHTML = `${member.firstName} ${member.lastName}<br><span class="member-pit">${member.pit}</span>`;
+        tr.appendChild(tdMember);
 
-        // Colonne de gauche (Membre)
-        const nameTd = document.createElement('td');
-        nameTd.className = 'member-col';
-        nameTd.innerHTML = `${member.firstName} ${member.lastName}<br><span class="member-pit">${member.pit}</span>`;
-        tr.appendChild(nameTd);
-
-        // Cellules des jours du mois
-        for (let d = 1; d <= lastDay; d++) {
-          const dayDate = new Date(mYear, mMonth, d);
-          const dateKey = formatDateKeyStatic(dayDate);
-          const isWeekend = (dayDate.getDay() === 0 || dayDate.getDay() === 6);
-          const isHoliday = holidays.has(dateKey);
-          const isTodayDate = isToday(dayDate);
-
+        for (let day = 1; day <= daysInMonth; day++) {
           const td = document.createElement('td');
+          const dateObj = new Date(mYear, mMonth, day);
+          const yearStr = dateObj.getFullYear();
+          const monthStr = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const dayStr = String(dateObj.getDate()).padStart(2, '0');
+          const dateKey = `${yearStr}-${monthStr}-${dayStr}`;
 
-          if (isWeekend) td.classList.add('weekend-cell');
-          if (isHoliday) td.classList.add('holiday-cell');
-          if (isTodayDate) td.classList.add('today-cell');
-
-          if (!isWeekend) {
-            const useHalves = isCurrentOrNextWeek(dayDate);
-
-            // Gestion des demi-journées si semaine en cours/suivante
-            if (useHalves) {
-              const halvesCont = document.createElement('div');
-              halvesCont.className = 'halves-container';
-              halvesCont.style.height = '100%';
-              halvesCont.style.minHeight = '28px';
-
-              ['am', 'pm'].forEach(slot => {
-                const halfDiv = document.createElement('div');
-                halfDiv.className = 'day-half';
-                const st = getStatus(dateKey, member.firstName, slot);
-                
-                if (st !== 'PRESENT') {
-                  halfDiv.classList.add(`bg-${st}`);
-                  halfDiv.textContent = st; // Affichage complet ou abrégé selon l'espace
-                } else {
-                  halfDiv.textContent = slot === 'am' ? 'M' : 'A';
-                }
-
-                // Permettre la modif si on est la personne elle-même ou un manager
-                const currentUserObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
-                if (member.firstName === currentUser || (currentUserObj && currentUserObj.isManager)) {
-                  halfDiv.onclick = (e) => {
-                    e.stopPropagation();
-                    setStatus(dateKey, member.firstName, selectedTool, slot);
-                    if (db) db.ref('planning').set(calendarData);
-                    else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
-                    renderTeamCalendar(year, month);
-                  };
-                }
-
-                halvesCont.appendChild(halfDiv);
-              });
-              td.appendChild(halvesCont);
-              td.style.padding = '1px'; // Réduction du padding du td parent
-              
-            } else {
-              // Gestion journée entière standard
-              const st = getStatus(dateKey, member.firstName);
-              if (st !== 'PRESENT') {
-                td.classList.add(`bg-${st}`);
-                td.textContent = st;
-              }
-
-              const currentUserObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
-              if (member.firstName === currentUser || (currentUserObj && currentUserObj.isManager)) {
-                td.onclick = () => {
-                  setStatus(dateKey, member.firstName, selectedTool);
-                  if (db) db.ref('planning').set(calendarData);
-                  else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
-                  renderTeamCalendar(year, month);
-                };
-                td.style.cursor = 'pointer';
-              }
-            }
+          if (dateObj.getDay() === 0 || dateObj.getDay() === 6) {
+            td.className = 'weekend-cell';
+          }
+          if (isToday(dateObj)) {
+            td.className += ' today-cell';
           }
 
+          const statusVal = calendarData[dateKey] && calendarData[dateKey][member.firstName];
+          if (statusVal) {
+            if (typeof statusVal === 'string') {
+              if (statusVal !== 'PRESENT') {
+                td.innerHTML = `<span class="mini-badge bg-${statusVal}">${statusVal}</span>`;
+              }
+            } else if (typeof statusVal === 'object') {
+              let html = '';
+              if (statusVal.am && statusVal.am !== 'PRESENT') html += `<span class="mini-badge bg-${statusVal.am}" style="margin-bottom:1px;">${statusVal.am}</span>`;
+              if (statusVal.pm && statusVal.pm !== 'PRESENT') html += `<span class="mini-badge bg-${statusVal.pm}">${statusVal.pm}</span>`;
+              td.innerHTML = html;
+            }
+          }
           tr.appendChild(td);
         }
         tbody.appendChild(tr);
       });
 
       table.appendChild(tbody);
-      wrapper.appendChild(table);
-      monthSection.appendChild(wrapper);
-      container.appendChild(monthSection);
-    }
+      tableWrapper.appendChild(table);
+      section.appendChild(tableWrapper);
+      container.appendChild(section);
+    });
   }
 
-  // Initialisation de l'application
   syncData();
-
 </script>
 </body>
 </html>
