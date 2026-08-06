@@ -58,7 +58,7 @@
 
       /* Couleurs des statuts (Mode Sombre) */
       --color-CA: #D32F2F;
-      --color-JDR: #F36E39;
+      --color-JDR: #C2185B;
       --color-Formation: #F48FB1;
       --color-TT: #E57373;
       --color-LAD: #1976D2;
@@ -641,8 +641,8 @@
     <!-- VUE : PRÉSENCE DU JOUR -->
     <div id="view-presence" class="view">
       <div class="form-box" style="max-width: 650px; text-align: left;">
-        <h2>👥 Présence du jour - Équipe</h2>
-        <p style="color: var(--text-muted); margin-bottom: 12px;">État des présences pour aujourd'hui (<span id="presence-date-text"></span>).</p>
+        <h2>👥 Présence aujourd'hui et demain - Équipe</h2>
+        <p style="color: var(--text-muted); margin-bottom: 12px;">État des présences pour aujourd'hui et demain.</p>
         <div id="presence-list-container"></div>
       </div>
     </div>
@@ -1502,14 +1502,6 @@
   function renderTeamPresence() {
     const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
     if (!userObj || !userObj.isManager) return;
-
-    const dateFormatted = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'full' }).format(nowRef);
-    document.getElementById('presence-date-text').textContent = dateFormatted;
-    const yearStr = todayYear;
-    const monthStr = String(todayMonth + 1).padStart(2, '0');
-    const dayStr = String(todayDate).padStart(2, '0');
-    const todayKey = `${yearStr}-${monthStr}-${dayStr}`;
-
     const container = document.getElementById('presence-list-container');
     container.innerHTML = '';
     const teamMembers = ALL_MEMBERS.filter(m => m.pit === userObj.pit);
@@ -1517,41 +1509,52 @@
       container.innerHTML = '<p style="color: var(--text-dim);">Aucun membre dans votre équipe.</p>';
       return;
     }
-
-    const listDiv = document.createElement('div');
-    listDiv.style.display = 'flex'; listDiv.style.flexDirection = 'column'; listDiv.style.gap = '6px';
-
-    teamMembers.forEach(member => {
-      const card = document.createElement('div');
-      card.style.background = 'var(--bg)'; card.style.padding = '8px 10px'; card.style.borderRadius = '6px';
-      card.style.border = '1px solid var(--border)'; card.style.display = 'flex'; card.style.justifyContent = 'space-between'; card.style.alignItems = 'center';
-
-      const infoDiv = document.createElement('div');
-      infoDiv.style.fontSize = '0.85rem';
-      infoDiv.innerHTML = `<strong>${member.firstName} ${member.lastName}</strong> <span class="member-pit">(${member.pit})</span>`;
-
-      const statusDiv = document.createElement('div');
-      const statusVal = calendarData[todayKey] && calendarData[todayKey][member.firstName];
-
-      if (!statusVal || statusVal === 'PRESENT') {
-        statusDiv.innerHTML = `<span class="status-badge" style="background: var(--badge-neutral-bg); color: var(--badge-neutral-text); padding: 2px 5px;">Bureau (Présent)</span>`;
-      } else if (typeof statusVal === 'string') {
-        statusDiv.innerHTML = `<span class="status-badge bg-${statusVal}" style="padding: 2px 5px;">${statusVal}</span>`;
-      } else if (typeof statusVal === 'object') {
-        let amStat = statusVal.am || 'PRESENT';
-        let pmStat = statusVal.pm || 'PRESENT';
-        statusDiv.innerHTML = `
-          <div style="display: flex; gap: 4px; align-items: center; font-size: 0.72rem;">
-            <span>Matin : <strong class="${amStat !== 'PRESENT' ? 'status-badge bg-' + amStat : ''}" style="padding: 1px 3px; border-radius: 3px;">${amStat}</strong></span>
-            <span>|</span>
-            <span>Après-midi : <strong class="${pmStat !== 'PRESENT' ? 'status-badge bg-' + pmStat : ''}" style="padding: 1px 3px; border-radius: 3px;">${pmStat}</strong></span>
-          </div>
-        `;
-      }
-      card.appendChild(infoDiv); card.appendChild(statusDiv);
-      listDiv.appendChild(card);
+    const datesToDisplay = [
+      { label: "Aujourd'hui", date: new Date() },
+      { label: 'Demain', date: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1) }
+    ];
+    datesToDisplay.forEach(({ label, date }) => {
+      const dateFormatted = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'full' }).format(date);
+      const dateKey = formatDateKeyStatic(date);
+      const section = document.createElement('div');
+      section.style.marginBottom = '16px';
+      const title = document.createElement('h3');
+      title.style.fontSize = '0.95rem';
+      title.style.margin = '0 0 8px 0';
+      title.textContent = `${label} — ${dateFormatted}`;
+      section.appendChild(title);
+      const listDiv = document.createElement('div');
+      listDiv.style.display = 'flex'; listDiv.style.flexDirection = 'column'; listDiv.style.gap = '6px';
+      teamMembers.forEach(member => {
+        const card = document.createElement('div');
+        card.style.background = 'var(--bg)'; card.style.padding = '8px 10px'; card.style.borderRadius = '6px';
+        card.style.border = '1px solid var(--border)'; card.style.display = 'flex'; card.style.justifyContent = 'space-between'; card.style.alignItems = 'center';
+        const infoDiv = document.createElement('div');
+        infoDiv.style.fontSize = '0.85rem';
+        infoDiv.innerHTML = `<strong>${member.firstName} ${member.lastName}</strong> <span class="member-pit">(${member.pit})</span>`;
+        const statusDiv = document.createElement('div');
+        const statusVal = calendarData[dateKey] && calendarData[dateKey][member.firstName];
+        if (!statusVal || statusVal === 'PRESENT') {
+          statusDiv.innerHTML = `<span class="status-badge" style="background: var(--badge-neutral-bg); color: var(--badge-neutral-text); padding: 2px 5px;">Bureau (Présent)</span>`;
+        } else if (typeof statusVal === 'string') {
+          statusDiv.innerHTML = `<span class="status-badge bg-${statusVal}" style="padding: 2px 5px;">${statusVal}</span>`;
+        } else if (typeof statusVal === 'object') {
+          let amStat = statusVal.am || 'PRESENT';
+          let pmStat = statusVal.pm || 'PRESENT';
+          statusDiv.innerHTML = `
+            <div style="display: flex; gap: 4px; align-items: center; font-size: 0.72rem;">
+              <span>Matin : <strong class="${amStat !== 'PRESENT' ? 'status-badge bg-' + amStat : ''}" style="padding: 1px 3px; border-radius: 3px;">${amStat}</strong></span>
+              <span>|</span>
+              <span>Après-midi : <strong class="${pmStat !== 'PRESENT' ? 'status-badge bg-' + pmStat : ''}" style="padding: 1px 3px; border-radius: 3px;">${pmStat}</strong></span>
+            </div>
+          `;
+        }
+        card.appendChild(infoDiv); card.appendChild(statusDiv);
+        listDiv.appendChild(card);
+      });
+      section.appendChild(listDiv);
+      container.appendChild(section);
     });
-    container.appendChild(listDiv);
   }
 
   function renderAnnualReport() {
@@ -1789,9 +1792,10 @@
       monthsToRender = 3;
       containerClass = 'personal-multi-container months-3';
     } else if (personalViewMonths === 'ANNUAL') {
-      monthsToRender = 12;
+      year = nowRef.getFullYear();
+      month = nowRef.getMonth();
+      monthsToRender = 24 - month;
       containerClass = 'personal-multi-container months-12';
-      month = 0; // Commencer en janvier pour l'annuel
     }
 
     container.className = containerClass;
@@ -1806,7 +1810,7 @@
 
       const monthTitle = document.createElement('div');
       monthTitle.className = 'month-section-title';
-      monthTitle.textContent = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: (personalViewMonths === 'ANNUAL' ? undefined : 'numeric') }).format(targetDate);
+      monthTitle.textContent = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(targetDate);
       monthSection.appendChild(monthTitle);
 
       const grid = document.createElement('div');
