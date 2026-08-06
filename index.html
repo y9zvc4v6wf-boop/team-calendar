@@ -10,7 +10,7 @@
     (function () {
       try {
         var saved = localStorage.getItem('theme_preference');
-        var theme = (saved === 'light' || saved === 'gray') ? saved : 'dark';
+        var theme = saved === 'light' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', theme);
       } catch (e) {
         document.documentElement.setAttribute('data-theme', 'dark');
@@ -58,7 +58,7 @@
 
       /* Couleurs des statuts (Mode Sombre) */
       --color-CA: #D32F2F;
-      --color-JDR: #C2185B;
+      --color-JDR: #F36E39;
       --color-Formation: #F48FB1;
       --color-TT: #E57373;
       --color-LAD: #1976D2;
@@ -83,60 +83,6 @@
       --pit-tbm: #f59e0b;
       --pit-prep: #ef4444;
     }
-
-    /* MODE GRIS */
-    [data-theme="gray"] {
-      --bg: #1e222b;
-      --card: #272c38;
-      --card-hover: #313745;
-      --input-bg: #222631;
-      --accent: #78829c;
-      --accent-hover: #939db8;
-      --accent-soft: rgba(120, 130, 156, 0.2);
-      --accent-contrast: #ffffff;
-      --text: #e4e7ec;
-      --text-muted: #9aa2b1;
-      --text-dim: #6b7280;
-      --border: #383f50;
-      --border-soft: #2f3544;
-      --weekend-bg: #191c23;
-      --danger: #e5534b;
-      --danger-soft: rgba(229, 83, 75, 0.15);
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-      --shadow-md: 0 6px 20px -6px rgba(0,0,0,0.5);
-      --shadow-lg: 0 20px 45px -12px rgba(0,0,0,0.6);
-      --scrollbar-thumb: #414a5e;
-      --badge-neutral-bg: #414a5e;
-      --badge-neutral-text: #f3f4f6;
-      --status-text-color: #ffffff;
-
-      --color-CA: #b45309;
-      --color-JDR: #92400e;
-      --color-Formation: #6d28d9;
-      --color-TT: #0f766e;
-      --color-LAD: #3f6212;
-      --color-CAR: #5b21b6;
-      --color-ALE: #9f1239;
-      --color-ARA: #065f46;
-      --color-CGR: #86198f;
-      --color-SPA: #0369a1;
-      --color-NKE: #be123c;
-      --color-WAT: #1d4ed8;
-      --color-LVL: #b45309;
-      --color-HBG: #3730a3;
-      --color-VLD: #166534;
-      --color-UCH: #7c2d12;
-      --color-ZAL: #475569;
-      --color-CTX: #4338ca;
-      --color-COM: #0f766e;
-      --color-Autres: #4b5563;
-
-      --pit-archi: #0284c7;
-      --pit-cac: #059669;
-      --pit-tbm: #d97706;
-      --pit-prep: #dc2626;
-    }
-
     /* MODE CLAIR */
     [data-theme="light"] {
       --bg: #f4f6fb;
@@ -201,7 +147,7 @@
 
     html { color-scheme: dark; }
     [data-theme="light"] { color-scheme: light; }
-    [data-theme="gray"] { color-scheme: dark; }
+    
 
     body {
       font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -1020,20 +966,19 @@
   let kpiCostChart = null;
 
   function applyTheme(theme) {
-    const resolved = (theme === 'light' || theme === 'gray') ? theme : 'dark';
+    const resolved = theme === 'light' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', resolved);
     const icon = document.getElementById('theme-toggle-icon');
     const label = document.getElementById('theme-toggle-label');
     if (icon && label) {
       if (resolved === 'light') { icon.textContent = '☀️'; label.textContent = 'Clair'; }
-      else if (resolved === 'gray') { icon.textContent = '☁️'; label.textContent = 'Gris'; }
       else { icon.textContent = '🌙'; label.textContent = 'Sombre'; }
     }
   }
 
   function toggleTheme() {
     const current = document.documentElement.getAttribute('data-theme');
-    let next = (current === 'dark') ? 'gray' : (current === 'gray' ? 'light' : 'dark');
+    let next = current === 'dark' ? 'light' : 'dark';
     try { localStorage.setItem('theme_preference', next); } catch (e) {}
     applyTheme(next);
     if (document.getElementById('view-kpi') && document.getElementById('view-kpi').classList.contains('active')) {
@@ -1044,7 +989,7 @@
   let savedTheme = 'dark';
   try { 
     const stored = localStorage.getItem('theme_preference');
-    if (stored === 'light' || stored === 'gray') savedTheme = stored;
+    if (stored === 'light') savedTheme = stored;
   } catch (e) {}
   applyTheme(savedTheme);
 
