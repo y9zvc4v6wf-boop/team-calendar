@@ -1508,9 +1508,12 @@
       container.innerHTML = '<p style="color: var(--text-dim);">Aucun membre dans votre équipe.</p>';
       return;
     }
+    const today = new Date();
+    const nextWorkDay = new Date(today);
+    nextWorkDay.setDate(today.getDate() + (today.getDay() === 5 ? 3 : 1));
     const datesToDisplay = [
-      { label: "Aujourd'hui", date: new Date() },
-      { label: 'Demain', date: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1) }
+      { label: "Aujourd'hui", date: today },
+      { label: today.getDay() === 5 ? 'Lundi' : 'Demain', date: nextWorkDay }
     ];
     const daysContainer = document.createElement('div');
     daysContainer.style.display = 'grid';
