@@ -29,6 +29,7 @@
   
   <!-- Chart.js pour les graphiques KPI -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <style>
     :root, [data-theme="dark"] {
@@ -57,7 +58,7 @@
       --status-text-color: #ffffff;
 
       /* Couleurs des statuts (Mode Sombre) */
-      --color-CA: #F69200;
+      --color-CA: #eb7405;
       --color-JDR: #C2185B;
       --color-Formation: #F48FB1;
       --color-TT: #E57373;
@@ -631,6 +632,11 @@
           <button class="btn-secondary" style="border-color: #e11d48; color: #e11d48;" onclick="deleteMyAccount()">Supprimer mon compte</button>
         </div>
         <div id="manager-team-deletion-section" style="display: none; text-align: left;">
+          <div style="margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+            <h3 style="color: var(--text); font-size: 0.9rem; margin-top: 0;">Export des données</h3>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px;">Exporter les données du planning dans un fichier Excel structuré en base de données.</p>
+            <button class="btn-primary" onclick="exportPlanningToExcel()">📥 Exporter les données en Excel</button>
+          </div>
           <h3 style="color: var(--text); font-size: 0.9rem; margin-top: 0;">Gestion des comptes de mon équipe (<span id="manager-pit-name"></span>)</h3>
           <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px;">Supprimer un membre :</p>
           <div id="team-members-list-for-deletion" style="display: flex; flex-direction: column; gap: 6px;"></div>
@@ -1466,6 +1472,54 @@
       selectedTool = e.target.getAttribute('data-status');
     };
   });
+
+  function exportPlanningToExcel() {
+    const userObj = ALL_MEMBERS.find(member => member.firstName === currentUser);
+    if (!userObj || !userObj.isManager) {
+      alert("Accès refusé : l'export Excel est réservé aux Managers.");
+      return;
+    }
+    if (typeof XLSX === 'undefined') {
+      alert("La bibliothèque d'export Excel n'est pas disponible. Vérifiez votre connexion internet puis réessayez.");
+      return;
+    }
+    const rows = [];
+    Object.keys(calendarData).sort().forEach(dateKey => {
+      const dayData = calendarData[dateKey] || {};
+      Object.keys(dayData).sort().forEach(firstName => {
+        const member = ALL_MEMBERS.find(item => item.firstName === firstName);
+        const value = dayData[firstName];
+        const base = {
+          Date: dateKey,
+          Prenom: firstName,
+          Nom: member ? member.lastName : '',
+          PIT: member ? member.pit : '',
+          Manager: member && member.isManager ? 'Oui' : 'Non'
+        };
+        if (typeof value === 'string') {
+          rows.push({ ...base, Creneau: 'Journee', Statut: value });
+        } else if (value && typeof value === 'object') {
+          if (value.am && value.am !== 'PRESENT') rows.push({ ...base, Creneau: 'Matin', Statut: value.am });
+          if (value.pm && value.pm !== 'PRESENT') rows.push({ ...base, Creneau: 'Apres-midi', Statut: value.pm });
+        }
+      });
+    });
+    if (rows.length === 0) {
+      alert("Aucune donnée de planning à exporter.");
+      return;
+    }
+    const headers = ['Date', 'Prenom', 'Nom', 'PIT', 'Manager', 'Creneau', 'Statut'];
+    const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
+    worksheet['!autofilter'] = { ref: `A1:G${rows.length + 1}` };
+    worksheet['!cols'] = [
+      { wch: 12 }, { wch: 16 }, { wch: 20 }, { wch: 16 },
+      { wch: 10 }, { wch: 14 }, { wch: 14 }
+    ];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Planning');
+    const exportDate = formatDateKeyStatic(new Date());
+    XLSX.writeFile(workbook, `export_planning_${exportDate}.xlsx`);
+  }
 
   function renderSettingsView() {
     const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
