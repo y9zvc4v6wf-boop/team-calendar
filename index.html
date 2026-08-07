@@ -3484,5 +3484,134 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   @media(max-width:600px){.secondary-code-options{grid-template-columns:repeat(2,1fr)}}
 </style>
 
+<style id="secondary-kpi-styles">
+  .secondary-kpi-table-box { grid-column: 1 / -1; max-height: none; }
+  .secondary-kpi-table-wrap { overflow-x:auto; }
+  .secondary-kpi-table { width:100%; border-collapse:separate; border-spacing:0; font-size:.74rem; }
+  .secondary-kpi-table th,.secondary-kpi-table td { padding:7px 9px; border:1px solid var(--border-soft); text-align:right; }
+  .secondary-kpi-table th:first-child,.secondary-kpi-table td:first-child { text-align:left; font-weight:800; }
+  .secondary-kpi-table thead th { background:var(--input-bg); color:var(--text-muted); }
+  .secondary-kpi-table tbody tr:hover td { background:var(--accent-soft); }
+  .secondary-kpi-table td:last-child { color:var(--accent-hover); font-weight:900; }
+</style>
+<script>
+(function () {
+  const SECONDARY_KPI_COLORS = {
+    VSM:'#6366f1', WKS:'#06b6d4', PRJ:'#f59e0b', SPU:'#10b981',
+    FOR:'#ec4899', VFO:'#8b5cf6', VMA:'#f97316', RSX:'#64748b'
+  };
+  let kpiSecondaryCostChart = null;
+
+  function ensureSecondaryKPIVisuals() {
+    const container = document.querySelector('#view-kpi .kpi-charts-container');
+    if (!container) return;
+    if (!document.getElementById('kpi-secondary-cost-chart')) {
+      const chartBox = document.createElement('div');
+      chartBox.className = 'chart-box';
+      chartBox.innerHTML = '<h3>Coût par code secondaire (€)</h3><canvas id="kpi-secondary-cost-chart"></canvas>';
+      container.appendChild(chartBox);
+    }
+    if (!document.getElementById('kpi-secondary-budget-body')) {
+      const tableBox = document.createElement('div');
+      tableBox.className = 'chart-box secondary-kpi-table-box';
+      tableBox.innerHTML = `
+        <h3>Budget annuel par code secondaire</h3>
+        <div class="secondary-kpi-table-wrap">
+          <table class="secondary-kpi-table">
+            <thead><tr><th>Code secondaire</th><th>Budget dépensé à date</th><th>Prévisionnel restant</th><th>Coût total de l'année</th></tr></thead>
+            <tbody id="kpi-secondary-budget-body"></tbody>
+          </table>
+        </div>`;
+      container.appendChild(tableBox);
+    }
+  }
+
+  function getSecondaryForSlot(dateKey, firstName, slot) {
+    const value = secondaryCodesData?.[dateKey]?.[firstName];
+    if (!value) return null;
+    if (typeof value === 'string') return value;
+    return value[slot] || null;
+  }
+
+  function addStatusCost(target, dateKey, firstName, status, slot, multiplier) {
+    if (!status || !SECONDARY_CODES.includes(getSecondaryForSlot(dateKey, firstName, slot))) return;
+    const code = getSecondaryForSlot(dateKey, firstName, slot);
+    const amount = (DISPLACEMENT_COSTS[status] || 0) * multiplier;
+    target[code] += amount;
+  }
+
+  function calculateSecondaryKPIData() {
+    const year = Number(document.getElementById('kpi-year').value);
+    const month = document.getElementById('kpi-month').value;
+    const pit = document.getElementById('kpi-pit-filter').value;
+    const person = document.getElementById('kpi-person-filter').value;
+    const todayKey = formatDateKeyStatic(new Date());
+    const periodCosts = Object.fromEntries(SECONDARY_CODES.map(code => [code, 0]));
+    const spent = Object.fromEntries(SECONDARY_CODES.map(code => [code, 0]));
+    const forecast = Object.fromEntries(SECONDARY_CODES.map(code => [code, 0]));
+
+    Object.entries(calendarData).forEach(([dateKey, dayData]) => {
+      const [dateYear, dateMonth] = dateKey.split('-').map(Number);
+      if (dateYear !== year || (month !== 'ALL' && dateMonth - 1 !== Number(month))) return;
+      Object.entries(dayData || {}).forEach(([firstName, status]) => {
+        const member = ALL_MEMBERS.find(item => item.firstName === firstName);
+        if (!member || (pit !== 'ALL' && member.pit !== pit) || (person !== 'ALL' && firstName !== person)) return;
+        if (typeof status === 'string') addStatusCost(periodCosts, dateKey, firstName, status, null, 1);
+        else if (status && typeof status === 'object') {
+          addStatusCost(periodCosts, dateKey, firstName, status.am, 'am', .5);
+          addStatusCost(periodCosts, dateKey, firstName, status.pm, 'pm', .5);
+        }
+      });
+    });
+
+    const currentYear = new Date().getFullYear();
+    Object.entries(calendarData).forEach(([dateKey, dayData]) => {
+      if (!dateKey.startsWith(`${currentYear}-`)) return;
+      Object.entries(dayData || {}).forEach(([firstName, status]) => {
+        const member = ALL_MEMBERS.find(item => item.firstName === firstName);
+        if (!member || (pit !== 'ALL' && member.pit !== pit) || (person !== 'ALL' && firstName !== person)) return;
+        const target = dateKey <= todayKey ? spent : forecast;
+        if (typeof status === 'string') addStatusCost(target, dateKey, firstName, status, null, 1);
+        else if (status && typeof status === 'object') {
+          addStatusCost(target, dateKey, firstName, status.am, 'am', .5);
+          addStatusCost(target, dateKey, firstName, status.pm, 'pm', .5);
+        }
+      });
+    });
+    return { periodCosts, spent, forecast };
+  }
+
+  function renderSecondaryKPIs() {
+    ensureSecondaryKPIVisuals();
+    const canvas = document.getElementById('kpi-secondary-cost-chart');
+    const tbody = document.getElementById('kpi-secondary-budget-body');
+    if (!canvas || !tbody) return;
+    const { periodCosts, spent, forecast } = calculateSecondaryKPIData();
+    if (kpiSecondaryCostChart) kpiSecondaryCostChart.destroy();
+    kpiSecondaryCostChart = new Chart(canvas.getContext('2d'), {
+      type:'bar',
+      data:{ labels:SECONDARY_CODES, datasets:[{ label:'Coût (€)', data:SECONDARY_CODES.map(code=>periodCosts[code]), backgroundColor:SECONDARY_CODES.map(code=>SECONDARY_KPI_COLORS[code]), borderWidth:1, borderRadius:4 }] },
+      options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, ticks:{ callback:value=>`${value.toLocaleString('fr-FR')} €` } } }, plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y.toLocaleString('fr-FR')} €`}} } },
+      plugins: typeof insideBarLabelsPlugin !== 'undefined' ? [insideBarLabelsPlugin] : []
+    });
+    tbody.innerHTML = SECONDARY_CODES.map(code => {
+      const total = spent[code] + forecast[code];
+      return `<tr><td>${code}</td><td>${formatEuroAmount(spent[code])}</td><td>${formatEuroAmount(forecast[code])}</td><td>${formatEuroAmount(total)}</td></tr>`;
+    }).join('');
+  }
+
+  const originalRenderKPICharts = window.renderKPICharts;
+  window.renderKPICharts = function () {
+    const result = originalRenderKPICharts.apply(this, arguments);
+    renderSecondaryKPIs();
+    return result;
+  };
+
+  const vsmButton = document.querySelector("button[onclick=\"chooseSecondaryCode('VSM')\"]");
+  if (vsmButton && !vsmButton.querySelector('span')) vsmButton.insertAdjacentHTML('beforeend', '<span>Value Stream Mapping</span>');
+  ensureSecondaryKPIVisuals();
+})();
+</script>
+
 </body>
 </html>
