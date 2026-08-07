@@ -580,6 +580,63 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       from { opacity: 0; transform: translateY(2px); }
       to { opacity: 1; transform: translateY(0); }
     }
+  
+    /* Fenetre integree pour les alertes de deplacement commun */
+    .app-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(3, 7, 18, 0.68);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+    .app-modal-overlay.visible { display: flex; }
+    .app-modal-card {
+      width: min(460px, 100%);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--card);
+      color: var(--text);
+      box-shadow: var(--shadow-lg);
+      animation: modalAppear 0.18s ease-out;
+    }
+    .app-modal-accent { height: 5px; background: linear-gradient(90deg, var(--accent), #06b6d4); }
+    .app-modal-content { padding: 22px; }
+    .app-modal-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .app-modal-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      font-size: 1.25rem;
+    }
+    .app-modal-title { margin: 0; font-size: 1.08rem; font-weight: 800; color: var(--text); }
+    .app-modal-subtitle { margin: 2px 0 0; font-size: 0.74rem; color: var(--text-muted); }
+    .app-modal-message {
+      margin: 0 0 18px;
+      padding: 13px 14px;
+      border: 1px solid var(--border-soft);
+      border-radius: 10px;
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 0.86rem;
+      line-height: 1.55;
+    }
+    .app-modal-actions { display: flex; justify-content: flex-end; }
+    .app-modal-ok { width: auto; min-width: 92px; margin: 0; padding: 8px 18px; }
+    @keyframes modalAppear {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -888,6 +945,25 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   </div>
 
+
+  <div id="travel-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="travel-modal-title" onclick="handleTravelModalOverlay(event)">
+    <div class="app-modal-card">
+      <div class="app-modal-accent"></div>
+      <div class="app-modal-content">
+        <div class="app-modal-heading">
+          <div class="app-modal-icon">✈️</div>
+          <div>
+            <h2 id="travel-modal-title" class="app-modal-title">Déplacement commun</h2>
+            <p class="app-modal-subtitle">Un collègue a renseigné la même destination</p>
+          </div>
+        </div>
+        <p id="travel-modal-message" class="app-modal-message"></p>
+        <div class="app-modal-actions">
+          <button type="button" id="travel-modal-ok" class="btn-primary app-modal-ok" onclick="closeTravelModal()">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBgcDyREaj8-mwazuCR4OPxwYqxPOI4m0Q",
@@ -1921,6 +1997,33 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     });
   }
 
+  function showTravelModal(message) {
+    const modal = document.getElementById('travel-modal');
+    const messageElement = document.getElementById('travel-modal-message');
+    if (!modal || !messageElement) return;
+    messageElement.textContent = message;
+    modal.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('travel-modal-ok')?.focus(), 0);
+  }
+
+  function closeTravelModal() {
+    const modal = document.getElementById('travel-modal');
+    if (!modal) return;
+    modal.classList.remove('visible');
+    document.body.style.overflow = '';
+  }
+
+  function handleTravelModalOverlay(event) {
+    if (event.target.id === 'travel-modal') closeTravelModal();
+  }
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && document.getElementById('travel-modal')?.classList.contains('visible')) {
+      closeTravelModal();
+    }
+  });
+
   function notifySameDestination(dateKey, destination, currentUserName, slot = null) {
     const travelCodes = ['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM'];
     if (!travelCodes.includes(destination)) return;
@@ -1934,7 +2037,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       : `${names.slice(0, -1).join(', ')} et ${names[names.length - 1]}`;
     const slotText = slot === 'am' ? ' le matin' : slot === 'pm' ? " l'après-midi" : '';
     const verb = colleagues.length === 1 ? 'est également en déplacement' : 'sont également en déplacement';
-    alert(`Information déplacement\n\n${namesText} ${verb} à ${destination} le ${formattedDate}${slotText}.`);
+    showTravelModal(`${namesText} ${verb} à ${destination} le ${formattedDate}${slotText}.`);
   }
 
   function renderPersonalCalendar(year, month) {
