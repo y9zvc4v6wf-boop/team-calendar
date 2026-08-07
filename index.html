@@ -1315,6 +1315,34 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   </div>
 
 
+  <div id="secondary-code-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="secondary-code-modal-title" onclick="handleSecondaryCodeOverlay(event)">
+    <div class="app-modal-card secondary-code-modal-card">
+      <div class="app-modal-accent"></div>
+      <div class="app-modal-content">
+        <div class="app-modal-heading">
+          <div class="app-modal-icon">🏷️</div>
+          <div>
+            <h2 id="secondary-code-modal-title" class="app-modal-title">Code secondaire</h2>
+            <p id="secondary-code-modal-subtitle" class="app-modal-subtitle">Sélectionnez le code associé au déplacement</p>
+          </div>
+        </div>
+        <div class="secondary-code-options">
+          <button type="button" onclick="chooseSecondaryCode('VSM')"><strong>VSM</strong></button>
+          <button type="button" onclick="chooseSecondaryCode('WKS')"><strong>WKS</strong><span>Workshop</span></button>
+          <button type="button" onclick="chooseSecondaryCode('PRJ')"><strong>PRJ</strong><span>Projet</span></button>
+          <button type="button" onclick="chooseSecondaryCode('SPU')"><strong>SPU</strong><span>Support usine</span></button>
+          <button type="button" onclick="chooseSecondaryCode('FOR')"><strong>FOR</strong><span>Formation</span></button>
+          <button type="button" onclick="chooseSecondaryCode('VFO')"><strong>VFO</strong><span>Visite fournisseur</span></button>
+          <button type="button" onclick="chooseSecondaryCode('VMA')"><strong>VMA</strong><span>Visite managers</span></button>
+          <button type="button" onclick="chooseSecondaryCode('RSX')"><strong>RSX</strong><span>Reseaux</span></button>
+        </div>
+        <div class="app-modal-actions">
+          <button type="button" class="btn-secondary app-modal-ok" onclick="cancelSecondaryCodeSelection()">Annuler</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="travel-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="travel-modal-title" onclick="handleTravelModalOverlay(event)">
     <div class="app-modal-card">
       <div class="app-modal-accent"></div>
@@ -1349,6 +1377,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   let currentUser = null;
   let currentDate = new Date();
   let calendarData = {};
+  let secondaryCodesData = {};
+  let selectedSecondaryCode = null;
+  let secondaryCodeSelectionCallback = null;
   let usersPins = {};
   let customMembers = [];
   let ALL_MEMBERS = [];
@@ -1538,6 +1569,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           renderViews();
         }
       });
+      db.ref('secondary_codes').on('value', (snap) => { secondaryCodesData = snap.val() || {}; });
       db.ref('users_pins').on('value', (snap) => {
         usersPins = snap.val() || {};
         if (migrateLegacyPinKeys()) db.ref('users_pins').set(usersPins);
@@ -1554,6 +1586,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       });
     } else {
       const localCal = localStorage.getItem('team_calendar_data');
+      const localSecondary = localStorage.getItem('team_secondary_codes');
+      if (localSecondary) try { secondaryCodesData = JSON.parse(localSecondary); } catch(e) {}
       if (localCal) try { calendarData = JSON.parse(localCal); } catch(e) {}
       const localPins = localStorage.getItem('team_users_pins');
       if (localPins) try { usersPins = JSON.parse(localPins); } catch(e) {}
@@ -1599,6 +1633,76 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
            dateObj.getDate() === todayDate;
   }
 
+  const SECONDARY_CODE_DESTINATIONS = ['ARA', 'ALE', 'SPA', 'CGR', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM'];
+  const SECONDARY_CODES = ['VSM', 'WKS', 'PRJ', 'SPU', 'FOR', 'VFO', 'VMA', 'RSX'];
+
+  function requiresSecondaryCode(status) { return SECONDARY_CODE_DESTINATIONS.includes(status); }
+
+  function getSecondaryCode(dateKey, user, slot = null) {
+    const value = secondaryCodesData[dateKey] && secondaryCodesData[dateKey][user];
+    if (!value) return null;
+    if (typeof value === 'string') return value;
+    return slot ? (value[slot] || null) : (value.am || value.pm || null);
+  }
+
+  function setSecondaryCode(dateKey, user, status, slot = null, code = null) {
+    if (!secondaryCodesData[dateKey]) secondaryCodesData[dateKey] = {};
+    const validCode = requiresSecondaryCode(status) && SECONDARY_CODES.includes(code) ? code : null;
+    if (slot) {
+      let current = secondaryCodesData[dateKey][user];
+      let obj = typeof current === 'object' && current !== null ? {...current} : {};
+      if (validCode) obj[slot] = validCode; else delete obj[slot];
+      if (!obj.am && !obj.pm) delete secondaryCodesData[dateKey][user]; else secondaryCodesData[dateKey][user] = obj;
+    } else {
+      if (validCode) secondaryCodesData[dateKey][user] = validCode; else delete secondaryCodesData[dateKey][user];
+    }
+    if (secondaryCodesData[dateKey] && Object.keys(secondaryCodesData[dateKey]).length === 0) delete secondaryCodesData[dateKey];
+  }
+
+  function renderStatusWithSecondary(element, status, dateKey, user, slot = null) {
+    element.textContent = status === 'Formation' ? 'For' : status;
+    if (status === 'Formation') element.classList.add('formation-short-label');
+    const code = requiresSecondaryCode(status) ? getSecondaryCode(dateKey, user, slot) : null;
+    if (code) {
+      const initial = document.createElement('span');
+      initial.className = 'secondary-code-initial';
+      initial.textContent = code.charAt(0);
+      initial.title = code;
+      element.appendChild(initial);
+    }
+  }
+
+  function savePlanningAndSecondaryData() {
+    if (db) {
+      db.ref('planning').set(calendarData);
+      db.ref('secondary_codes').set(secondaryCodesData);
+    } else {
+      localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
+      localStorage.setItem('team_secondary_codes', JSON.stringify(secondaryCodesData));
+    }
+  }
+
+  function openSecondaryCodeModal(destination, callback) {
+    secondaryCodeSelectionCallback = callback;
+    document.getElementById('secondary-code-modal-subtitle').textContent = `Sélectionnez le code associé à ${destination}`;
+    document.getElementById('secondary-code-modal').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  }
+  function chooseSecondaryCode(code) {
+    if (!SECONDARY_CODES.includes(code)) return;
+    document.getElementById('secondary-code-modal').classList.remove('visible');
+    document.body.style.overflow = '';
+    const callback = secondaryCodeSelectionCallback;
+    secondaryCodeSelectionCallback = null;
+    if (callback) callback(code);
+  }
+  function cancelSecondaryCodeSelection() {
+    document.getElementById('secondary-code-modal').classList.remove('visible');
+    document.body.style.overflow = '';
+    secondaryCodeSelectionCallback = null;
+  }
+  function handleSecondaryCodeOverlay(event) { if (event.target.id === 'secondary-code-modal') cancelSecondaryCodeSelection(); }
+
   function getStatus(dateKey, user, slot = null) {
     const dayVal = calendarData[dateKey] && calendarData[dateKey][user];
     if (!dayVal) return 'PRESENT';
@@ -1611,6 +1715,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 
   function setStatus(dateKey, user, tool, slot = null) {
+    if (requiresSecondaryCode(tool) && !selectedSecondaryCode) return false;
     if (!calendarData[dateKey]) calendarData[dateKey] = {};
     let current = calendarData[dateKey][user];
 
@@ -1637,9 +1742,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       else calendarData[dateKey][user] = tool;
     }
 
+    setSecondaryCode(dateKey, user, tool, slot, selectedSecondaryCode);
     if (Object.keys(calendarData[dateKey]).length === 0) {
       delete calendarData[dateKey];
     }
+    return true;
   }
 
   function populateGlobalFilters() {
@@ -2013,8 +2120,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           if (Object.keys(calendarData[dateKey]).length === 0) delete calendarData[dateKey];
         }
       });
-      if (db) db.ref('planning').set(calendarData);
-      else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
+                  savePlanningAndSecondaryData();
 
       alert("Votre compte a bien été supprimé.");
       logout();
@@ -2037,8 +2143,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           if (Object.keys(calendarData[dateKey]).length === 0) delete calendarData[dateKey];
         }
       });
-      if (db) db.ref('planning').set(calendarData);
-      else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
+                  savePlanningAndSecondaryData();
 
       alert(`Le compte de ${memberName} a été supprimé.`);
       updateAllMembersList();
@@ -2119,10 +2224,18 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   const toolBtns = document.querySelectorAll('.tool-btn');
   toolBtns.forEach(btn => {
-    btn.onclick = (e) => {
-      toolBtns.forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      selectedTool = e.target.getAttribute('data-status');
+    btn.onclick = () => {
+      const selectedButton = btn;
+      const requestedTool = selectedButton.getAttribute('data-status');
+      const activateTool = secondaryCode => {
+        toolBtns.forEach(button => button.classList.remove('active'));
+        selectedButton.classList.add('active');
+        selectedTool = requestedTool;
+        selectedSecondaryCode = secondaryCode || null;
+        selectedButton.title = secondaryCode ? `${requestedTool} • ${secondaryCode}` : requestedTool;
+      };
+      if (requiresSecondaryCode(requestedTool)) openSecondaryCodeModal(requestedTool, activateTool);
+      else activateTool(null);
     };
   });
 
@@ -2153,7 +2266,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
     brushTouchedCells.add(paintKey);
     brushLastPaintKey = paintKey;
-    setStatus(dateKey, currentUser, selectedTool, slot);
+    if (!setStatus(dateKey, currentUser, selectedTool, slot)) return;
     target.classList.add('brush-painted-preview');
     brushHasChanges = true;
 
@@ -2164,8 +2277,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   function saveBrushChanges() {
     if (!brushHasChanges) return;
-    if (db) db.ref('planning').set(calendarData);
-    else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
+                  savePlanningAndSecondaryData();
   }
 
   function finishBrushStroke() {
@@ -2911,17 +3023,15 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
                 const st = getStatus(dateKey, currentUser, slot);
                 if (st !== 'PRESENT') {
                   halfDiv.classList.add(`bg-${st}`);
-                  halfDiv.textContent = st === 'Formation' ? 'For' : st;
-                  if (st === 'Formation') halfDiv.classList.add('formation-short-label');
+                  renderStatusWithSecondary(halfDiv, st, dateKey, currentUser, slot);
                 } else {
                   halfDiv.textContent = slot === 'am' ? 'M' : 'A';
                 }
 
                 halfDiv.onclick = (e) => {
                   e.stopPropagation();
-                  setStatus(dateKey, currentUser, selectedTool, slot);
-                  if (db) db.ref('planning').set(calendarData);
-                  else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
+                  if (!setStatus(dateKey, currentUser, selectedTool, slot)) return;
+                  savePlanningAndSecondaryData();
                   notifySameDestination(dateKey, selectedTool, currentUser, slot);
                   renderPersonalCalendar(year, month);
                 };
@@ -2934,15 +3044,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
                 cell.classList.add(`bg-${st}`);
                 const badge = document.createElement('div');
                 badge.className = 'status-badge';
-                badge.textContent = st === 'Formation' ? 'For' : st;
-                if (st === 'Formation') badge.classList.add('formation-short-label');
+                renderStatusWithSecondary(badge, st, dateKey, currentUser);
                 cell.appendChild(badge);
               }
               cell.dataset.brushDate = dateKey;
               cell.onclick = () => {
-                setStatus(dateKey, currentUser, selectedTool);
-                if (db) db.ref('planning').set(calendarData);
-                else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
+                if (!setStatus(dateKey, currentUser, selectedTool)) return;
+                savePlanningAndSecondaryData();
                 notifySameDestination(dateKey, selectedTool, currentUser);
                 renderPersonalCalendar(year, month);
               };
@@ -3087,8 +3195,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
                 if (st !== 'PRESENT') {
                   halfDiv.classList.add(`bg-${st}`);
-                  halfDiv.textContent = st === 'Formation' ? 'For' : st; // Libellé court uniquement à l'affichage
-                  if (st === 'Formation') halfDiv.classList.add('formation-short-label');
+                  renderStatusWithSecondary(halfDiv, st, dateKey, member.firstName, slot);
                 } else {
                   halfDiv.textContent = slot === 'am' ? 'M' : 'A';
                 }
@@ -3104,8 +3211,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
               const st = getStatus(dateKey, member.firstName);
               if (st !== 'PRESENT') {
                 td.classList.add(`bg-${st}`);
-                td.textContent = st === 'Formation' ? 'For' : st;
-                if (st === 'Formation') td.classList.add('formation-short-label');
+                renderStatusWithSecondary(td, st, dateKey, member.firstName);
               }
 
             }
@@ -3362,6 +3468,20 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   #view-personal.brush-mode-active .day-half:hover {
     border-color: var(--accent) !important;
   }
+</style>
+
+
+<style id="secondary-code-styles">
+  .secondary-code-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:14px 0 18px; }
+  .secondary-code-options button { margin:0; min-height:50px; padding:8px 10px; border:1px solid var(--accent); border-radius:8px; background:var(--input-bg); color:var(--text); cursor:pointer; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:2px; text-align:left; }
+  .secondary-code-options button strong { font-size:.82rem; font-weight:900; line-height:1; }
+  .secondary-code-options button span { color:var(--text-muted); font-size:.68rem; font-weight:600; line-height:1.15; }
+  .secondary-code-options button:hover { background:var(--accent); color:#fff; transform:translateY(-1px); }
+  .secondary-code-options button:hover span { color:rgba(255,255,255,.84); }
+  .secondary-code-initial { position:absolute; right:3px; top:2px; display:inline-flex; align-items:center; justify-content:center; width:13px; height:13px; border-radius:50%; background:rgba(0,0,0,.38); color:#fff !important; font-size:.48rem !important; font-weight:900; line-height:1; z-index:3; pointer-events:none; }
+  #view-personal .day-card, #view-personal .day-half, #view-team td { position:relative; }
+  #view-personal .day-half .secondary-code-initial { right:2px; top:1px; width:11px; height:11px; font-size:.42rem !important; }
+  @media(max-width:600px){.secondary-code-options{grid-template-columns:repeat(2,1fr)}}
 </style>
 
 </body>
