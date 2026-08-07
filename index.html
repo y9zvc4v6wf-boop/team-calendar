@@ -1541,17 +1541,17 @@
         const statusDiv = document.createElement('div');
         const statusVal = calendarData[dateKey] && calendarData[dateKey][member.firstName];
         if (!statusVal || statusVal === 'PRESENT') {
-          statusDiv.innerHTML = `<span class="status-badge" style="background: var(--badge-neutral-bg); color: var(--badge-neutral-text); padding: 2px 5px;">Bureau (Présent)</span>`;
+          statusDiv.innerHTML = `<span class="status-badge" style="background: var(--badge-neutral-bg); color: var(--badge-neutral-text); padding: 2px 5px; border-radius: 4px;">Bureau (Présent)</span>`;
         } else if (typeof statusVal === 'string') {
-          statusDiv.innerHTML = `<span class="status-badge bg-${statusVal}" style="padding: 2px 5px;">${statusVal}</span>`;
+          statusDiv.innerHTML = `<span class="status-badge bg-${statusVal}" style="padding: 2px 5px; border-radius: 4px;">${statusVal}</span>`;
         } else if (typeof statusVal === 'object') {
           let amStat = statusVal.am || 'PRESENT';
           let pmStat = statusVal.pm || 'PRESENT';
           statusDiv.innerHTML = `
             <div style="display: flex; gap: 4px; align-items: center; font-size: 0.72rem;">
-              <span>Matin : <strong class="${amStat !== 'PRESENT' ? 'status-badge bg-' + amStat : ''}" style="padding: 1px 3px; border-radius: 3px;">${amStat}</strong></span>
+              <span>Matin : <strong class="${amStat !== 'PRESENT' ? 'status-badge bg-' + amStat : ''}" style="padding: 1px 3px; border-radius: 4px;">${amStat}</strong></span>
               <span>|</span>
-              <span>Après-midi : <strong class="${pmStat !== 'PRESENT' ? 'status-badge bg-' + pmStat : ''}" style="padding: 1px 3px; border-radius: 3px;">${pmStat}</strong></span>
+              <span>Après-midi : <strong class="${pmStat !== 'PRESENT' ? 'status-badge bg-' + pmStat : ''}" style="padding: 1px 3px; border-radius: 4px;">${pmStat}</strong></span>
             </div>
           `;
         }
