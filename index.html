@@ -79,10 +79,11 @@
       --color-COM: #AD1457;
       --color-Autres: #2E7D32;
 
-      --pit-archi: #0ea5e9;
-      --pit-cac: #10b981;
-      --pit-tbm: #f59e0b;
-      --pit-prep: #ef4444;
+      --pit-archi: #00F0FF;
+      --pit-cac: #00FF88;
+      --pit-tbm: #FF75BA;
+      --pit-prep: #C78FFF;
+      --ult-ara: #FFEA00;
     }
     /* MODE CLAIR */
     [data-theme="light"] {
@@ -510,6 +511,12 @@
       min-height: 18px;
       margin: 0;
     }
+    #view-personal .formation-short-label,
+    #view-team .formation-short-label {
+      font-size: 0.75rem !important;
+      letter-spacing: normal;
+      line-height: normal;
+    }
 
     .team-subnav {
       display: flex; align-items: center; gap: 6px; margin-bottom: 0;
@@ -713,6 +720,38 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
   
     /* Blocs de taille uniforme dans Presence Equipe */
+    #view-presence .presence-days-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+    #view-presence .presence-day-panel {
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+      box-shadow: var(--shadow-sm);
+    }
+    #view-presence .presence-day-panel.today-panel {
+      border-top: 4px solid var(--accent);
+    }
+    #view-presence .presence-day-panel.next-day-panel {
+      border-top: 4px solid #06b6d4;
+    }
+    #view-presence .presence-day-title {
+      margin: 0 0 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-soft);
+      color: var(--text);
+      font-size: 0.92rem;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+    @media (max-width: 1000px) {
+      #view-presence .presence-days-grid { grid-template-columns: 1fr; }
+    }
     #view-presence .presence-member-card {
       display: grid !important;
       grid-template-columns: minmax(0, 1fr) 270px;
@@ -958,6 +997,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
             <option value="PIT CAC">PIT CAC</option>
             <option value="PIT Prep">PIT Prep</option>
             <option value="PIT TBM">PIT TBM</option>
+            <option value="ULT ARA">ULT ARA</option>
           </select>
         </div>
         <label class="checkbox-group">
@@ -1260,7 +1300,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     "PIT Archi": "#0ea5e9",
     "PIT CAC": "#10b981",
     "PIT TBM": "#f59e0b",
-    "PIT Prep": "#ef4444"
+    "PIT Prep": "#ef4444",
+    "ULT ARA": "#8b5cf6"
   };
 
   function getPitColor(pitName) {
@@ -1366,7 +1407,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   const DISPLACEMENT_COSTS = {
     ALE: 220, ARA: 210, CGR: 250, HBG: 225, LVL: 200, NKE: 279, SPA: 365,
-    UCH: 249, VLD: 210, WAT: 306, ZAL: 200, CTX: 210, COM: 220, Autres: 200
+    UCH: 249, VLD: 210, WAT: 306, ZAL: 200, CTX: 210, COM: 220, Autres: 0
   };
   const DISPLACEMENT_CODES = Object.keys(DISPLACEMENT_COSTS);
 
@@ -1551,7 +1592,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     const pitFilter = document.getElementById('login-pit-filter');
     if (!pitFilter) return;
     pitFilter.innerHTML = '<option value="ALL">Tous les PITs</option>';
-    const pits = [...new Set(ALL_MEMBERS.map(m => m.pit).filter(Boolean))];
+    const pits = [...new Set([...ALL_MEMBERS.map(m => m.pit).filter(Boolean), 'ULT ARA'])];
     pits.forEach(pit => {
       const opt = document.createElement('option');
       opt.value = pit;
@@ -1633,7 +1674,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     if (!kpiPitFilter) return;
     const currentVal = kpiPitFilter.value;
     kpiPitFilter.innerHTML = '<option value="ALL">Tous les PITs</option>';
-    const pits = [...new Set(ALL_MEMBERS.map(m => m.pit).filter(Boolean))];
+    const pits = [...new Set([...ALL_MEMBERS.map(m => m.pit).filter(Boolean), 'ULT ARA'])];
     pits.forEach(pit => {
       const opt = document.createElement('option');
       opt.value = pit;
@@ -1669,7 +1710,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     if (pitSelect) {
       const currentPitVal = pitSelect.value;
       pitSelect.innerHTML = '<option value="ALL">Tous les PITs</option>';
-      const pits = [...new Set(ALL_MEMBERS.map(m => m.pit).filter(Boolean))];
+      const pits = [...new Set([...ALL_MEMBERS.map(m => m.pit).filter(Boolean), 'ULT ARA'])];
       pits.forEach(pit => {
         const opt = document.createElement('option');
         opt.value = pit;
@@ -2112,17 +2153,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       { label: today.getDay() === 5 ? 'Lundi' : 'Demain', date: nextWorkDay }
     ];
     const daysContainer = document.createElement('div');
-    daysContainer.style.display = 'grid';
-    daysContainer.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
-    daysContainer.style.gap = '12px';
-    datesToDisplay.forEach(({ label, date }) => {
+    daysContainer.className = 'presence-days-grid';
+    datesToDisplay.forEach(({ label, date }, dayIndex) => {
       const dateFormatted = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'full' }).format(date);
       const dateKey = formatDateKeyStatic(date);
-      const section = document.createElement('div');
-      section.style.minWidth = '0';
+      const section = document.createElement('section');
+      section.className = `presence-day-panel ${dayIndex === 0 ? 'today-panel' : 'next-day-panel'}`;
       const title = document.createElement('h3');
-      title.style.fontSize = '0.95rem';
-      title.style.margin = '0 0 8px 0';
+      title.className = 'presence-day-title';
       title.textContent = `${label} — ${dateFormatted}`;
       section.appendChild(title);
       const listDiv = document.createElement('div');
@@ -2298,7 +2336,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   function calculateKPIData(selectedYear, selectedMonth, selectedPitFilter, selectedPersonFilter) {
     let personStats = {}, pitStats = {}, jdrPersonStats = {}, caPersonStats = {}, monthPitStats = {}, pitCosts = {};
-    const pits = [...new Set(ALL_MEMBERS.map(m => m.pit).filter(Boolean))];
+    const pits = [...new Set([...ALL_MEMBERS.map(m => m.pit).filter(Boolean), 'ULT ARA'])];
 
     ALL_MEMBERS.forEach(m => {
       if (selectedPitFilter !== 'ALL' && m.pit !== selectedPitFilter) return;
@@ -2656,7 +2694,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
                 const st = getStatus(dateKey, currentUser, slot);
                 if (st !== 'PRESENT') {
                   halfDiv.classList.add(`bg-${st}`);
-                  halfDiv.textContent = st;
+                  halfDiv.textContent = st === 'Formation' ? 'For' : st;
+                  if (st === 'Formation') halfDiv.classList.add('formation-short-label');
                 } else {
                   halfDiv.textContent = slot === 'am' ? 'M' : 'A';
                 }
@@ -2678,7 +2717,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
                 cell.classList.add(`bg-${st}`);
                 const badge = document.createElement('div');
                 badge.className = 'status-badge';
-                badge.textContent = st;
+                badge.textContent = st === 'Formation' ? 'For' : st;
+                if (st === 'Formation') badge.classList.add('formation-short-label');
                 cell.appendChild(badge);
               }
               cell.onclick = () => {
@@ -2828,7 +2868,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
                 if (st !== 'PRESENT') {
                   halfDiv.classList.add(`bg-${st}`);
-                  halfDiv.textContent = st; // Affichage complet ou abrégé selon l'espace
+                  halfDiv.textContent = st === 'Formation' ? 'For' : st; // Libellé court uniquement à l'affichage
+                  if (st === 'Formation') halfDiv.classList.add('formation-short-label');
                 } else {
                   halfDiv.textContent = slot === 'am' ? 'M' : 'A';
                 }
@@ -2844,7 +2885,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
               const st = getStatus(dateKey, member.firstName);
               if (st !== 'PRESENT') {
                 td.classList.add(`bg-${st}`);
-                td.textContent = st;
+                td.textContent = st === 'Formation' ? 'For' : st;
+                if (st === 'Formation') td.classList.add('formation-short-label');
               }
 
             }
