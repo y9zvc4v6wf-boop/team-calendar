@@ -460,6 +460,37 @@
       padding: 1px 2px;
     }
 
+    /* Taille et centrage uniformes des statuts dans les trois vues concernees */
+    #view-presence [class*="bg-"],
+    #view-presence .status-badge,
+    #view-personal [class*="bg-"],
+    #view-personal .status-badge,
+    #view-team [class*="bg-"],
+    #view-team .status-badge {
+      font-family: inherit !important;
+      font-size: 0.75rem !important;
+      text-align: center !important;
+      vertical-align: middle !important;
+    }
+
+    #view-presence .status-badge,
+    #view-personal .status-badge,
+    #view-team .status-badge,
+    #view-personal .day-half,
+    #view-team .day-half {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      text-align: center !important;
+    }
+
+    #view-personal .day-card[class*="bg-"] .status-badge {
+      width: 100%;
+      height: 100%;
+      min-height: 18px;
+      margin: 0;
+    }
+
     .team-subnav {
       display: flex; align-items: center; gap: 6px; margin-bottom: 0;
       background: var(--card); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); flex-wrap: wrap;
