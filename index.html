@@ -1787,6 +1787,37 @@
     else if (activeView.id === 'view-presence') renderTeamPresence();
   }
 
+  function getColleaguesAtSameDestination(dateKey, destination, currentUserName, slot = null) {
+    const dayData = calendarData[dateKey] || {};
+    return ALL_MEMBERS.filter(member => {
+      if (member.firstName === currentUserName) return false;
+      const colleagueStatus = dayData[member.firstName];
+      if (!colleagueStatus) return false;
+      if (slot) {
+        if (typeof colleagueStatus === 'string') return colleagueStatus === destination;
+        return colleagueStatus[slot] === destination;
+      }
+      if (typeof colleagueStatus === 'string') return colleagueStatus === destination;
+      return colleagueStatus.am === destination || colleagueStatus.pm === destination;
+    });
+  }
+
+  function notifySameDestination(dateKey, destination, currentUserName, slot = null) {
+    const travelCodes = ['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM'];
+    if (!travelCodes.includes(destination)) return;
+    const colleagues = getColleaguesAtSameDestination(dateKey, destination, currentUserName, slot);
+    if (colleagues.length === 0) return;
+    const [year, month, day] = dateKey.split('-').map(Number);
+    const formattedDate = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(new Date(year, month - 1, day));
+    const names = colleagues.map(member => `${member.firstName} ${member.lastName}`);
+    const namesText = names.length === 1
+      ? names[0]
+      : `${names.slice(0, -1).join(', ')} et ${names[names.length - 1]}`;
+    const slotText = slot === 'am' ? ' le matin' : slot === 'pm' ? " l'après-midi" : '';
+    const verb = colleagues.length === 1 ? 'est également en déplacement' : 'sont également en déplacement';
+    alert(`Information déplacement\n\n${namesText} ${verb} à ${destination} le ${formattedDate}${slotText}.`);
+  }
+
   function renderPersonalCalendar(year, month) {
     const container = document.getElementById('personal-grids-container');
     container.innerHTML = '';
@@ -1903,6 +1934,7 @@
                   setStatus(dateKey, currentUser, selectedTool, slot);
                   if (db) db.ref('planning').set(calendarData);
                   else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
+                  notifySameDestination(dateKey, selectedTool, currentUser, slot);
                   renderPersonalCalendar(year, month);
                 };
                 halvesCont.appendChild(halfDiv);
@@ -1921,6 +1953,7 @@
                 setStatus(dateKey, currentUser, selectedTool);
                 if (db) db.ref('planning').set(calendarData);
                 else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
+                notifySameDestination(dateKey, selectedTool, currentUser);
                 renderPersonalCalendar(year, month);
               };
             }
