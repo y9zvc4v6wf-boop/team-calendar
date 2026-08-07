@@ -1290,7 +1290,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           <canvas id="kpi-person-chart"></canvas>
         </div>
         <div class="chart-box">
-          <h3>Répartition par PIT (Jours)</h3>
+          <h3>Coût des déplacements par personne (€)</h3>
           <canvas id="kpi-pit-chart"></canvas>
         </div>
         <div class="chart-box">
@@ -2517,13 +2517,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 
   function calculateKPIData(selectedYear, selectedMonth, selectedPitFilter, selectedPersonFilter) {
-    let personStats = {}, pitStats = {}, jdrPersonStats = {}, caPersonStats = {}, monthPitStats = {}, pitCosts = {};
+    let personStats = {}, personCosts = {}, pitStats = {}, jdrPersonStats = {}, caPersonStats = {}, monthPitStats = {}, pitCosts = {};
     const pits = [...new Set([...ALL_MEMBERS.map(m => m.pit).filter(Boolean), 'ULT ARA'])];
 
     ALL_MEMBERS.forEach(m => {
       if (selectedPitFilter !== 'ALL' && m.pit !== selectedPitFilter) return;
       if (selectedPersonFilter !== 'ALL' && m.firstName !== selectedPersonFilter) return;
       personStats[m.firstName] = 0;
+      personCosts[m.firstName] = 0;
       jdrPersonStats[m.firstName] = 0;
       caPersonStats[m.firstName] = 0;
     });
@@ -2567,6 +2568,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
         if (personStats[user] !== undefined) {
           personStats[user] += dispDays;
+          personCosts[user] += costToAdd;
           jdrPersonStats[user] += jdrDays;
           caPersonStats[user] += caDays;
           const pit = userObj.pit;
@@ -2579,7 +2581,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       });
     });
 
-    return { personStats, pitStats, jdrPersonStats, caPersonStats, monthPitStats, pitCosts, pits };
+    return { personStats, personCosts, pitStats, jdrPersonStats, caPersonStats, monthPitStats, pitCosts, pits };
   }
 
   function calculateCurrentYearBudget(selectedPitFilter, selectedPersonFilter) {
@@ -2631,7 +2633,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     const pitFilter = document.getElementById('kpi-pit-filter').value;
     const personFilter = document.getElementById('kpi-person-filter').value;
 
-    const { personStats, pitStats, jdrPersonStats, caPersonStats, monthPitStats, pitCosts, pits } = calculateKPIData(year, month, pitFilter, personFilter);
+    const { personStats, personCosts, pitStats, jdrPersonStats, caPersonStats, monthPitStats, pitCosts, pits } = calculateKPIData(year, month, pitFilter, personFilter);
     updateBudgetKPIs(pitFilter, personFilter);
 
     if (kpiPersonChart) kpiPersonChart.destroy();
@@ -2657,11 +2659,42 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       plugins: [insideBarLabelsPlugin]
     });
 
-    const pitLabels = Object.keys(pitStats);
+    const personCostLabels = Object.keys(personCosts);
+    const personCostColors = personCostLabels.map(user => {
+      const member = ALL_MEMBERS.find(item => item.firstName === user);
+      return member ? getPitColor(member.pit) : '#3b82f6';
+    });
     kpiPitChart = new Chart(document.getElementById('kpi-pit-chart').getContext('2d'), {
-      type: 'doughnut',
-      data: { labels: pitLabels, datasets: [{ label: 'Jours de déplacement', data: Object.values(pitStats), backgroundColor: pitLabels.map(pit => getPitColor(pit)), borderColor: '#1e293b', borderWidth: 2 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+      type: 'bar',
+      data: {
+        labels: personCostLabels,
+        datasets: [{
+          label: 'Coût (€)',
+          data: Object.values(personCosts),
+          backgroundColor: personCostColors,
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { callback: value => `${value.toLocaleString('fr-FR')} €` }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: context => `${context.parsed.y.toLocaleString('fr-FR')} €`
+            }
+          }
+        }
+      },
+      plugins: [insideBarLabelsPlugin]
     });
 
     kpiJdrChart = new Chart(document.getElementById('kpi-jdr-chart').getContext('2d'), {
