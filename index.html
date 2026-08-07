@@ -2975,5 +2975,90 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   syncData();
 
 </script>
+<style>
+  /* Le panneau graphique occupe entièrement la zone qui lui est allouée */
+  #view-annual .annual-chart-pane,
+  #view-annual #annual-destination-chart-box {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 10px 12px !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  #view-annual #annual-destination-chart-box > div {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  #view-annual #annual-destination-chart {
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    image-rendering: auto !important;
+  }
+
+  #view-annual #annual-destination-chart-box h3 {
+    margin: 0 0 6px !important;
+    text-align: left !important;
+    line-height: 1.2 !important;
+  }
+
+  #view-annual #annual-destination-empty {
+    margin: 5px 0 0 !important;
+  }
+</style>
+<script>
+  (function () {
+    function resizeAnnualDestinationChart() {
+      const box = document.getElementById('annual-destination-chart-box');
+      const canvas = document.getElementById('annual-destination-chart');
+      if (!box || !canvas || !box.offsetParent) return;
+
+      const chart = window.annualDestinationChart ||
+        (window.Chart && typeof Chart.getChart === 'function' ? Chart.getChart(canvas) : null);
+
+      if (chart) {
+        chart.options.responsive = true;
+        chart.options.maintainAspectRatio = false;
+        chart.options.devicePixelRatio = Math.max(window.devicePixelRatio || 1, 2);
+        chart.resize();
+        chart.update('none');
+      }
+    }
+
+    const originalSwitchTab = window.switchTab;
+    if (typeof originalSwitchTab === 'function') {
+      window.switchTab = function (viewId) {
+        const result = originalSwitchTab.apply(this, arguments);
+        if (viewId === 'view-annual') {
+          requestAnimationFrame(() => requestAnimationFrame(resizeAnnualDestinationChart));
+        }
+        return result;
+      };
+    }
+
+    window.addEventListener('resize', resizeAnnualDestinationChart);
+
+    const observer = new ResizeObserver(() => resizeAnnualDestinationChart());
+    const chartBox = document.getElementById('annual-destination-chart-box');
+    if (chartBox) observer.observe(chartBox);
+
+    requestAnimationFrame(() => requestAnimationFrame(resizeAnnualDestinationChart));
+  })();
+</script>
+
 </body>
 </html>
