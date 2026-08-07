@@ -26,7 +26,7 @@
   <!-- Firebase Web SDK (v8 Compat) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  
+
   <!-- Chart.js pour les graphiques KPI -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -59,7 +59,7 @@
 
       /* Couleurs des statuts (Mode Sombre) */
       --color-CA: #eb7405;
-      --color-JDR: #D67F00;
+      --color-JDR: #C2185B;
       --color-Formation: #F48FB1;
       --color-TT: #E57373;
       --color-LAD: #4c4cad;
@@ -148,7 +148,7 @@
 
     html { color-scheme: dark; }
     [data-theme="light"] { color-scheme: light; }
-    
+
 
     body {
       font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -300,7 +300,7 @@
     .form-box p { color: var(--text-muted); font-size: 0.82rem; margin-bottom: 12px; }
     .form-group { margin-bottom: 10px; text-align: left; }
     .form-group label { display: block; margin-bottom: 3px; font-weight: 600; font-size: 0.78rem; color: var(--text-muted); }
-    
+
     .checkbox-group {
       display: flex; align-items: center; gap: 8px; margin-bottom: 10px; text-align: left; cursor: pointer; color: var(--text); font-size: 0.85rem;
     }
@@ -372,16 +372,36 @@
     .day-card:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
     .day-card.weekend { background: var(--weekend-bg); opacity: 0.55; cursor: not-allowed; }
     .day-card.weekend:hover { transform: none; box-shadow: none; border-color: var(--border); }
-    .day-card.holiday { background: rgba(180, 83, 9, 0.14); border-color: rgba(180, 83, 9, 0.5); }
-    
-    .day-card.today {
+    .day-card.holiday {
+      background: rgba(245, 158, 11, 0.28);
+      border: 2px solid #f59e0b;
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.18), inset 0 0 12px rgba(245, 158, 11, 0.16);
+    }
+    .day-card.holiday.weekend { opacity: 1; }
+    .day-card.holiday .day-num { color: #f59e0b; font-weight: 800; }
+    .holiday-badge-mini {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: #f59e0b;
+      color: #111827;
+      font-size: 0.58rem;
+      font-weight: 800;
+      line-height: 1;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+.day-card.today {
       border: 2px solid var(--accent);
       background: linear-gradient(135deg, var(--card-hover) 0%, var(--accent-soft) 100%);
       z-index: 2;
     }
 
     .day-num { font-weight: 700; font-size: 0.75rem; margin-bottom: 1px; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
-    
+
     .halves-container {
       display: flex; flex-direction: column; gap: 2px; flex-grow: 1;
     }
@@ -497,18 +517,32 @@
       box-shadow: var(--shadow-sm);
     }
     .team-subnav button.active { background: var(--accent); color: var(--accent-contrast); font-weight: 700; border-color: var(--accent); }
-    
+
     .team-table-wrapper { background: transparent; border: none; padding: 0; box-shadow: none; overflow-x: auto; }
     .month-section { margin-bottom: 15px; }
     .month-section-title { font-size: 0.95rem; font-weight: 700; color: var(--text); text-transform: capitalize; margin-bottom: 6px; }
-    
+
     table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
     th, td { border: 1px solid var(--border-soft); padding: 4px 2px; text-align: center; min-width: 30px; color: var(--text); vertical-align: middle; }
     th { background: var(--input-bg); color: var(--text-muted); font-weight: 700; font-size: 0.68rem; text-transform: uppercase; }
     th.weekend-header, td.weekend-cell { background: var(--weekend-bg); color: var(--text-dim); }
-    th.holiday-header, td.holiday-cell { background: rgba(180, 83, 9, 0.16); color: var(--text); }
-    
-    th.today-header { background: var(--accent); color: #fff; font-weight: bold; border: 2px solid var(--accent); }
+    th.holiday-header, td.holiday-cell {
+      background: rgba(245, 158, 11, 0.30);
+      color: var(--text);
+      border: 2px solid #f59e0b;
+      box-shadow: inset 0 0 8px rgba(245, 158, 11, 0.18);
+    }
+    th.holiday-header { color: #f59e0b; font-weight: 800; }
+    .holiday-header-label {
+      display: block;
+      margin-top: 1px;
+      font-size: 0.48rem;
+      line-height: 1;
+      color: #f59e0b;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+th.today-header { background: var(--accent); color: #fff; font-weight: bold; border: 2px solid var(--accent); }
     td.today-cell { background: var(--accent-soft); border: 2px solid var(--accent); }
 
     .member-col { text-align: left; padding-left: 8px; font-weight: 700; min-width: 140px; position: sticky; left: 0; background: var(--card); z-index: 2; font-size: 0.8rem; }
@@ -753,7 +787,7 @@
 
       <div class="form-box" style="max-width: 720px; text-align: left; margin: 4px auto; padding: 8px 12px; zoom: 1.4;">
         <h2 style="margin: 0 0 4px 0; font-size: 0.95rem;">📅 Bilan Annuel (<span id="annual-report-year-title"></span>) — <span id="annual-report-user-name" style="color: var(--accent);"></span></h2>
-        
+
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px;">
           <div style="background: var(--bg); padding: 4px; border-radius: 4px; border: 1px solid var(--border); text-align: center;">
             <div style="font-size: 0.58rem; color: var(--text-muted); margin-bottom: 1px;">JDR</div>
@@ -867,11 +901,11 @@
 
   const BASE_TEAM_MEMBERS = [];
 
-  let currentUser = null; 
+  let currentUser = null;
   let currentDate = new Date();
   let calendarData = {};
-  let usersPins = {}; 
-  let customMembers = []; 
+  let usersPins = {};
+  let customMembers = [];
   let ALL_MEMBERS = [];
   let selectedTool = 'CA';
   let teamViewMonths = 1;
@@ -905,14 +939,14 @@
     const currentDayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1;
     const currentMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - currentDayOfWeek);
     currentMonday.setHours(0,0,0,0);
-    
+
     const nextSunday = new Date(currentMonday);
     nextSunday.setDate(currentMonday.getDate() + 13);
     nextSunday.setHours(23,59,59,999);
-    
+
     const target = new Date(dateObj);
     target.setHours(12,0,0,0);
-    
+
     return target >= currentMonday && target <= nextSunday;
   }
 
@@ -941,7 +975,7 @@
     const m = Math.floor((a + 11 * h + 22 * l) / 451);
     const month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
     const day = ((h + l - 7 * m + 114) % 31) + 1;
-    
+
     const easter = new Date(year, month, day);
     const easterMonday = new Date(easter);
     easterMonday.setDate(easter.getDate() + 1);
@@ -1024,7 +1058,7 @@
   }
 
   let savedTheme = 'dark';
-  try { 
+  try {
     const stored = localStorage.getItem('theme_preference');
     if (stored === 'light') savedTheme = stored;
   } catch (e) {}
@@ -1106,7 +1140,7 @@
   function setStatus(dateKey, user, tool, slot = null) {
     if (!calendarData[dateKey]) calendarData[dateKey] = {};
     let current = calendarData[dateKey][user];
-    
+
     if (slot !== null) {
       let obj = {};
       if (typeof current === 'object' && current !== null) {
@@ -1280,7 +1314,7 @@
 
   function loginSuccess(name) {
     currentUser = name;
-    document.getElementById('login-pin').value = ''; 
+    document.getElementById('login-pin').value = '';
     const userObj = ALL_MEMBERS.find(m => m.firstName === name);
     let greetingHtml = `Bonjour, ${currentUser}`;
     if (userObj && userObj.isManager) greetingHtml += ` <span class="manager-badge">Manager</span>`;
@@ -1288,7 +1322,7 @@
     document.getElementById('main-header').style.display = 'flex';
     document.getElementById('main-tabs').style.display = 'flex';
     document.getElementById('header-greeting').innerHTML = greetingHtml;
-    document.getElementById('btn-back-login').style.display = 'none'; 
+    document.getElementById('btn-back-login').style.display = 'none';
     document.getElementById('btn-back-login-kpi').style.display = 'none';
 
     document.getElementById('tab-personal').style.display = 'block';
@@ -1343,7 +1377,7 @@
     document.getElementById('main-header').style.display = 'flex';
     document.getElementById('main-tabs').style.display = 'flex';
     document.getElementById('header-greeting').textContent = `Accès Public`;
-    document.getElementById('btn-back-login').style.display = 'inline-block'; 
+    document.getElementById('btn-back-login').style.display = 'inline-block';
     document.getElementById('btn-back-login-kpi').style.display = 'inline-block';
 
     document.getElementById('tab-personal').style.display = 'none';
@@ -1447,7 +1481,7 @@
 
     const showNav = (viewId === 'view-personal' || viewId === 'view-team');
     document.getElementById('month-nav').style.display = showNav ? 'flex' : 'none';
-    
+
     if (showNav || viewId === 'view-kpi') renderViews();
     if (viewId === 'view-presence') renderTeamPresence();
     if (viewId === 'view-settings') renderSettingsView();
@@ -1787,7 +1821,7 @@
 
   function renderKPICharts() {
     if (!document.getElementById('view-kpi').classList.contains('active')) return;
-    
+
     const year = document.getElementById('kpi-year').value;
     const month = document.getElementById('kpi-month').value;
     const pitFilter = document.getElementById('kpi-pit-filter').value;
@@ -1907,7 +1941,6 @@
     const container = document.getElementById('personal-grids-container');
     container.innerHTML = '';
 
-    const holidays = getFrenchPublicHolidays(year);
     let monthsToRender = 1;
     let containerClass = 'personal-grids-container';
 
@@ -1928,6 +1961,7 @@
       let mYear = targetDate.getFullYear();
       let mMonth = targetDate.getMonth();
 
+      const holidays = getFrenchPublicHolidays(mYear);
       const monthSection = document.createElement('div');
       monthSection.className = 'month-section';
 
@@ -2107,12 +2141,18 @@
         const th = document.createElement('th');
         th.textContent = d;
         if (isWeekend) th.classList.add('weekend-header');
-        if (isHoliday) th.classList.add('holiday-header');
+        if (isHoliday) {
+          th.classList.add('holiday-header');
+          const holidayLabel = document.createElement('span');
+          holidayLabel.className = 'holiday-header-label';
+          holidayLabel.textContent = 'F';
+          th.appendChild(holidayLabel);
+        }
         if (isTodayDate) th.classList.add('today-header');
 
         headerRow.appendChild(th);
       }
-      
+
       thead.appendChild(headerRow);
       table.appendChild(thead);
 
@@ -2156,7 +2196,7 @@
                 const halfDiv = document.createElement('div');
                 halfDiv.className = 'day-half';
                 const st = getStatus(dateKey, member.firstName, slot);
-                
+
                 if (st !== 'PRESENT') {
                   halfDiv.classList.add(`bg-${st}`);
                   halfDiv.textContent = st; // Affichage complet ou abrégé selon l'espace
@@ -2169,7 +2209,7 @@
               });
               td.appendChild(halvesCont);
               td.style.padding = '1px'; // Réduction du padding du td parent
-              
+
             } else {
               // Gestion journée entière standard
               const st = getStatus(dateKey, member.firstName);
