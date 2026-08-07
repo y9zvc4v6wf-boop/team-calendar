@@ -2823,6 +2823,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   function renderTeamCalendar(year, month) {
     const container = document.getElementById('team-table-container');
     container.innerHTML = '';
+    container.classList.toggle('team-three-months', teamViewMonths === 3);
 
     let membersToDisplay = ALL_MEMBERS;
     if (selectedPit !== 'ALL') {
@@ -3059,6 +3060,117 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     requestAnimationFrame(() => requestAnimationFrame(resizeAnnualDestinationChart));
   })();
 </script>
+
+
+<style id="page-zoom-connexion-bilan">
+  /* Zoom léger limité à la page de connexion et au Bilan Annuel */
+  #view-login > .form-box {
+    zoom: 1.10;
+  }
+
+  #view-annual > .form-box {
+    zoom: 1.10 !important;
+    transform-origin: top center;
+  }
+
+  /* Conserve la largeur disponible malgré le zoom du Bilan Annuel */
+  #view-annual > .form-box {
+    width: calc(100% / 1.10) !important;
+    max-width: calc(100% / 1.10) !important;
+  }
+</style>
+
+
+<style id="bilan-table-team-3m-enhancements">
+  /* Chiffres plus lisibles dans le tableau du Bilan Annuel */
+  #view-annual #annual-detail-tbody td:not(:first-child) {
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+  }
+
+  #view-annual #annual-detail-tbody td:first-child {
+    font-size: 0.70rem !important;
+  }
+
+  /* Séparation renforcée uniquement dans Vue Équipe en mode 3 mois */
+  #team-table-container.team-three-months {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  #team-table-container.team-three-months > .month-section {
+    margin-bottom: 0 !important;
+    padding: 10px;
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    background: var(--card);
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.16), var(--shadow-md);
+  }
+
+  #team-table-container.team-three-months .month-section-title {
+    margin: -10px -10px 9px !important;
+    padding: 8px 12px;
+    border-bottom: 2px solid #3b82f6;
+    border-radius: 10px 10px 0 0;
+    background: linear-gradient(90deg, var(--accent-soft), transparent);
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 800;
+  }
+</style>
+
+
+<style id="calendar-blue-outline-all-views">
+  /* Liseré bleu complet dans Vue Équipe, en 1 mois comme en 3 mois */
+  #team-table-container > .month-section {
+    padding: 10px;
+    border: 2px solid #3b82f6 !important;
+    border-radius: 12px;
+    background: var(--card);
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.16), var(--shadow-md);
+  }
+
+  #team-table-container > .month-section > .month-section-title {
+    margin: -10px -10px 9px !important;
+    padding: 8px 12px;
+    border-bottom: 2px solid #3b82f6;
+    border-radius: 10px 10px 0 0;
+    background: linear-gradient(90deg, var(--accent-soft), transparent);
+    font-weight: 800;
+  }
+
+  /* Même liseré dans Mon Calendrier : vues 1 mois, 3 mois et Annuel */
+  #personal-grids-container > .month-section {
+    padding: 8px !important;
+    border: 2px solid #3b82f6 !important;
+    border-radius: 12px !important;
+    background: var(--card);
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.16), var(--shadow-md);
+  }
+
+  #personal-grids-container > .month-section > .month-section-title {
+    margin: -8px -8px 7px !important;
+    padding: 6px 10px;
+    border-bottom: 2px solid #3b82f6;
+    border-radius: 10px 10px 0 0;
+    background: linear-gradient(90deg, var(--accent-soft), transparent);
+    font-weight: 800;
+  }
+
+  /* Conserve un format compact pour les vues multi-mois */
+  #personal-grids-container.personal-multi-container > .month-section {
+    padding: 6px !important;
+    border-radius: 9px !important;
+  }
+
+  #personal-grids-container.personal-multi-container > .month-section > .month-section-title {
+    margin: -6px -6px 5px !important;
+    padding: 4px 7px;
+    border-radius: 7px 7px 0 0;
+  }
+</style>
 
 </body>
 </html>
