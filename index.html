@@ -3022,6 +3022,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
                 halfDiv.className = 'day-half';
                 halfDiv.dataset.brushDate = dateKey;
                 halfDiv.dataset.brushSlot = slot;
+                halfDiv.dataset.calendarTooltip = 'true';
+                halfDiv.dataset.tooltipDate = dateKey;
+                halfDiv.dataset.tooltipUser = currentUser;
+                halfDiv.dataset.tooltipSlot = slot;
                 const st = getStatus(dateKey, currentUser, slot);
                 if (st !== 'PRESENT') {
                   halfDiv.classList.add(`bg-${st}`);
@@ -3050,6 +3054,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
                 cell.appendChild(badge);
               }
               cell.dataset.brushDate = dateKey;
+              cell.dataset.calendarTooltip = 'true';
+              cell.dataset.tooltipDate = dateKey;
+              cell.dataset.tooltipUser = currentUser;
+              cell.dataset.tooltipSlot = '';
               cell.onclick = () => {
                 if (!setStatus(dateKey, currentUser, selectedTool)) return;
                 savePlanningAndSecondaryData();
@@ -3193,6 +3201,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
               ['am', 'pm'].forEach(slot => {
                 const halfDiv = document.createElement('div');
                 halfDiv.className = 'day-half';
+                halfDiv.dataset.calendarTooltip = 'true';
+                halfDiv.dataset.tooltipDate = dateKey;
+                halfDiv.dataset.tooltipUser = member.firstName;
+                halfDiv.dataset.tooltipSlot = slot;
                 const st = getStatus(dateKey, member.firstName, slot);
 
                 if (st !== 'PRESENT') {
@@ -3210,6 +3222,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
             } else {
               // Gestion journée entière standard
+              td.dataset.calendarTooltip = 'true';
+              td.dataset.tooltipDate = dateKey;
+              td.dataset.tooltipUser = member.firstName;
+              td.dataset.tooltipSlot = '';
               const st = getStatus(dateKey, member.firstName);
               if (st !== 'PRESENT') {
                 td.classList.add(`bg-${st}`);
@@ -3806,6 +3822,208 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-size: .38rem !important;
   }
 </style>
+
+
+<style id="calendar-hover-tooltip-styles">
+  #calendar-hover-tooltip {
+    position: fixed;
+    z-index: 5000;
+    display: none;
+    width: max-content;
+    min-width: 225px;
+    max-width: min(340px, calc(100vw - 20px));
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--text);
+    box-shadow: var(--shadow-lg);
+    pointer-events: none;
+    text-align: left;
+    font-size: .72rem;
+    line-height: 1.35;
+    opacity: 0;
+    transform: translateY(3px);
+    transition: opacity .12s ease, transform .12s ease;
+  }
+  #calendar-hover-tooltip.visible {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .calendar-tooltip-date {
+    margin-bottom: 7px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text);
+    font-size: .78rem;
+    font-weight: 800;
+    text-transform: capitalize;
+  }
+  .calendar-tooltip-row {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 7px;
+    margin-top: 4px;
+  }
+  .calendar-tooltip-label { color: var(--text-muted); font-weight: 700; }
+  .calendar-tooltip-value { color: var(--text); font-weight: 700; overflow-wrap: anywhere; }
+  .calendar-tooltip-colleagues {
+    margin-top: 7px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .calendar-tooltip-colleagues-title { color: var(--text-muted); font-weight: 700; }
+  .calendar-tooltip-colleagues-list { margin-top: 3px; color: var(--text); font-weight: 650; }
+</style>
+<div id="calendar-hover-tooltip" role="tooltip" aria-hidden="true"></div>
+<script id="calendar-hover-tooltip-script">
+(function () {
+  const SECONDARY_CODE_LABELS = {
+    VSM: 'Value Stream Mapping',
+    WKS: 'Workshop',
+    PRJ: 'Projet',
+    SPU: 'Support usine',
+    FOR: 'Formation',
+    VFO: 'Visite fournisseur',
+    VMA: 'Visite managers',
+    RSX: 'Réseaux'
+  };
+  const tooltip = document.getElementById('calendar-hover-tooltip');
+  let activeTarget = null;
+  let showTimer = null;
+
+  function escapeTooltipHtml(value) {
+    return String(value ?? '').replace(/[&<>'"]/g, character => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
+    })[character]);
+  }
+
+  function statusForTooltip(dateKey, firstName, slot) {
+    const value = calendarData?.[dateKey]?.[firstName];
+    if (!value) return 'PRESENT';
+    if (typeof value === 'string') return value;
+    if (slot) return value[slot] || 'PRESENT';
+    if (value.am === value.pm) return value.am || 'PRESENT';
+    return [value.am || 'PRESENT', value.pm || 'PRESENT'];
+  }
+
+  function secondaryForTooltip(dateKey, firstName, slot) {
+    const value = secondaryCodesData?.[dateKey]?.[firstName];
+    if (!value) return null;
+    if (typeof value === 'string') return value;
+    return slot ? (value[slot] || null) : (value.am === value.pm ? value.am : null);
+  }
+
+  function colleaguesForTooltip(dateKey, destination, firstName, slot) {
+    if (!DISPLACEMENT_CODES.includes(destination)) return [];
+    return ALL_MEMBERS.filter(member => {
+      if (member.firstName === firstName) return false;
+      const value = calendarData?.[dateKey]?.[member.firstName];
+      if (!value) return false;
+      if (slot) {
+        if (typeof value === 'string') return value === destination;
+        return value[slot] === destination;
+      }
+      if (typeof value === 'string') return value === destination;
+      return value.am === destination || value.pm === destination;
+    }).map(member => `${member.firstName} ${member.lastName}`);
+  }
+
+  function formatTooltipDate(dateKey) {
+    const [year, month, day] = dateKey.split('-').map(Number);
+    return new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
+      .format(new Date(year, month - 1, day));
+  }
+
+  function makeTooltipContent(target) {
+    const dateKey = target.dataset.tooltipDate;
+    const firstName = target.dataset.tooltipUser;
+    const slot = target.dataset.tooltipSlot || null;
+    if (!dateKey || !firstName) return null;
+    const status = statusForTooltip(dateKey, firstName, slot);
+    const displayStatus = Array.isArray(status)
+      ? `Matin : ${status[0]} · Après-midi : ${status[1]}`
+      : (status === 'PRESENT' ? 'Bureau' : status);
+    const secondary = Array.isArray(status) ? null : secondaryForTooltip(dateKey, firstName, slot);
+    const secondaryText = secondary
+      ? `${secondary} : ${SECONDARY_CODE_LABELS[secondary] || secondary}`
+      : 'Non renseigné';
+    const destination = Array.isArray(status) ? null : status;
+    const colleagues = destination ? colleaguesForTooltip(dateKey, destination, firstName, slot) : [];
+    const slotText = slot === 'am' ? 'Matin' : slot === 'pm' ? 'Après-midi' : 'Journée';
+    const colleagueText = colleagues.length
+      ? colleagues.map(escapeTooltipHtml).join(', ')
+      : 'Personne d’autre sur cette destination';
+    return `
+      <div class="calendar-tooltip-date">${escapeTooltipHtml(formatTooltipDate(dateKey))}</div>
+      <div class="calendar-tooltip-row"><span class="calendar-tooltip-label">Personne</span><span class="calendar-tooltip-value">${escapeTooltipHtml(firstName)}</span></div>
+      <div class="calendar-tooltip-row"><span class="calendar-tooltip-label">Créneau</span><span class="calendar-tooltip-value">${escapeTooltipHtml(slotText)}</span></div>
+      <div class="calendar-tooltip-row"><span class="calendar-tooltip-label">Type de jour</span><span class="calendar-tooltip-value">${escapeTooltipHtml(displayStatus)}</span></div>
+      <div class="calendar-tooltip-row"><span class="calendar-tooltip-label">Code secondaire</span><span class="calendar-tooltip-value">${escapeTooltipHtml(secondaryText)}</span></div>
+      <div class="calendar-tooltip-colleagues">
+        <div class="calendar-tooltip-colleagues-title">Même destination</div>
+        <div class="calendar-tooltip-colleagues-list">${colleagueText}</div>
+      </div>`;
+  }
+
+  function positionTooltip(clientX, clientY) {
+    const margin = 10;
+    const offset = 14;
+    tooltip.style.left = '0px';
+    tooltip.style.top = '0px';
+    const rect = tooltip.getBoundingClientRect();
+    let left = clientX + offset;
+    let top = clientY + offset;
+    if (left + rect.width + margin > window.innerWidth) left = clientX - rect.width - offset;
+    if (top + rect.height + margin > window.innerHeight) top = clientY - rect.height - offset;
+    tooltip.style.left = `${Math.max(margin, left)}px`;
+    tooltip.style.top = `${Math.max(margin, top)}px`;
+  }
+
+  function showTooltip(target, clientX, clientY) {
+    const content = makeTooltipContent(target);
+    if (!content) return;
+    activeTarget = target;
+    tooltip.innerHTML = content;
+    tooltip.classList.add('visible');
+    tooltip.setAttribute('aria-hidden', 'false');
+    positionTooltip(clientX, clientY);
+  }
+
+  function hideTooltip() {
+    clearTimeout(showTimer);
+    activeTarget = null;
+    tooltip.classList.remove('visible');
+    tooltip.setAttribute('aria-hidden', 'true');
+  }
+
+  document.addEventListener('mouseover', event => {
+    const target = event.target.closest('[data-calendar-tooltip="true"]');
+    if (!target || target === activeTarget) return;
+    clearTimeout(showTimer);
+    showTimer = setTimeout(() => showTooltip(target, event.clientX, event.clientY), 180);
+  });
+
+  document.addEventListener('mousemove', event => {
+    if (activeTarget) positionTooltip(event.clientX, event.clientY);
+  });
+
+  document.addEventListener('mouseout', event => {
+    const target = event.target.closest('[data-calendar-tooltip="true"]');
+    if (!target) return;
+    const next = event.relatedTarget && event.relatedTarget.closest
+      ? event.relatedTarget.closest('[data-calendar-tooltip="true"]')
+      : null;
+    if (next === target) return;
+    hideTooltip();
+  });
+
+  document.addEventListener('pointerdown', hideTooltip, true);
+  window.addEventListener('scroll', hideTooltip, true);
+  window.addEventListener('blur', hideTooltip);
+})();
+</script>
 
 </body>
 </html>
