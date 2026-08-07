@@ -1132,6 +1132,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
         <div class="toolbar">
           <span>Sélectionner le type de jour à appliquer :</span>
+          <button type="button" id="brush-mode-toggle" class="brush-mode-toggle" onclick="toggleBrushMode()" aria-pressed="false" title="Maintenir le clic et glisser pour remplir plusieurs cases">🖌️ Pinceau : OFF</button>
           <button class="tool-btn tool-CA active" data-status="CA">CA</button>
           <button class="tool-btn tool-JDR" data-status="JDR">JDR</button>
           <button class="tool-btn tool-Formation" data-status="Formation">Formation</button>
@@ -1353,6 +1354,12 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   let ALL_MEMBERS = [];
   const legacyNameMappings = {};
   let selectedTool = 'CA';
+  let brushModeEnabled = false;
+  let brushDragging = false;
+  let brushHasChanges = false;
+  let brushLastPaintKey = null;
+  let brushLastTravelContext = null;
+  const brushTouchedCells = new Set();
   let teamViewMonths = 1;
   let personalViewMonths = 1;
   let selectedPit = 'ALL';
@@ -2053,6 +2060,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     if(viewId === 'view-personal') document.getElementById('tab-personal').classList.add('active');
+    document.getElementById('view-personal').classList.toggle('brush-mode-active', brushModeEnabled);
     if(viewId === 'view-team') document.getElementById('tab-team').classList.add('active');
     if(viewId === 'view-annual') document.getElementById('tab-annual').classList.add('active');
     if(viewId === 'view-kpi') document.getElementById('tab-kpi').classList.add('active');
@@ -2116,6 +2124,114 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       e.target.classList.add('active');
       selectedTool = e.target.getAttribute('data-status');
     };
+  });
+
+  function toggleBrushMode() {
+    brushModeEnabled = !brushModeEnabled;
+    const button = document.getElementById('brush-mode-toggle');
+    const personalView = document.getElementById('view-personal');
+    if (button) {
+      button.classList.toggle('active', brushModeEnabled);
+      button.setAttribute('aria-pressed', String(brushModeEnabled));
+      button.textContent = brushModeEnabled ? '🖌️ Pinceau : ON' : '🖌️ Pinceau : OFF';
+    }
+    if (personalView) personalView.classList.toggle('brush-mode-active', brushModeEnabled);
+    if (!brushModeEnabled) finishBrushStroke();
+  }
+
+  function getBrushTarget(element) {
+    if (!brushModeEnabled || !element) return null;
+    return element.closest('#view-personal [data-brush-date]');
+  }
+
+  function paintWithBrush(target) {
+    if (!target || !currentUser) return;
+    const dateKey = target.dataset.brushDate;
+    const slot = target.dataset.brushSlot || null;
+    const paintKey = `${dateKey}|${slot || 'day'}`;
+    if (brushTouchedCells.has(paintKey)) return;
+
+    brushTouchedCells.add(paintKey);
+    brushLastPaintKey = paintKey;
+    setStatus(dateKey, currentUser, selectedTool, slot);
+    target.classList.add('brush-painted-preview');
+    brushHasChanges = true;
+
+    if (['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM'].includes(selectedTool)) {
+      brushLastTravelContext = { dateKey, destination: selectedTool, slot };
+    }
+  }
+
+  function saveBrushChanges() {
+    if (!brushHasChanges) return;
+    if (db) db.ref('planning').set(calendarData);
+    else localStorage.setItem('team_calendar_data', JSON.stringify(calendarData));
+  }
+
+  function finishBrushStroke() {
+    if (!brushDragging && !brushHasChanges) return;
+    brushDragging = false;
+    saveBrushChanges();
+
+    const travelContext = brushLastTravelContext;
+    const hadChanges = brushHasChanges;
+    brushHasChanges = false;
+    brushLastPaintKey = null;
+    brushLastTravelContext = null;
+    brushTouchedCells.clear();
+
+    if (hadChanges) {
+      renderPersonalCalendar(currentDate.getFullYear(), currentDate.getMonth());
+      if (travelContext) {
+        notifySameDestination(travelContext.dateKey, travelContext.destination, currentUser, travelContext.slot);
+      }
+    }
+  }
+
+  document.addEventListener('pointerdown', event => {
+    const target = getBrushTarget(event.target);
+    if (!target || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    brushDragging = true;
+    brushHasChanges = false;
+    brushLastPaintKey = null;
+    brushLastTravelContext = null;
+    brushTouchedCells.clear();
+    paintWithBrush(target);
+  }, true);
+
+  document.addEventListener('pointermove', event => {
+    if (!brushModeEnabled || !brushDragging) return;
+    event.preventDefault();
+    const elementUnderPointer = document.elementFromPoint(event.clientX, event.clientY);
+    const target = getBrushTarget(elementUnderPointer);
+    if (!target) return;
+    paintWithBrush(target);
+  }, { capture: true, passive: false });
+
+  document.addEventListener('pointerup', event => {
+    if (!brushModeEnabled || !brushDragging) return;
+    event.preventDefault();
+    finishBrushStroke();
+  }, true);
+
+  document.addEventListener('pointercancel', () => {
+    if (brushDragging) finishBrushStroke();
+  }, true);
+
+  document.addEventListener('click', event => {
+    if (!brushModeEnabled || !getBrushTarget(event.target)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }, true);
+
+  window.addEventListener('blur', () => {
+    if (brushDragging) finishBrushStroke();
+  });
+
+  document.getElementById('view-personal').addEventListener('dragstart', event => {
+    if (brushModeEnabled) event.preventDefault();
   });
 
   function exportPlanningToExcel() {
@@ -2757,6 +2873,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
               ['am', 'pm'].forEach(slot => {
                 const halfDiv = document.createElement('div');
                 halfDiv.className = 'day-half';
+                halfDiv.dataset.brushDate = dateKey;
+                halfDiv.dataset.brushSlot = slot;
                 const st = getStatus(dateKey, currentUser, slot);
                 if (st !== 'PRESENT') {
                   halfDiv.classList.add(`bg-${st}`);
@@ -2787,6 +2905,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
                 if (st === 'Formation') badge.classList.add('formation-short-label');
                 cell.appendChild(badge);
               }
+              cell.dataset.brushDate = dateKey;
               cell.onclick = () => {
                 setStatus(dateKey, currentUser, selectedTool);
                 if (db) db.ref('planning').set(calendarData);
@@ -3169,6 +3288,46 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin: -6px -6px 5px !important;
     padding: 4px 7px;
     border-radius: 7px 7px 0 0;
+  }
+</style>
+
+
+<style id="brush-mode-styles">
+  #brush-mode-toggle {
+    margin-right: 6px;
+    padding: 5px 10px;
+    border: 2px solid var(--accent);
+    background: var(--input-bg);
+    color: var(--accent-hover);
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+  }
+
+  #brush-mode-toggle.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow-sm);
+  }
+
+  #view-personal.brush-mode-active .day-card:not(.weekend),
+  #view-personal.brush-mode-active .day-half {
+    cursor: crosshair !important;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    -webkit-user-drag: none;
+  }
+
+  #view-personal.brush-mode-active .brush-painted-preview {
+    outline: 3px solid var(--accent) !important;
+    outline-offset: -3px;
+    box-shadow: inset 0 0 0 2px var(--accent-soft), var(--shadow-sm) !important;
+  }
+
+  #view-personal.brush-mode-active .day-card:not(.weekend):hover,
+  #view-personal.brush-mode-active .day-half:hover {
+    border-color: var(--accent) !important;
   }
 </style>
 
