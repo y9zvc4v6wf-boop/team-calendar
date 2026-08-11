@@ -5223,9 +5223,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   'use strict';
   const SESSION_KEY = 'planning_remembered_session';
   const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
-  const SESSION_VERSION = 1;
+  const SESSION_VERSION = 2;
+  const DATA_WAIT_LIMIT_MS = 20000;
   let automaticLoginInProgress = false;
   let automaticLoginCompleted = false;
+  let startupStartedAt = Date.now();
 
   function credentialFingerprint(value) {
     const source = JSON.stringify(value || null);
@@ -5242,14 +5244,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       const raw = localStorage.getItem(SESSION_KEY);
       if (!raw) return null;
       const session = JSON.parse(raw);
-      if (!session || session.version !== SESSION_VERSION || !session.user || !Number.isFinite(session.expiresAt)) {
+      if (!session || !session.user || !Number.isFinite(session.expiresAt)) {
         localStorage.removeItem(SESSION_KEY);
         return null;
       }
       return session;
     } catch (error) {
       console.error('[Session locale] Lecture impossible', error);
-      try { localStorage.removeItem(SESSION_KEY); } catch (ignored) {}
       return null;
     }
   }
@@ -5263,15 +5264,24 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   function saveRememberedSession(userName) {
     const protectedCredential = usersPins?.[userName];
-    if (!protectedCredential) return;
+    if (!protectedCredential) {
+      console.error('[Session locale] PIN protégé indisponible au moment de créer la session');
+      return;
+    }
     const session = {
       user: userName,
       expiresAt: Date.now() + SESSION_DURATION_MS,
       version: SESSION_VERSION,
       credentialFingerprint: credentialFingerprint(protectedCredential)
     };
-    try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); }
-    catch (error) { console.error('[Session locale] Enregistrement impossible', error); }
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      const saved = localStorage.getItem(SESSION_KEY);
+      if (!saved) throw new Error('La session locale n’a pas été conservée');
+    } catch (error) {
+      console.error('[Session locale] Enregistrement impossible', error);
+      alert('La connexion automatique n’a pas pu être activée dans ce navigateur.');
+    }
   }
 
   function formatExpiry(expiresAt) {
@@ -5280,30 +5290,38 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }).format(new Date(expiresAt));
   }
 
-  function sessionIsValid(session) {
-    if (!session || session.expiresAt <= Date.now()) return false;
-    const memberExists = ALL_MEMBERS.some(member => member.firstName === session.user);
+  function getSessionState(session) {
+    if (!session) return 'missing';
+    if (session.expiresAt <= Date.now()) return 'expired';
     const protectedCredential = usersPins?.[session.user];
-    if (!memberExists || !protectedCredential) return false;
-    return session.credentialFingerprint === credentialFingerprint(protectedCredential);
+    const membersReady = Array.isArray(ALL_MEMBERS) && ALL_MEMBERS.length > 0;
+    if (!membersReady || !protectedCredential) return 'waiting';
+    const memberExists = ALL_MEMBERS.some(member => member.firstName === session.user);
+    if (!memberExists) return 'invalid';
+    if (session.credentialFingerprint !== credentialFingerprint(protectedCredential)) return 'invalid';
+    return 'valid';
   }
 
   function tryAutomaticLogin() {
     if (automaticLoginCompleted || automaticLoginInProgress || currentUser) return;
     const session = readRememberedSession();
     if (!session) return;
-    if (!sessionIsValid(session)) {
+    const state = getSessionState(session);
+    if (state === 'waiting') {
+      if (Date.now() - startupStartedAt < DATA_WAIT_LIMIT_MS) return;
+      console.error('[Session locale] Les données Firebase nécessaires ne sont pas arrivées');
+      return;
+    }
+    if (state === 'expired' || state === 'invalid') {
       clearRememberedSession();
       automaticLoginCompleted = true;
       return;
     }
+    if (state !== 'valid') return;
     automaticLoginInProgress = true;
     automaticLoginCompleted = true;
-    try {
-      loginSuccess(session.user);
-    } finally {
-      automaticLoginInProgress = false;
-    }
+    try { loginSuccess(session.user); }
+    finally { automaticLoginInProgress = false; }
   }
 
   function renderRememberedDevicePanel() {
@@ -5313,7 +5331,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     const panel = document.createElement('div');
     panel.className = 'remember-device-panel';
     const session = readRememberedSession();
-    if (session && sessionIsValid(session) && session.user === currentUser) {
+    const state = getSessionState(session);
+    if (session && (state === 'valid' || state === 'waiting') && session.user === currentUser) {
       panel.innerHTML = `<h3>📱 Session sur cet appareil</h3><p>Connexion automatique active jusqu’au ${formatExpiry(session.expiresAt)}. Le PIN n’est pas enregistré sur l’appareil.</p><button type="button" class="btn-secondary" id="forget-this-device">Oublier cet appareil</button>`;
       panel.querySelector('#forget-this-device').addEventListener('click', () => {
         clearRememberedSession();
@@ -5328,9 +5347,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   const originalLoginSuccess = window.loginSuccess;
   window.loginSuccess = function (name) {
     const result = originalLoginSuccess.apply(this, arguments);
-    if (!automaticLoginInProgress && document.getElementById('remember-session-week')?.checked) {
-      saveRememberedSession(name);
-    }
+    if (!automaticLoginInProgress && document.getElementById('remember-session-week')?.checked) saveRememberedSession(name);
     renderRememberedDevicePanel();
     return result;
   };
@@ -5339,13 +5356,15 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   window.logout = function () {
     clearRememberedSession();
     automaticLoginCompleted = false;
+    startupStartedAt = Date.now();
     return originalLogout.apply(this, arguments);
   };
 
   const originalChangePin = window.changePin;
   window.changePin = async function () {
+    const result = await originalChangePin.apply(this, arguments);
     clearRememberedSession();
-    return await originalChangePin.apply(this, arguments);
+    return result;
   };
 
   const originalDeleteMyAccount = window.deleteMyAccount;
@@ -5364,20 +5383,20 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   const originalUpdateAllMembersList = window.updateAllMembersList;
   window.updateAllMembersList = function () {
     const result = originalUpdateAllMembersList.apply(this, arguments);
-    queueMicrotask(tryAutomaticLogin);
+    setTimeout(tryAutomaticLogin, 0);
     return result;
   };
 
   window.forgetRememberedSession = clearRememberedSession;
 
-  // Firebase may deliver profiles and protected PINs in either order.
   const startupProbe = window.setInterval(() => {
     tryAutomaticLogin();
     if (automaticLoginCompleted || currentUser || !readRememberedSession()) window.clearInterval(startupProbe);
-  }, 250);
-  window.setTimeout(() => window.clearInterval(startupProbe), 10000);
+  }, 300);
+  window.setTimeout(() => window.clearInterval(startupProbe), DATA_WAIT_LIMIT_MS + 1000);
 
   window.addEventListener('load', () => {
+    startupStartedAt = Date.now();
     const checkbox = document.getElementById('remember-session-week');
     if (checkbox) checkbox.checked = false;
     tryAutomaticLogin();
