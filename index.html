@@ -5907,199 +5907,196 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 </style>
 
 
-<style id="iphone-presence-one-screen-layout">
+<style id="iphone-calendar-final-repair">
   @media (display-mode: standalone) and (max-width:430px) and (orientation:portrait) {
-    body:has(#view-presence.active) {
-      height:100dvh !important;
-      min-height:100dvh !important;
-      overflow:hidden !important;
+    /* The active calendar view must never inherit clipping from the rounded iPhone shell. */
+    body:has(#view-personal.active) {
+      overflow-x:hidden !important;
+      overflow-y:auto !important;
     }
-    body:has(#view-presence.active) .container {
-      height:calc(100dvh - var(--iphone-top-inset) - var(--iphone-bottom-inset) - 78px) !important;
-      min-height:0 !important;
-      overflow:hidden !important;
+    body:has(#view-personal.active) .container {
+      overflow:visible !important;
+      border-radius:0 !important;
     }
-    body:has(#view-presence.active) #main-header {
-      margin-bottom:5px !important;
-      padding:6px 9px !important;
-      min-height:38px !important;
-    }
-    body:has(#view-presence.active) #main-header .user-greeting { font-size:.68rem !important; }
-    body:has(#view-presence.active) #main-header button { min-height:30px !important; padding:4px 7px !important; }
-    #view-presence.view.active {
+    #view-personal,
+    #view-personal.view.active {
       display:block !important;
-      height:calc(100% - 45px) !important;
-      min-height:0 !important;
-      overflow:hidden !important;
-    }
-    #view-presence .form-box {
-      display:flex !important;
-      flex-direction:column !important;
-      height:100% !important;
-      min-height:0 !important;
-      margin:0 !important;
-      padding:6px !important;
-      overflow:hidden !important;
-      box-sizing:border-box !important;
-    }
-    #view-presence .form-box > h2 {
-      flex:0 0 auto;
-      margin:0 0 1px !important;
-      font-size:.82rem !important;
-      line-height:1.05 !important;
-    }
-    #view-presence .form-box > p {
-      flex:0 0 auto;
-      margin:0 0 4px !important;
-      font-size:.52rem !important;
-      line-height:1.05 !important;
-    }
-    #view-presence #presence-list-container {
-      flex:1 1 auto !important;
-      min-height:0 !important;
-      height:100% !important;
-      overflow:hidden !important;
-    }
-    #view-presence .presence-days-grid {
-      display:grid !important;
-      grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-      gap:5px !important;
       width:100% !important;
-      height:100% !important;
-      min-height:0 !important;
-      overflow:hidden !important;
-      align-items:stretch !important;
-    }
-    #view-presence .presence-day-panel {
-      display:flex !important;
-      flex-direction:column !important;
+      max-width:100% !important;
       min-width:0 !important;
-      min-height:0 !important;
-      height:100% !important;
-      padding:5px !important;
-      overflow:hidden !important;
-      border-radius:12px !important;
+      margin:0 !important;
+      padding:0 !important;
+      border-radius:0 !important;
+      overflow:visible !important;
       box-sizing:border-box !important;
     }
-    #view-presence .presence-day-title {
-      flex:0 0 auto !important;
-      min-height:21px !important;
-      margin:0 0 3px !important;
-      padding:0 1px 3px !important;
-      font-size:.54rem !important;
-      line-height:1.05 !important;
-      white-space:normal !important;
-      text-align:center !important;
+    #view-personal .sticky-header-section,
+    #view-personal .team-subnav,
+    #view-personal .toolbar {
+      max-width:100% !important;
+      min-width:0 !important;
+      box-sizing:border-box !important;
     }
-    #view-presence .presence-day-panel > div {
-      flex:1 1 auto !important;
-      min-height:0 !important;
-      gap:2px !important;
-      overflow:hidden !important;
-      justify-content:space-evenly !important;
+    #mobile-day-toolbar {
+      display:block !important;
+      position:relative !important;
+      width:100% !important;
+      max-width:100% !important;
+      min-width:0 !important;
+      margin:0 0 8px !important;
+      padding:0 !important;
+      overflow:visible !important;
+      box-sizing:border-box !important;
     }
-    #view-presence .presence-member-card {
+    .mobile-week-controls {
       display:grid !important;
-      grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr) !important;
-      flex:1 1 0 !important;
-      min-height:0 !important;
-      max-height:none !important;
+      grid-template-columns:40px minmax(0,1fr) 40px !important;
+      align-items:center !important;
+      width:100% !important;
+      max-width:100% !important;
+      min-width:0 !important;
+      gap:6px !important;
+      margin:0 0 7px !important;
+    }
+    .mobile-week-controls > button {
+      width:40px !important;
+      min-width:40px !important;
+      height:40px !important;
+      min-height:40px !important;
+      padding:0 !important;
+    }
+    .mobile-week-controls > div {
+      min-width:0 !important;
+      overflow:hidden !important;
+    }
+    #mobile-week-label {
+      display:block !important;
+      max-width:100% !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+      white-space:nowrap !important;
+      font-size:.81rem !important;
+    }
+    #mobile-go-today {
+      max-width:100% !important;
+      margin:3px auto 0 !important;
+    }
+    #mobile-week-strip {
+      display:grid !important;
+      width:100% !important;
+      max-width:100% !important;
+      min-width:0 !important;
       gap:3px !important;
-      padding:3px 4px !important;
-      border-radius:8px !important;
+      padding:0 !important;
+      overflow:visible !important;
+      box-sizing:border-box !important;
+    }
+    .mobile-day-chip {
+      width:100% !important;
+      min-width:0 !important;
+      max-width:100% !important;
+      min-height:50px !important;
+      padding:4px 1px !important;
+      border-radius:10px !important;
+      box-sizing:border-box !important;
+      overflow:hidden !important;
+    }
+    .mobile-day-chip span { font-size:.52rem !important; }
+    .mobile-day-chip strong { font-size:.92rem !important; }
+    #personal-grids-container,
+    #personal-grids-container.mobile-focus-view {
+      display:block !important;
+      width:100% !important;
+      max-width:100% !important;
+      min-width:0 !important;
+      margin:0 !important;
+      padding:0 0 88px !important;
+      overflow:visible !important;
+      box-sizing:border-box !important;
+    }
+    .mobile-focus-card {
+      display:block !important;
+      width:100% !important;
+      max-width:100% !important;
+      min-width:0 !important;
+      margin:0 !important;
+      border-radius:17px !important;
       overflow:hidden !important;
       box-sizing:border-box !important;
     }
-    #view-presence .presence-member-info {
-      display:flex !important;
-      flex-direction:column !important;
-      justify-content:center !important;
-      min-width:0 !important;
-    }
-    #view-presence .presence-member-name-line {
-      display:block !important;
-      min-width:0 !important;
-      line-height:1 !important;
-    }
-    #view-presence .presence-member-name-line strong {
-      display:block !important;
-      font-size:clamp(.48rem,1.55vw,.59rem) !important;
-      line-height:1.05 !important;
-      white-space:normal !important;
-      overflow:hidden !important;
-      text-overflow:ellipsis !important;
-      display:-webkit-box !important;
-      -webkit-line-clamp:2;
-      -webkit-box-orient:vertical;
-    }
-    #view-presence .presence-member-pit-line {
-      margin-top:1px !important;
-      font-size:.42rem !important;
-      line-height:1 !important;
-      white-space:nowrap !important;
-      overflow:hidden !important;
-      text-overflow:ellipsis !important;
-    }
-    #view-presence .manager-badge {
-      display:inline-block !important;
-      margin:1px 0 0 !important;
-      padding:0 2px !important;
-      font-size:.36rem !important;
-      line-height:1.25 !important;
-    }
-    #view-presence .presence-status-block {
-      display:flex !important;
+    .mobile-focus-date {
+      display:grid !important;
+      grid-template-columns:minmax(0,1fr) auto !important;
       align-items:center !important;
+      gap:7px !important;
+      width:100% !important;
       min-width:0 !important;
-      min-height:0 !important;
-      overflow:hidden !important;
+      padding:11px 12px 9px !important;
+      box-sizing:border-box !important;
     }
-    #view-presence .presence-half-status {
+    .mobile-focus-date > div { min-width:0 !important; }
+    .mobile-focus-date h2 {
+      max-width:100% !important;
+      margin:0 !important;
+      font-size:1rem !important;
+      line-height:1.15 !important;
+      overflow-wrap:anywhere !important;
+    }
+    .mobile-focus-date p {
+      margin:2px 0 0 !important;
+      font-size:.63rem !important;
+    }
+    .mobile-focus-date-badge {
+      max-width:78px !important;
+      padding:4px 6px !important;
+      font-size:.55rem !important;
+      white-space:nowrap !important;
+    }
+    .mobile-focus-slots {
       display:grid !important;
       grid-template-columns:1fr !important;
       width:100% !important;
-      min-height:0 !important;
-      gap:2px !important;
-      font-size:.45rem !important;
-    }
-    #view-presence .presence-half-status > span {
-      display:grid !important;
-      grid-template-columns:12px minmax(0,1fr) !important;
-      align-items:center !important;
-      gap:2px !important;
+      max-width:100% !important;
       min-width:0 !important;
-      min-height:17px !important;
-      padding:1px 2px !important;
-      border-radius:5px !important;
-      overflow:hidden !important;
+      gap:7px !important;
+      padding:9px 10px 10px !important;
+      box-sizing:border-box !important;
     }
-    #view-presence .presence-slot-label {
-      width:12px !important;
-      overflow:hidden !important;
-      font-size:0 !important;
-    }
-    #view-presence .presence-slot-label::first-letter { font-size:.44rem !important; }
-    #view-presence .presence-half-status > span:first-child .presence-slot-label::after {
-      content:'M'; font-size:.44rem !important;
-    }
-    #view-presence .presence-half-status > span:last-child .presence-slot-label::after {
-      content:'A'; font-size:.44rem !important;
-    }
-    #view-presence .presence-half-status .status-badge {
-      min-width:0 !important;
+    .mobile-focus-slot {
+      display:flex !important;
       width:100% !important;
-      padding:2px 11px 2px 2px !important;
-      font-size:clamp(.43rem,1.45vw,.54rem) !important;
-      line-height:1.1 !important;
-      white-space:nowrap !important;
+      max-width:100% !important;
+      min-width:0 !important;
+      min-height:72px !important;
+      padding:8px 10px !important;
+      border-radius:12px !important;
       overflow:hidden !important;
-      text-overflow:ellipsis !important;
+      box-sizing:border-box !important;
     }
-    #view-presence .presence-half-status .secondary-code-initial {
-      top:1px !important;
-      right:1px !important;
-      transform:scale(.66) !important;
-      transform-origin:top right !important;
+    .mobile-focus-slot-label { font-size:.6rem !important; }
+    .mobile-focus-slot-value {
+      width:100% !important;
+      min-width:0 !important;
+      min-height:31px !important;
+      padding:2px 29px !important;
+      font-size:1rem !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+    }
+    .mobile-focus-hint {
+      max-width:100% !important;
+      font-size:.53rem !important;
+      white-space:normal !important;
+    }
+    #mobile-activity-button {
+      right:calc(var(--iphone-side-inset) + 2px) !important;
+      bottom:calc(70px + var(--iphone-bottom-inset)) !important;
+      max-width:calc(100vw - (2 * var(--iphone-side-inset)) - 4px) !important;
+    }
+    #mobile-activity-sheet {
+      max-height:calc(100dvh - var(--iphone-top-inset) - var(--iphone-bottom-inset) - 16px) !important;
+      overflow-y:auto !important;
+      box-sizing:border-box !important;
     }
   }
 </style>
