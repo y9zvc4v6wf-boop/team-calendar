@@ -5087,5 +5087,38 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 }
 </style>
 
+
+<style id="ios-input-no-auto-zoom">
+  /* Safari iOS zoome automatiquement sur les champs dont le texte est inférieur à 16 px. */
+  @media (max-width: 700px) {
+    input[type="password"],
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="tel"],
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+
+    #login-pin,
+    #old-pin,
+    #new-pin,
+    #cp-pin,
+    #security-admin-code,
+    #unified-modal-input {
+      box-sizing: border-box !important;
+      width: 100% !important;
+      min-height: 44px !important;
+      padding: 10px 12px !important;
+      font-size: 16px !important;
+      line-height: 1.25 !important;
+      transform: none !important;
+      zoom: 1 !important;
+      -webkit-text-size-adjust: 100%;
+    }
+  }
+</style>
+
 </body>
 </html>
