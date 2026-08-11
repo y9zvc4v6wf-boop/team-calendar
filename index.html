@@ -4510,5 +4510,152 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
+
+<!-- Interface mobile portrait -->
+<nav id="mobile-bottom-nav" aria-label="Navigation mobile">
+  <button type="button" data-mobile-view="view-personal" onclick="mobileNavigate('view-personal')"><span>👤</span><small>Planning</small></button>
+  <button type="button" data-mobile-view="view-team" onclick="mobileNavigate('view-team')"><span>👥</span><small>Équipe</small></button>
+  <button type="button" data-mobile-view="view-annual" onclick="mobileNavigate('view-annual')"><span>📅</span><small>Bilan</small></button>
+  <button type="button" id="mobile-more-button" onclick="toggleMobileMore()"><span>•••</span><small>Plus</small></button>
+</nav>
+<div id="mobile-more-backdrop" onclick="closeMobileMore()"></div>
+<section id="mobile-more-sheet" aria-label="Plus d’options">
+  <div class="mobile-sheet-handle"></div>
+  <h3>Plus d’options</h3>
+  <button type="button" onclick="mobileNavigate('view-presence')">👥 Présence Équipe</button>
+  <button type="button" id="mobile-kpi-link" onclick="mobileNavigate('view-kpi')">📊 KPI</button>
+  <button type="button" onclick="mobileNavigate('view-settings')">⚙️ Paramètres</button>
+  <button type="button" class="mobile-danger" onclick="logout(); closeMobileMore()">Déconnexion</button>
+</section>
+<button type="button" id="mobile-tool-fab" onclick="toggleMobileToolSheet()" aria-expanded="false">＋ <span>Ajouter</span></button>
+<div id="mobile-tool-backdrop" onclick="closeMobileToolSheet()"></div>
+
+
+<style id="mobile-portrait-v2-styles">
+  #mobile-bottom-nav, #mobile-more-sheet, #mobile-more-backdrop, #mobile-tool-fab, #mobile-tool-backdrop { display:none; }
+  @media (max-width: 700px) and (orientation: portrait) {
+    body { padding-bottom: calc(78px + env(safe-area-inset-bottom)) !important; }
+    #main-tabs { display:none !important; }
+    #main-header { margin-bottom:6px; padding:8px 10px; }
+    #main-header .user-greeting { font-size:.82rem; }
+    #mobile-bottom-nav {
+      position:fixed; display:grid; grid-template-columns:repeat(4,1fr); left:0; right:0; bottom:0; z-index:8000;
+      padding:6px max(8px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
+      background:color-mix(in srgb,var(--card) 94%,transparent); border-top:1px solid var(--border); box-shadow:0 -10px 28px rgba(0,0,0,.2); backdrop-filter:blur(14px);
+    }
+    #mobile-bottom-nav button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-height:48px; padding:3px; border:0; background:transparent; color:var(--text-muted); }
+    #mobile-bottom-nav button span { font-size:1.15rem; line-height:1; }
+    #mobile-bottom-nav button small { font-size:.62rem; font-weight:750; }
+    #mobile-bottom-nav button.active { color:var(--accent-hover); background:var(--accent-soft); border-radius:10px; }
+    #mobile-more-backdrop, #mobile-tool-backdrop { position:fixed; inset:0; z-index:8100; background:rgba(3,7,18,.55); backdrop-filter:blur(3px); }
+    #mobile-more-backdrop.visible, #mobile-tool-backdrop.visible { display:block; }
+    #mobile-more-sheet { position:fixed; display:flex; flex-direction:column; gap:7px; left:10px; right:10px; bottom:calc(72px + env(safe-area-inset-bottom)); z-index:8200; padding:10px 12px 14px; border:1px solid var(--border); border-radius:18px; background:var(--card); box-shadow:var(--shadow-lg); transform:translateY(calc(100% + 100px)); transition:transform .2s ease; }
+    #mobile-more-sheet.visible { transform:translateY(0); }
+    .mobile-sheet-handle { width:38px; height:4px; border-radius:99px; background:var(--border); margin:0 auto 3px; }
+    #mobile-more-sheet h3 { margin:0 0 4px; font-size:.92rem; }
+    #mobile-more-sheet button { min-height:43px; text-align:left; padding:9px 12px; }
+    #mobile-more-sheet .mobile-danger { color:var(--danger); border-color:var(--danger); }
+
+    #view-personal .sticky-header-section { position:static; background:transparent; padding:0; }
+    #view-personal .team-subnav { display:none !important; }
+    #view-personal .toolbar { position:fixed; left:8px; right:8px; bottom:calc(72px + env(safe-area-inset-bottom)); z-index:8400; display:grid; grid-template-columns:repeat(3,1fr); gap:7px; max-height:min(72vh,620px); overflow-y:auto; padding:12px; border-radius:18px; transform:translateY(calc(100% + 110px)); transition:transform .22s ease; box-shadow:var(--shadow-lg); }
+    #view-personal .toolbar.mobile-open { transform:translateY(0); }
+    #view-personal .toolbar > span { grid-column:1/-1; font-size:.7rem; }
+    #view-personal .toolbar .brush-mode-toggle, #view-personal .toolbar .tool-PRESENT { grid-column:1/-1; }
+    #view-personal .toolbar button { min-height:42px; font-size:.75rem; }
+    #mobile-tool-backdrop { z-index:8300; }
+    #mobile-tool-fab { position:fixed; display:flex; align-items:center; gap:6px; right:14px; bottom:calc(82px + env(safe-area-inset-bottom)); z-index:8050; min-height:46px; padding:0 16px; border:0; border-radius:999px; background:linear-gradient(135deg,var(--accent),var(--accent-hover)); color:#fff; box-shadow:0 8px 24px rgba(79,70,229,.35); }
+    #mobile-tool-fab span { font-weight:800; }
+
+    #personal-grids-container.mobile-week-list { display:flex; flex-direction:column; gap:9px; overflow:visible; padding-bottom:65px; }
+    .mobile-week-header { display:grid; grid-template-columns:42px 1fr 42px; align-items:center; gap:7px; position:sticky; top:max(0px,env(safe-area-inset-top)); z-index:90; padding:7px; border:1px solid var(--border); border-radius:12px; background:var(--card); box-shadow:var(--shadow-sm); }
+    .mobile-week-header button { width:42px; height:38px; padding:0; font-size:1rem; }
+    .mobile-week-title { text-align:center; font-weight:800; font-size:.84rem; text-transform:capitalize; }
+    .mobile-week-today { display:block; width:max-content; margin:3px auto 0; padding:2px 7px; border-radius:999px; font-size:.58rem; color:var(--accent-hover); background:var(--accent-soft); cursor:pointer; }
+    .mobile-day-row { position:relative; display:grid; grid-template-columns:64px 1fr; min-height:68px; overflow:hidden; border:1px solid var(--border); border-radius:12px; background:var(--card); box-shadow:var(--shadow-sm); }
+    .mobile-day-row.today { border:2px solid var(--accent); }
+    .mobile-day-row.weekend { opacity:.58; }
+    .mobile-day-date { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:7px 4px; border-right:1px solid var(--border-soft); background:var(--input-bg); }
+    .mobile-day-name { font-size:.62rem; color:var(--text-muted); text-transform:uppercase; font-weight:800; }
+    .mobile-day-number { font-size:1.28rem; font-weight:850; line-height:1.1; }
+    .mobile-day-month { font-size:.58rem; color:var(--text-dim); }
+    .mobile-day-content { position:relative; display:flex; flex-direction:column; justify-content:center; gap:5px; min-width:0; padding:8px 10px; cursor:pointer; }
+    .mobile-status-line { position:relative; display:flex; align-items:center; justify-content:center; min-height:38px; padding:6px 28px 6px 8px; border:1px solid var(--border-soft); border-radius:8px; background:var(--input-bg); font-size:.82rem; font-weight:800; }
+    .mobile-status-line small { margin-right:auto; color:var(--text-muted); font-size:.58rem; font-weight:700; }
+    .mobile-status-line .secondary-code-initial { top:4px !important; right:4px !important; }
+    .mobile-empty { color:var(--text-muted); font-size:.76rem; font-weight:650; }
+    .mobile-day-row.holiday .mobile-day-date { color:#f59e0b; }
+  }
+</style>
+
+
+<script id="mobile-portrait-v2-script">
+(function () {
+  const portraitQuery = window.matchMedia('(max-width: 700px) and (orientation: portrait)');
+  const originalRenderPersonalCalendar = window.renderPersonalCalendar;
+  const dayNames = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  function isMobilePortrait() { return portraitQuery.matches; }
+  function mondayOf(date) {
+    const result = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    result.setDate(result.getDate() - ((result.getDay() + 6) % 7)); result.setHours(12,0,0,0); return result;
+  }
+  function labelWeek(start) {
+    const end = new Date(start); end.setDate(start.getDate()+6);
+    const fmt = new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short'});
+    return `Semaine du ${fmt.format(start)} au ${fmt.format(end)}`;
+  }
+  function mobileApply(dateKey, slot) {
+    if (!currentUser || (requiresSecondaryCode(selectedTool) && !selectedSecondaryCode)) {
+      if (requiresSecondaryCode(selectedTool)) openSecondaryCodeModal(selectedTool, code => { selectedSecondaryCode=code; mobileApply(dateKey,slot); });
+      return;
+    }
+    if (!setStatus(dateKey,currentUser,selectedTool,slot)) return;
+    savePlanningAndSecondaryData(); notifySameDestination(dateKey,selectedTool,currentUser,slot); renderMobileWeek();
+  }
+  function statusLine(dateKey,status,slot,label) {
+    const line=document.createElement('div'); line.className='mobile-status-line';
+    line.dataset.brushDate=dateKey; if(slot) line.dataset.brushSlot=slot;
+    line.dataset.calendarTooltip='true'; line.dataset.tooltipDate=dateKey; line.dataset.tooltipUser=currentUser; line.dataset.tooltipSlot=slot||'';
+    if(label){const small=document.createElement('small');small.textContent=label;line.appendChild(small);}
+    const value=status||'PRESENT';
+    if(value==='PRESENT'){const txt=document.createElement('span');txt.className='mobile-empty';txt.textContent='Bureau';line.appendChild(txt);}
+    else { line.classList.add(`bg-${value}`); const txt=document.createElement('span'); renderStatusWithSecondary(txt,value,dateKey,currentUser,slot); line.appendChild(txt); }
+    line.onclick=event=>{event.stopPropagation();mobileApply(dateKey,slot);};
+    return line;
+  }
+  function renderMobileWeek() {
+    if (!isMobilePortrait()) return originalRenderPersonalCalendar(currentDate.getFullYear(),currentDate.getMonth());
+    const container=document.getElementById('personal-grids-container'); container.innerHTML=''; container.className='mobile-week-list';
+    const monday=mondayOf(currentDate); const header=document.createElement('div'); header.className='mobile-week-header';
+    header.innerHTML=`<button type="button" aria-label="Semaine précédente">‹</button><div><div class="mobile-week-title">${labelWeek(monday)}</div><span class="mobile-week-today">Aujourd’hui</span></div><button type="button" aria-label="Semaine suivante">›</button>`;
+    header.children[0].onclick=()=>{currentDate.setDate(currentDate.getDate()-7);renderMobileWeek();};
+    header.children[2].onclick=()=>{currentDate.setDate(currentDate.getDate()+7);renderMobileWeek();};
+    header.querySelector('.mobile-week-today').onclick=()=>{currentDate=new Date();renderMobileWeek();}; container.appendChild(header);
+    const holidays=getFrenchPublicHolidays(monday.getFullYear());
+    for(let i=0;i<7;i++){
+      const date=new Date(monday);date.setDate(monday.getDate()+i);const key=formatDateKeyStatic(date);const row=document.createElement('article');
+      row.className='mobile-day-row'; if(isToday(date))row.classList.add('today'); if(i>4)row.classList.add('weekend'); if(holidays.has(key))row.classList.add('holiday');
+      row.innerHTML=`<div class="mobile-day-date"><span class="mobile-day-name">${dayNames[i]}</span><strong class="mobile-day-number">${date.getDate()}</strong><span class="mobile-day-month">${new Intl.DateTimeFormat('fr-FR',{month:'short'}).format(date)}</span></div><div class="mobile-day-content"></div>`;
+      const content=row.querySelector('.mobile-day-content'); const value=calendarData[key]?.[currentUser];
+      if(value&&typeof value==='object'){content.appendChild(statusLine(key,value.am,'am','Matin'));content.appendChild(statusLine(key,value.pm,'pm','Après-midi'));}
+      else content.appendChild(statusLine(key,typeof value==='string'?value:'PRESENT',null,''));
+      container.appendChild(row);
+    }
+    updateMobileSelectionLabel();
+  }
+  window.renderPersonalCalendar=function(year,month){ return isMobilePortrait()?renderMobileWeek():originalRenderPersonalCalendar(year,month); };
+  window.mobileNavigate=function(view){ closeMobileMore(); closeMobileToolSheet(); switchTab(view); document.querySelectorAll('#mobile-bottom-nav [data-mobile-view]').forEach(button=>button.classList.toggle('active',button.dataset.mobileView===view)); };
+  window.toggleMobileMore=function(){document.getElementById('mobile-more-sheet').classList.toggle('visible');document.getElementById('mobile-more-backdrop').classList.toggle('visible');};
+  window.closeMobileMore=function(){document.getElementById('mobile-more-sheet').classList.remove('visible');document.getElementById('mobile-more-backdrop').classList.remove('visible');};
+  window.toggleMobileToolSheet=function(){const toolbar=document.querySelector('#view-personal .toolbar');const open=!toolbar.classList.contains('mobile-open');toolbar.classList.toggle('mobile-open',open);document.getElementById('mobile-tool-backdrop').classList.toggle('visible',open);document.getElementById('mobile-tool-fab').setAttribute('aria-expanded',String(open));};
+  window.closeMobileToolSheet=function(){document.querySelector('#view-personal .toolbar')?.classList.remove('mobile-open');document.getElementById('mobile-tool-backdrop').classList.remove('visible');document.getElementById('mobile-tool-fab').setAttribute('aria-expanded','false');};
+  function updateMobileSelectionLabel(){const fab=document.getElementById('mobile-tool-fab');if(!fab)return;const code=selectedSecondaryCode?` · ${selectedSecondaryCode}`:'';fab.querySelector('span').textContent=`${selectedTool}${code}`;}
+  document.querySelectorAll('.tool-btn').forEach(button=>button.addEventListener('click',()=>setTimeout(()=>{updateMobileSelectionLabel();closeMobileToolSheet();},80)));
+  const originalSwitchTab=window.switchTab; window.switchTab=function(view){const result=originalSwitchTab(view);setTimeout(()=>{document.getElementById('mobile-tool-fab').style.display=isMobilePortrait()&&view==='view-personal'?'flex':'none';document.getElementById('mobile-kpi-link').style.display=document.getElementById('tab-kpi').style.display==='none'?'none':'block';document.querySelectorAll('#mobile-bottom-nav [data-mobile-view]').forEach(button=>button.classList.toggle('active',button.dataset.mobileView===view));},0);return result;};
+  portraitQuery.addEventListener?.('change',()=>{if(document.getElementById('view-personal').classList.contains('active'))renderPersonalCalendar(currentDate.getFullYear(),currentDate.getMonth());});
+  window.addEventListener('load',()=>{if(isMobilePortrait()){document.getElementById('mobile-tool-fab').style.display='none';}});
+})();
+</script>
+
 </body>
 </html>
