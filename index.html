@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Planning Équipe — TT, Congés & KPI</title>
 
   <!-- Application immédiate du thème mémorisé (évite le flash visuel au chargement) -->
@@ -5565,6 +5565,146 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       justify-content: space-between !important;
       padding: 5px 7px !important;
     }
+  }
+</style>
+
+
+<style id="iphone-16-pro-rounded-screen-design">
+  /* Optimisation PWA iPhone 16 Pro : viewport 402 × 874 CSS px et respect des zones sûres. */
+  @media (display-mode: standalone) and (max-width: 430px) {
+    :root {
+      --iphone-side-inset: max(12px, env(safe-area-inset-left), env(safe-area-inset-right));
+      --iphone-top-inset: max(12px, env(safe-area-inset-top));
+      --iphone-bottom-inset: max(10px, env(safe-area-inset-bottom));
+      --iphone-screen-radius: 28px;
+      --iphone-card-radius: 18px;
+    }
+    html {
+      min-height: 100%;
+      background: #050814;
+      overscroll-behavior: none;
+    }
+    body {
+      min-height: 100dvh !important;
+      margin: 0 !important;
+      padding:
+        var(--iphone-top-inset)
+        var(--iphone-side-inset)
+        calc(78px + var(--iphone-bottom-inset)) !important;
+      background:
+        radial-gradient(circle at 20% -10%, rgba(99,102,241,.20), transparent 32%),
+        radial-gradient(circle at 100% 35%, rgba(6,182,212,.10), transparent 28%),
+        var(--bg) !important;
+      overflow-x: clip !important;
+      box-sizing: border-box;
+    }
+    body::before {
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-1;
+      pointer-events:none;
+      border-radius:var(--iphone-screen-radius);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.025);
+    }
+    .container {
+      width:100% !important;
+      max-width:100% !important;
+      min-height:calc(100dvh - var(--iphone-top-inset) - var(--iphone-bottom-inset) - 78px);
+      margin:0 !important;
+      padding:0 !important;
+      border-radius:var(--iphone-screen-radius) var(--iphone-screen-radius) 22px 22px;
+      overflow:clip;
+    }
+    #main-header {
+      margin:0 0 10px !important;
+      padding:10px 12px !important;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:20px !important;
+      background:color-mix(in srgb, var(--card) 88%, transparent) !important;
+      box-shadow:0 10px 28px rgba(0,0,0,.18);
+      backdrop-filter:blur(22px) saturate(140%);
+      -webkit-backdrop-filter:blur(22px) saturate(140%);
+    }
+    .view.active {
+      border-radius:22px !important;
+      overflow:clip;
+    }
+    .form-box,
+    .month-section,
+    .mobile-focus-card,
+    .presence-day-panel,
+    .chart-box,
+    .security-panel,
+    .remember-device-panel {
+      border-radius:var(--iphone-card-radius) !important;
+    }
+    button, input, select, textarea { border-radius:12px !important; }
+    .presence-member-card, .mobile-focus-slot { border-radius:14px !important; }
+    #mobile-bottom-nav {
+      left:var(--iphone-side-inset) !important;
+      right:var(--iphone-side-inset) !important;
+      bottom:var(--iphone-bottom-inset) !important;
+      width:auto !important;
+      height:62px !important;
+      padding:5px 6px !important;
+      border:1px solid rgba(255,255,255,.10) !important;
+      border-radius:22px !important;
+      background:color-mix(in srgb, var(--card) 87%, transparent) !important;
+      box-shadow:0 14px 36px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.08) !important;
+      backdrop-filter:blur(24px) saturate(155%);
+      -webkit-backdrop-filter:blur(24px) saturate(155%);
+    }
+    #mobile-bottom-nav button {
+      height:50px !important;
+      min-height:50px !important;
+      border-radius:16px !important;
+    }
+    #mobile-bottom-nav button.active {
+      box-shadow:0 7px 16px color-mix(in srgb, var(--accent) 32%, transparent), inset 0 1px 0 rgba(255,255,255,.20) !important;
+    }
+    #mobile-activity-button {
+      right:calc(var(--iphone-side-inset) + 4px) !important;
+      bottom:calc(70px + var(--iphone-bottom-inset)) !important;
+      border:1px solid rgba(255,255,255,.14) !important;
+      box-shadow:0 12px 28px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.18) !important;
+    }
+    #mobile-more-sheet {
+      left:var(--iphone-side-inset) !important;
+      right:var(--iphone-side-inset) !important;
+      bottom:calc(70px + var(--iphone-bottom-inset)) !important;
+      border-radius:24px !important;
+    }
+    #mobile-activity-sheet {
+      left:var(--iphone-side-inset) !important;
+      right:var(--iphone-side-inset) !important;
+      bottom:var(--iphone-bottom-inset) !important;
+      border-radius:26px !important;
+      padding-bottom:18px !important;
+    }
+    .app-modal-overlay {
+      padding:
+        calc(var(--iphone-top-inset) + 6px)
+        var(--iphone-side-inset)
+        calc(var(--iphone-bottom-inset) + 8px) !important;
+    }
+    .app-modal-card { border-radius:24px !important; }
+    #remember-session-boot { padding:var(--iphone-top-inset) var(--iphone-side-inset) var(--iphone-bottom-inset); }
+    .remember-session-boot-card {
+      width:100%;
+      max-width:330px;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:24px;
+      background:color-mix(in srgb,var(--card) 86%,transparent);
+      box-shadow:0 18px 42px rgba(0,0,0,.30);
+      backdrop-filter:blur(22px);
+      -webkit-backdrop-filter:blur(22px);
+    }
+  }
+  @media (display-mode: standalone) and (width: 402px) and (orientation: portrait) {
+    .mobile-week-controls { grid-template-columns:44px minmax(0,1fr) 44px !important; }
+    #mobile-week-strip { gap:4px !important; }
+    .mobile-day-chip { min-height:56px !important; }
   }
 </style>
 
