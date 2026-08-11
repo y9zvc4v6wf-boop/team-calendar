@@ -4596,8 +4596,30 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 <script id="ios-pwa-script">
 (function () {
-  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(error => console.error('[PWA] Service worker', error)));
+  if (
+    'serviceWorker' in navigator &&
+    (location.protocol === 'https:' || location.hostname === 'localhost')
+  ) {
+    window.addEventListener('load', async () => {
+      try {
+        const registration = await navigator.serviceWorker.register(
+          './service-worker.js',
+          {
+            updateViaCache: 'none'
+          }
+        );
+
+        // Vérifie immédiatement si une nouvelle version du service worker existe.
+        await registration.update();
+
+        console.info('[PWA] Service worker enregistré et vérifié.');
+      } catch (error) {
+        console.error(
+          '[PWA] Erreur lors de l’enregistrement du service worker :',
+          error
+        );
+      }
+    });
   }
   let lastTouchTarget = null;
   document.addEventListener('touchend', event => {
