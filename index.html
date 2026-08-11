@@ -2205,7 +2205,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     if (viewId === 'view-annual') renderAnnualReport();
   }
 
-  document.getElementById('prev-month').onclick = () => { currentDate.setMonth(currentDate.getMonth() - 1); renderViews(); };
+  document.getElementById('prev-month').onclick = () => {
+    const candidate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const currentMonthStart = new Date(todayYear, todayMonth, 1);
+    if (candidate < currentMonthStart) return;
+    currentDate = candidate;
+    renderViews();
+  };
   document.getElementById('next-month').onclick = () => { currentDate.setMonth(currentDate.getMonth() + 1); renderViews(); };
 
   document.getElementById('btn-team-1m').onclick = (e) => {
@@ -2997,7 +3003,18 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       let totalRows = Math.ceil((startDayOfWeek + totalDays) / 7);
 
       for (let r = 0; r < totalRows; r++) {
-        let sampleRowDate = new Date(mYear, mMonth, currentDayCount - startDayOfWeek + (r * 7));
+        let sampleRowDate = new Date(mYear, mMonth, 1 - startDayOfWeek + (r * 7));
+        const weekEndDate = new Date(sampleRowDate);
+        weekEndDate.setDate(sampleRowDate.getDate() + 6);
+        weekEndDate.setHours(23, 59, 59, 999);
+        const todayWeekLimit = new Date(todayYear, todayMonth, todayDate);
+        todayWeekLimit.setHours(0, 0, 0, 0);
+        if (weekEndDate < todayWeekLimit) {
+          for (let skippedColumn = 0; skippedColumn < 7; skippedColumn++) {
+            if (!((r === 0 && skippedColumn < startDayOfWeek) || currentDayCount > totalDays)) currentDayCount++;
+          }
+          continue;
+        }
         const wkCell = document.createElement('div');
         wkCell.className = 'week-number-cell';
         wkCell.textContent = `S${getWeekNumber(sampleRowDate)}`;
@@ -3015,6 +3032,15 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
           const dayDate = new Date(mYear, mMonth, currentDayCount);
           const dateKey = formatDateKeyStatic(dayDate);
+          const todayStart = new Date(todayYear, todayMonth, todayDate);
+          todayStart.setHours(0, 0, 0, 0);
+          if (dayDate < todayStart) {
+            cell.style.visibility = 'hidden';
+            cell.setAttribute('aria-hidden', 'true');
+            grid.appendChild(cell);
+            currentDayCount++;
+            continue;
+          }
           const isWeekend = (c >= 5);
           const isHoliday = holidays.has(dateKey);
           const isTodayDate = isToday(dayDate);
@@ -3161,13 +3187,18 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       // Création de l'en-tête (Numéros des jours)
       for (let d = 1; d <= lastDay; d++) {
         const dayDate = new Date(mYear, mMonth, d);
+        const teamTodayStart = new Date(todayYear, todayMonth, todayDate);
+        teamTodayStart.setHours(0, 0, 0, 0);
+        if (dayDate < teamTodayStart) continue;
         const dateKey = formatDateKeyStatic(dayDate);
         const isWeekend = (dayDate.getDay() === 0 || dayDate.getDay() === 6);
         const isHoliday = holidays.has(dateKey);
         const isTodayDate = isToday(dayDate);
 
         const th = document.createElement('th');
-        th.textContent = d;
+        const weekdayName = new Intl.DateTimeFormat('fr-FR', { weekday: 'long' }).format(dayDate);
+        th.title = `${weekdayName} ${d}`;
+        th.innerHTML = `<span class="team-day-number">${d}</span><span class="team-weekday-name">${weekdayName}</span>`;
         if (isWeekend) th.classList.add('weekend-header');
         if (isHoliday) {
           th.classList.add('holiday-header');
@@ -3200,6 +3231,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         // Cellules des jours du mois
         for (let d = 1; d <= lastDay; d++) {
           const dayDate = new Date(mYear, mMonth, d);
+          const teamTodayStart = new Date(todayYear, todayMonth, todayDate);
+          teamTodayStart.setHours(0, 0, 0, 0);
+          if (dayDate < teamTodayStart) continue;
           const dateKey = formatDateKeyStatic(dayDate);
           const isWeekend = (dayDate.getDay() === 0 || dayDate.getDay() === 6);
           const isHoliday = holidays.has(dateKey);
@@ -4800,7 +4834,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
   function renderStrip(start){
     const strip=document.getElementById('mobile-week-strip');strip.innerHTML='';const names=['L','M','M','J','V','S','D'];
-    for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=dateKey(d);const button=document.createElement('button');button.type='button';button.className='mobile-day-chip';if(sameDate(d,selectedMobileDate))button.classList.add('selected');if(isToday(d))button.classList.add('today');if(calendarData[key]?.[currentUser])button.classList.add('has-data');button.innerHTML=`<span>${names[i]}</span><strong>${d.getDate()}</strong><i></i>`;button.onclick=()=>{selectedMobileDate=d;currentDate=new Date(d);renderFocus();};strip.appendChild(button);}
+    let visibleDayCount=0;
+    const mobileToday=new Date();mobileToday.setHours(0,0,0,0);
+    for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);d.setHours(0,0,0,0);if(d<mobileToday)continue;visibleDayCount++;const key=dateKey(d);const button=document.createElement('button');button.type='button';button.className='mobile-day-chip';if(sameDate(d,selectedMobileDate))button.classList.add('selected');if(isToday(d))button.classList.add('today');if(calendarData[key]?.[currentUser])button.classList.add('has-data');button.innerHTML=`<span>${names[i]}</span><strong>${d.getDate()}</strong><i></i>`;button.onclick=()=>{selectedMobileDate=d;currentDate=new Date(d);renderFocus();};strip.appendChild(button);}
+    strip.style.gridTemplateColumns=`repeat(${Math.max(visibleDayCount,1)},minmax(0,1fr))`;
   }
   function renderFocus(){
     if(!active())return previousRender(currentDate.getFullYear(),currentDate.getMonth());
@@ -4816,7 +4853,12 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     container.appendChild(card);updateActivityLabels();
   }
   window.renderPersonalCalendar=function(y,m){return active()?renderFocus():previousRender(y,m);};
-  document.getElementById('mobile-prev-week').onclick=()=>{selectedMobileDate.setDate(selectedMobileDate.getDate()-7);currentDate=new Date(selectedMobileDate);renderFocus();};
+  document.getElementById('mobile-prev-week').onclick=()=>{
+    const candidate=new Date(selectedMobileDate);candidate.setDate(candidate.getDate()-7);
+    const today=new Date();today.setHours(0,0,0,0);
+    if(candidate<today)selectedMobileDate=today;else selectedMobileDate=candidate;
+    currentDate=new Date(selectedMobileDate);renderFocus();
+  };
   document.getElementById('mobile-next-week').onclick=()=>{selectedMobileDate.setDate(selectedMobileDate.getDate()+7);currentDate=new Date(selectedMobileDate);renderFocus();};
   document.getElementById('mobile-go-today').onclick=()=>{selectedMobileDate=new Date();currentDate=new Date();renderFocus();};
   function renderCategory(category){document.querySelectorAll('.mobile-activity-categories button').forEach(b=>b.classList.toggle('active',b.dataset.category===category));const root=document.getElementById('mobile-activity-options');root.innerHTML='';categories[category].forEach(status=>{const original=document.querySelector(`.tool-btn[data-status="${status}"]`);const button=document.createElement('button');button.type='button';button.dataset.mobileStatus=status;button.className=`tool-${status}`;button.textContent=status==='Formation'?'Formation':status;button.classList.toggle('active',selectedTool===status);button.onclick=()=>selectMobileStatus(status,original);root.appendChild(button);});}
@@ -5342,6 +5384,67 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   });
 })();
 </script>
+
+
+<style id="v46-admin-select-and-future-calendar-styles">
+  /* Administration des rôles : même typographie que les autres contrôles de la page. */
+  #view-settings #security-role-person,
+  #view-settings #security-role-value {
+    font-family: inherit !important;
+    font-size: .78rem !important;
+    font-weight: 400 !important;
+    line-height: 1.25 !important;
+    padding: 6px 8px !important;
+  }
+  #view-settings #security-role-person option,
+  #view-settings #security-role-value option {
+    font: inherit !important;
+  }
+  @media (max-width:700px) {
+    /* 16 px sur iPhone évite le zoom automatique tout en restant cohérent avec les autres champs mobiles. */
+    #view-settings #security-role-person,
+    #view-settings #security-role-value {
+      font-size:16px !important;
+      min-height:44px !important;
+    }
+  }
+</style>
+
+
+<style id="v47-future-weeks-and-weekday-names">
+  /* Vue Équipe : numéro du jour et nom du jour sur deux lignes. */
+  #team-table-container th:not(.member-col) {
+    min-width: 52px;
+    padding: 4px 3px;
+  }
+  #team-table-container .team-day-number {
+    display:block;
+    color:inherit;
+    font-size:.72rem;
+    font-weight:800;
+    line-height:1.05;
+  }
+  #team-table-container .team-weekday-name {
+    display:block;
+    margin-top:3px;
+    color:var(--text-muted);
+    font-size:.54rem;
+    font-weight:700;
+    line-height:1.05;
+    text-transform:capitalize;
+    white-space:nowrap;
+  }
+  #team-table-container th.today-header .team-weekday-name {
+    color:rgba(255,255,255,.86);
+  }
+  #team-table-container th.holiday-header .team-weekday-name {
+    color:#f59e0b;
+  }
+  @media (max-width:700px) and (orientation:portrait) {
+    #team-table-container th:not(.member-col) { min-width:48px; }
+    #team-table-container .team-weekday-name { font-size:.5rem; }
+  }
+</style>
 
 </body>
 </html>
