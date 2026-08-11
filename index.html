@@ -3952,19 +3952,23 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     const destination = Array.isArray(status) ? null : status;
     const colleagues = destination ? colleaguesForTooltip(dateKey, destination, firstName, slot) : [];
     const slotText = slot === 'am' ? 'Matin' : slot === 'pm' ? 'Après-midi' : 'Journée';
-    const colleagueText = colleagues.length
-      ? colleagues.map(escapeTooltipHtml).join(', ')
-      : 'Personne d’autre sur cette destination';
+    const colleaguesSection = colleagues.length
+      ? `
+          <div class="calendar-tooltip-colleagues">
+            <div class="calendar-tooltip-colleagues-title">Même destination</div>
+            <div class="calendar-tooltip-colleagues-list">
+              ${colleagues.map(escapeTooltipHtml).join(', ')}
+            </div>
+          </div>
+        `
+      : '';
     return `
       <div class="calendar-tooltip-date">${escapeTooltipHtml(formatTooltipDate(dateKey))}</div>
       <div class="calendar-tooltip-row"><span class="calendar-tooltip-label">Personne</span><span class="calendar-tooltip-value">${escapeTooltipHtml(firstName)}</span></div>
       <div class="calendar-tooltip-row"><span class="calendar-tooltip-label">Créneau</span><span class="calendar-tooltip-value">${escapeTooltipHtml(slotText)}</span></div>
       <div class="calendar-tooltip-row"><span class="calendar-tooltip-label">Type de jour</span><span class="calendar-tooltip-value">${escapeTooltipHtml(displayStatus)}</span></div>
       <div class="calendar-tooltip-row"><span class="calendar-tooltip-label">Code secondaire</span><span class="calendar-tooltip-value">${escapeTooltipHtml(secondaryText)}</span></div>
-      <div class="calendar-tooltip-colleagues">
-        <div class="calendar-tooltip-colleagues-title">Même destination</div>
-        <div class="calendar-tooltip-colleagues-list">${colleagueText}</div>
-      </div>`;
+      ${colleaguesSection}`;
   }
 
   function positionTooltip(clientX, clientY) {
