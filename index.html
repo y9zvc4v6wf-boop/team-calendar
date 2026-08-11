@@ -6158,5 +6158,93 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
+
+<style id="final-badge-centering-and-mobile-dark-calendar">
+  /*
+   * Badges de rôle et de statut : centrage horizontal et vertical uniforme
+   * sur les versions web, mobile et PWA.
+   */
+  .manager-badge,
+  .status-badge,
+  .mobile-focus-date-badge,
+  .holiday-badge-mini,
+  .secondary-code-initial {
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    line-height: 1 !important;
+  }
+
+  .manager-badge {
+    min-height: 18px;
+    padding: 3px 7px !important;
+    white-space: nowrap;
+  }
+
+  .status-badge {
+    line-height: 1.1 !important;
+  }
+
+  /* Évite qu'un alignement hérité décale Admin ou Manager dans leur bulle. */
+  .user-greeting .manager-badge,
+  .presence-member-name-line .manager-badge,
+  #view-team .manager-badge,
+  #view-settings .manager-badge {
+    align-self: center !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  /*
+   * Application mobile uniquement, en mode sombre : texte gris foncé et
+   * légèrement plus grand dans les cases colorées du Calendrier.
+   */
+  @media (display-mode: standalone) and (max-width: 430px) and (orientation: portrait) {
+    [data-theme="dark"] #view-personal .mobile-focus-slot[class*="bg-"] {
+      color: #263241 !important;
+    }
+
+    [data-theme="dark"] #view-personal .mobile-focus-slot[class*="bg-"] .mobile-focus-slot-label,
+    [data-theme="dark"] #view-personal .mobile-focus-slot[class*="bg-"] .mobile-focus-slot-value,
+    [data-theme="dark"] #view-personal .mobile-focus-slot[class*="bg-"] .mobile-focus-hint,
+    [data-theme="dark"] #view-personal .mobile-status-line[class*="bg-"] {
+      color: #263241 !important;
+      text-shadow: none !important;
+    }
+
+    [data-theme="dark"] #view-personal .mobile-focus-slot[class*="bg-"] .mobile-focus-slot-value {
+      font-size: 1.08rem !important;
+      font-weight: 850 !important;
+      letter-spacing: 0.01em !important;
+    }
+
+    [data-theme="dark"] #view-personal .mobile-focus-slot[class*="bg-"] .mobile-focus-slot-label {
+      font-size: .67rem !important;
+      font-weight: 800 !important;
+    }
+
+    [data-theme="dark"] #view-personal .mobile-focus-slot[class*="bg-"] .mobile-focus-hint {
+      font-size: .57rem !important;
+      font-weight: 700 !important;
+      opacity: .82 !important;
+    }
+
+    [data-theme="dark"] #view-personal .mobile-status-line[class*="bg-"] {
+      font-size: .88rem !important;
+      font-weight: 850 !important;
+    }
+
+    /* Les pastilles secondaires restent contrastées au-dessus du texte foncé. */
+    [data-theme="dark"] #view-personal .mobile-focus-slot[class*="bg-"] .secondary-code-initial,
+    [data-theme="dark"] #view-personal .mobile-status-line[class*="bg-"] .secondary-code-initial {
+      color: #f8fafc !important;
+      text-shadow: none !important;
+    }
+  }
+</style>
+
 </body>
 </html>
