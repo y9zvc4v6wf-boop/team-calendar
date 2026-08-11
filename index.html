@@ -975,6 +975,19 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       #view-annual .form-box > #annual-destination-chart-box { grid-column: 1; }
     }
   </style>
+
+  <!-- Web App iOS / PWA -->
+  <meta name="theme-color" content="#0a0e1a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Planning Équipe">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+
 </head>
 <body>
 
@@ -4448,6 +4461,54 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     vertical-align: middle !important;
   }
 </style>
+
+
+<style id="ios-pwa-styles">
+  html, body { min-height: 100%; overscroll-behavior-y: none; }
+  body {
+    padding-top: max(8px, env(safe-area-inset-top));
+    padding-right: max(8px, env(safe-area-inset-right));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    padding-left: max(8px, env(safe-area-inset-left));
+    -webkit-tap-highlight-color: transparent;
+  }
+  button, select, input { touch-action: manipulation; }
+  input, select, textarea { font-size: 16px; }
+  @media (display-mode: standalone) {
+    .storage-banner { border-top-left-radius: 0; border-top-right-radius: 0; }
+  }
+  @media (max-width: 700px) {
+    body { padding: max(5px, env(safe-area-inset-top)) max(5px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(5px, env(safe-area-inset-left)); }
+    .container { width: 100%; }
+    header { position: sticky; top: env(safe-area-inset-top); z-index: 120; }
+    .tabs { position: sticky; top: calc(env(safe-area-inset-top) + 52px); z-index: 115; padding: 4px 0; background: var(--bg); overflow-x: auto; flex-wrap: nowrap; }
+    .tab-btn { flex: 0 0 auto; min-width: 115px; min-height: 42px; }
+    .toolbar { max-height: 145px; overflow-y: auto; }
+    .tool-btn, .brush-mode-toggle { min-height: 36px; }
+    .calendar-grid { grid-template-columns: 22px repeat(7, minmax(38px, 1fr)); min-width: 345px; }
+    #personal-grids-container, #team-table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .app-modal-overlay { padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
+    .app-modal-card { max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px); overflow-y: auto; }
+    #calendar-hover-tooltip { display: none !important; }
+  }
+</style>
+
+
+<script id="ios-pwa-script">
+(function () {
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(error => console.error('[PWA] Service worker', error)));
+  }
+  let lastTouchTarget = null;
+  document.addEventListener('touchend', event => {
+    const target = event.target.closest?.('[data-calendar-tooltip="true"]');
+    if (!target || brushDragging) return;
+    if (lastTouchTarget === target) { lastTouchTarget = null; return; }
+    lastTouchTarget = target;
+    setTimeout(() => { if (lastTouchTarget === target) lastTouchTarget = null; }, 1200);
+  }, { passive: true });
+})();
+</script>
 
 </body>
 </html>
