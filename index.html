@@ -4963,5 +4963,129 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
+
+<style id="mobile-v5-presence-calendar-team-fixes">
+@media (max-width:700px) and (orientation:portrait) {
+  /* Présence : identité toujours visible au-dessus du statut */
+  #view-presence .form-box { padding:12px !important; }
+  #view-presence .presence-day-panel { padding:10px !important; }
+  #view-presence .presence-member-card {
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    gap:8px !important;
+    width:100% !important;
+    height:auto !important;
+    min-height:88px !important;
+    padding:10px 11px !important;
+    overflow:visible !important;
+  }
+  #view-presence .presence-member-info {
+    display:block !important;
+    width:100% !important;
+    min-width:0 !important;
+    overflow:visible !important;
+  }
+  #view-presence .presence-member-name-line {
+    display:flex !important;
+    align-items:center !important;
+    flex-wrap:wrap !important;
+    gap:4px !important;
+    width:100% !important;
+    white-space:normal !important;
+  }
+  #view-presence .presence-member-name-line strong {
+    display:block !important;
+    max-width:100% !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    white-space:normal !important;
+    color:var(--text) !important;
+    font-size:.92rem !important;
+    line-height:1.25 !important;
+  }
+  #view-presence .presence-member-pit-line {
+    display:block !important;
+    width:100% !important;
+    margin-top:3px !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    white-space:normal !important;
+    font-size:.69rem !important;
+  }
+  #view-presence .presence-status-block {
+    width:100% !important;
+    min-width:0 !important;
+    height:auto !important;
+    min-height:34px !important;
+  }
+  #view-presence .presence-status-block > .status-badge { width:100% !important; }
+  #view-presence .presence-half-status { width:100% !important; height:auto !important; }
+
+  /* Calendrier : tuiles Matin et Après-midi plus compactes */
+  .mobile-focus-slots { gap:8px !important; padding:10px 12px 12px !important; }
+  .mobile-focus-slot {
+    min-height:78px !important;
+    padding:9px 12px !important;
+    border-radius:12px !important;
+  }
+  .mobile-focus-slot-label { font-size:.63rem !important; }
+  .mobile-focus-slot-value {
+    min-height:34px !important;
+    padding:3px 30px !important;
+    font-size:1.05rem !important;
+  }
+  .mobile-focus-hint { font-size:.57rem !important; }
+  .mobile-focus-slot .secondary-code-initial {
+    top:9px !important;
+    right:9px !important;
+    width:21px !important;
+    height:21px !important;
+  }
+  .mobile-focus-slot .secondary-code-initial[data-two-letters="true"] { width:28px !important; }
+
+  /* Vue Équipe : seul le calendrier défile, colonne Membre figée */
+  #team-table-container { overflow-x:visible !important; }
+  #view-team .team-table-wrapper {
+    position:relative !important;
+    width:100% !important;
+    max-width:100% !important;
+    overflow-x:auto !important;
+    overflow-y:visible !important;
+    -webkit-overflow-scrolling:touch;
+    isolation:isolate;
+  }
+  #view-team .team-table-wrapper table {
+    width:max-content !important;
+    min-width:100% !important;
+    border-collapse:separate !important;
+    border-spacing:2px !important;
+  }
+  #view-team .team-table-wrapper .member-col {
+    position:-webkit-sticky !important;
+    position:sticky !important;
+    left:0 !important;
+    min-width:145px !important;
+    width:145px !important;
+    max-width:145px !important;
+    background:var(--card) !important;
+    background-clip:padding-box !important;
+    text-align:left !important;
+    white-space:normal !important;
+    overflow-wrap:anywhere !important;
+    box-shadow:5px 0 9px rgba(0,0,0,.28) !important;
+    border-right:2px solid var(--accent) !important;
+  }
+  #view-team .team-table-wrapper thead .member-col { z-index:35 !important; }
+  #view-team .team-table-wrapper tbody .member-col { z-index:25 !important; }
+  #view-team .team-table-wrapper .member-pit {
+    display:block !important;
+    margin-top:3px !important;
+    white-space:normal !important;
+  }
+  #view-team .team-column-outline { z-index:8 !important; }
+}
+</style>
+
 </body>
 </html>
