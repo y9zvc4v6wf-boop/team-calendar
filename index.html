@@ -1994,7 +1994,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     } else {
       document.getElementById('tab-kpi').style.display = 'none';
     }
-    switchTab('view-personal');
+    switchTab('view-presence');
   }
 
   function showCreateProfile() { switchTab('view-create-profile'); }
@@ -4513,16 +4513,28 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 <!-- Interface mobile portrait -->
 <nav id="mobile-bottom-nav" aria-label="Navigation mobile">
-  <button type="button" data-mobile-view="view-personal" onclick="mobileNavigate('view-personal')"><span>👤</span><small>Planning</small></button>
-  <button type="button" data-mobile-view="view-team" onclick="mobileNavigate('view-team')"><span>👥</span><small>Équipe</small></button>
-  <button type="button" data-mobile-view="view-annual" onclick="mobileNavigate('view-annual')"><span>📅</span><small>Bilan</small></button>
-  <button type="button" id="mobile-more-button" onclick="toggleMobileMore()"><span>•••</span><small>Plus</small></button>
+  <button type="button" data-mobile-view="view-presence" onclick="mobileNavigate('view-presence')" aria-label="Présence Équipe">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <small>Présence</small>
+  </button>
+  <button type="button" data-mobile-view="view-personal" onclick="mobileNavigate('view-personal')" aria-label="Mon calendrier">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
+    <small>Calendrier</small>
+  </button>
+  <button type="button" data-mobile-view="view-team" onclick="mobileNavigate('view-team')" aria-label="Vue Équipe">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/><circle cx="6" cy="6" r="1"/><path d="M12 13h6M12 17h4"/></svg>
+    <small>Équipe</small>
+  </button>
+  <button type="button" id="mobile-more-button" onclick="toggleMobileMore()" aria-label="Plus d’options">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+    <small>Plus</small>
+  </button>
 </nav>
 <div id="mobile-more-backdrop" onclick="closeMobileMore()"></div>
 <section id="mobile-more-sheet" aria-label="Plus d’options">
   <div class="mobile-sheet-handle"></div>
   <h3>Plus d’options</h3>
-  <button type="button" onclick="mobileNavigate('view-presence')">👥 Présence Équipe</button>
+  <button type="button" onclick="mobileNavigate('view-annual')">📅 Bilan Annuel</button>
   <button type="button" id="mobile-kpi-link" onclick="mobileNavigate('view-kpi')">📊 KPI</button>
   <button type="button" onclick="mobileNavigate('view-settings')">⚙️ Paramètres</button>
   <button type="button" class="mobile-danger" onclick="logout(); closeMobileMore()">Déconnexion</button>
@@ -4812,6 +4824,142 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   const priorSwitch=window.switchTab;window.switchTab=function(view){const result=priorSwitch(view);setTimeout(()=>{document.getElementById('mobile-day-toolbar').style.display=active()&&view==='view-personal'?'block':'none';document.getElementById('mobile-activity-button').style.display=active()&&view==='view-personal'?'flex':'none';},0);return result;};
   mq.addEventListener?.('change',()=>{if(document.getElementById('view-personal').classList.contains('active'))renderPersonalCalendar(currentDate.getFullYear(),currentDate.getMonth());});
   window.addEventListener('load',()=>{selectedMobileDate=new Date(currentDate);document.getElementById('mobile-day-toolbar').style.display='none';document.getElementById('mobile-activity-button').style.display='none';});
+})();
+</script>
+
+
+<style id="mobile-portrait-v4-no-horizontal-scroll">
+  @media (max-width: 700px) and (orientation: portrait) {
+    html, body {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+      overscroll-behavior-x: none;
+    }
+    body { position: relative; }
+    .container, .view, .sticky-header-section, header,
+    #personal-grids-container, #team-table-container,
+    #view-annual, #view-kpi, #view-settings, #view-presence {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      box-sizing: border-box !important;
+    }
+    #view-annual .form-box, #view-login .form-box, #view-settings .form-box,
+    #view-presence .form-box {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      zoom: 1 !important;
+      transform: none !important;
+    }
+    #view-annual .form-box { display: block !important; }
+    #view-annual .form-box > * { width: 100% !important; max-width: 100% !important; }
+    #view-team .team-table-wrapper, #view-kpi .chart-box,
+    .secondary-kpi-table-wrap {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+    }
+    #mobile-bottom-nav {
+      position: fixed !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: calc(68px + env(safe-area-inset-bottom));
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      gap: 3px;
+      padding: 6px max(7px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left)) !important;
+      border-radius: 18px 18px 0 0;
+      background: color-mix(in srgb, var(--card) 97%, transparent);
+      box-shadow: 0 -10px 30px rgba(0,0,0,.28);
+      overflow: hidden !important;
+      transform: translateZ(0);
+    }
+    #mobile-bottom-nav button {
+      width: 100% !important;
+      min-width: 0 !important;
+      height: 54px;
+      min-height: 54px;
+      gap: 4px;
+      padding: 5px 2px !important;
+      border-radius: 13px;
+      color: var(--text-muted);
+    }
+    #mobile-bottom-nav button svg {
+      width: 23px;
+      height: 23px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex: 0 0 auto;
+    }
+    #mobile-bottom-nav button small {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: .61rem;
+      line-height: 1;
+    }
+    #mobile-bottom-nav button.active {
+      color: #fff !important;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover)) !important;
+      box-shadow: 0 5px 15px color-mix(in srgb, var(--accent) 33%, transparent);
+    }
+    #mobile-more-sheet, #mobile-activity-sheet {
+      width: auto !important;
+      max-width: none !important;
+      overflow-x: hidden !important;
+    }
+    #mobile-week-strip { width: 100%; max-width: 100%; }
+    .mobile-day-chip { width: 100%; max-width: 100%; }
+    .mobile-focus-card, .mobile-focus-slot { max-width: 100%; overflow: hidden; }
+    #mobile-activity-button { max-width: calc(100vw - 28px); }
+  }
+</style>
+
+
+<script id="mobile-portrait-v4-navigation-script">
+(function () {
+  const portrait = window.matchMedia('(max-width: 700px) and (orientation: portrait)');
+  function syncBottomNavigation(viewId) {
+    document.querySelectorAll('#mobile-bottom-nav [data-mobile-view]').forEach(button => {
+      button.classList.toggle('active', button.dataset.mobileView === viewId);
+    });
+    document.getElementById('mobile-more-button')?.classList.toggle(
+      'active', ['view-annual', 'view-kpi', 'view-settings'].includes(viewId)
+    );
+  }
+  const previousMobileNavigate = window.mobileNavigate;
+  window.mobileNavigate = function (viewId) {
+    const result = previousMobileNavigate ? previousMobileNavigate(viewId) : switchTab(viewId);
+    syncBottomNavigation(viewId);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    return result;
+  };
+  const previousSwitch = window.switchTab;
+  window.switchTab = function (viewId) {
+    const result = previousSwitch(viewId);
+    if (portrait.matches) {
+      syncBottomNavigation(viewId);
+      requestAnimationFrame(() => window.scrollTo(0, 0));
+    }
+    return result;
+  };
+  window.addEventListener('load', () => {
+    if (!portrait.matches) return;
+    const activeView = document.querySelector('.view.active')?.id;
+    syncBottomNavigation(activeView === 'view-login' ? '' : activeView);
+  });
 })();
 </script>
 
