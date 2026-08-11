@@ -4657,5 +4657,163 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
+
+<!-- Interface mobile portrait épurée -->
+<div id="mobile-day-toolbar" aria-label="Navigation de la semaine">
+  <div class="mobile-week-controls">
+    <button type="button" id="mobile-prev-week" aria-label="Semaine précédente">‹</button>
+    <div>
+      <strong id="mobile-week-label">Semaine</strong>
+      <button type="button" id="mobile-go-today">Aujourd’hui</button>
+    </div>
+    <button type="button" id="mobile-next-week" aria-label="Semaine suivante">›</button>
+  </div>
+  <div id="mobile-week-strip" role="tablist" aria-label="Jours de la semaine"></div>
+</div>
+
+<button type="button" id="mobile-activity-button" onclick="openMobileActivitySheet()" aria-expanded="false">
+  <span class="mobile-activity-plus">＋</span>
+  <span><small>Type de jour</small><strong id="mobile-current-activity">CA</strong></span>
+</button>
+<div id="mobile-activity-backdrop" onclick="closeMobileActivitySheet()"></div>
+<section id="mobile-activity-sheet" aria-label="Sélectionner un type de jour">
+  <div class="mobile-sheet-handle"></div>
+  <div class="mobile-activity-heading">
+    <div><small>Appliquer</small><strong id="mobile-sheet-selection">CA</strong></div>
+    <button type="button" onclick="closeMobileActivitySheet()" aria-label="Fermer">×</button>
+  </div>
+  <div class="mobile-activity-categories" role="tablist">
+    <button type="button" data-category="presence" class="active">Présence</button>
+    <button type="button" data-category="absence">Absences</button>
+    <button type="button" data-category="travel">Déplacements</button>
+  </div>
+  <div id="mobile-activity-options"></div>
+  <button type="button" class="mobile-clear-day" data-mobile-status="PRESENT">🗑️ Remettre au bureau</button>
+</section>
+
+
+<style id="mobile-portrait-v3-styles">
+  #mobile-day-toolbar, #mobile-activity-button, #mobile-activity-sheet, #mobile-activity-backdrop { display:none; }
+  @media (max-width:700px) and (orientation:portrait) {
+    body { padding-bottom:calc(84px + env(safe-area-inset-bottom)) !important; }
+    #view-personal .sticky-header-section, #mobile-tool-fab, #mobile-tool-backdrop { display:none !important; }
+    #personal-grids-container.mobile-focus-view { display:block; overflow:visible; padding:0 0 88px; }
+
+    #mobile-day-toolbar { display:block; margin-bottom:12px; }
+    .mobile-week-controls { display:grid; grid-template-columns:48px 1fr 48px; align-items:center; gap:8px; margin-bottom:10px; }
+    .mobile-week-controls > button { height:44px; padding:0; border-radius:12px; font-size:1.45rem; }
+    .mobile-week-controls > div { text-align:center; }
+    #mobile-week-label { display:block; font-size:.92rem; line-height:1.25; color:var(--text); text-transform:capitalize; }
+    #mobile-go-today { margin-top:3px; padding:3px 9px; border:0; border-radius:999px; color:var(--accent-hover); background:var(--accent-soft); font-size:.66rem; }
+    #mobile-week-strip { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; }
+    .mobile-day-chip { min-width:0; min-height:58px; padding:6px 2px; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; background:var(--card); }
+    .mobile-day-chip span { font-size:.57rem; color:var(--text-muted); font-weight:800; text-transform:uppercase; }
+    .mobile-day-chip strong { font-size:1rem; line-height:1; color:var(--text); }
+    .mobile-day-chip i { width:5px; height:5px; border-radius:50%; background:transparent; }
+    .mobile-day-chip.has-data i { background:var(--accent); }
+    .mobile-day-chip.today { box-shadow:inset 0 0 0 1px var(--accent); }
+    .mobile-day-chip.selected { border-color:var(--accent); background:var(--accent); }
+    .mobile-day-chip.selected span,.mobile-day-chip.selected strong { color:#fff; }
+    .mobile-day-chip.selected i { background:#fff; }
+
+    .mobile-focus-card { overflow:hidden; border:1px solid var(--border); border-radius:18px; background:var(--card); box-shadow:var(--shadow-md); }
+    .mobile-focus-date { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:16px 18px 13px; border-bottom:1px solid var(--border-soft); }
+    .mobile-focus-date div:first-child { min-width:0; }
+    .mobile-focus-date h2 { margin:0; font-size:1.18rem; line-height:1.2; text-transform:capitalize; }
+    .mobile-focus-date p { margin:3px 0 0; font-size:.72rem; color:var(--text-muted); }
+    .mobile-focus-date-badge { flex:0 0 auto; padding:6px 9px; border-radius:999px; background:var(--accent-soft); color:var(--accent-hover); font-size:.66rem; font-weight:800; }
+    .mobile-focus-slots { display:flex; flex-direction:column; gap:10px; padding:14px; }
+    .mobile-focus-slot { position:relative; min-height:104px; padding:14px 15px; border:1px solid var(--border); border-radius:14px; background:var(--input-bg); cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; }
+    .mobile-focus-slot:active { transform:scale(.99); }
+    .mobile-focus-slot-label { font-size:.67rem; color:var(--text-muted); font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+    .mobile-focus-slot-value { display:flex; align-items:center; justify-content:center; min-height:52px; padding:7px 30px; font-size:1.2rem; font-weight:850; text-align:center; }
+    .mobile-focus-slot .secondary-code-initial { width:24px !important; height:24px !important; top:12px !important; right:12px !important; font-size:.58rem !important; }
+    .mobile-focus-slot .secondary-code-initial[data-two-letters="true"] { width:31px !important; }
+    .mobile-focus-hint { font-size:.63rem; color:var(--text-dim); text-align:center; }
+    .mobile-focus-card.weekend { opacity:.7; }
+    .mobile-focus-card.holiday { border-color:#f59e0b; }
+
+    #mobile-activity-button { position:fixed; display:flex; align-items:center; gap:10px; right:14px; bottom:calc(82px + env(safe-area-inset-bottom)); z-index:8050; min-width:154px; height:54px; padding:0 16px 0 11px; border:0; border-radius:999px; color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-hover)); box-shadow:0 10px 28px rgba(79,70,229,.4); text-align:left; }
+    .mobile-activity-plus { display:grid; place-items:center; width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.18); font-size:1.35rem; }
+    #mobile-activity-button small { display:block; color:rgba(255,255,255,.72); font-size:.57rem; line-height:1; }
+    #mobile-activity-button strong { display:block; margin-top:3px; color:#fff; font-size:.8rem; line-height:1; }
+    #mobile-activity-backdrop { position:fixed; inset:0; z-index:8500; background:rgba(3,7,18,.62); backdrop-filter:blur(4px); }
+    #mobile-activity-backdrop.visible { display:block; }
+    #mobile-activity-sheet { position:fixed; display:block; left:0; right:0; bottom:0; z-index:8600; padding:10px 14px calc(16px + env(safe-area-inset-bottom)); border-radius:22px 22px 0 0; background:var(--card); box-shadow:0 -18px 45px rgba(0,0,0,.35); transform:translateY(105%); transition:transform .22s ease; }
+    #mobile-activity-sheet.visible { transform:translateY(0); }
+    .mobile-activity-heading { display:flex; align-items:center; justify-content:space-between; margin:4px 0 12px; }
+    .mobile-activity-heading small { display:block; color:var(--text-muted); font-size:.64rem; }
+    .mobile-activity-heading strong { font-size:1rem; }
+    .mobile-activity-heading button { width:38px; height:38px; padding:0; border-radius:50%; font-size:1.25rem; }
+    .mobile-activity-categories { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:12px; padding:4px; border-radius:12px; background:var(--input-bg); }
+    .mobile-activity-categories button { min-width:0; padding:8px 4px; border:0; background:transparent; font-size:.68rem; }
+    .mobile-activity-categories button.active { background:var(--card); color:var(--accent-hover); box-shadow:var(--shadow-sm); }
+    #mobile-activity-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; max-height:38vh; overflow-y:auto; }
+    #mobile-activity-options button, .mobile-clear-day { min-height:50px; padding:9px 12px; border-radius:12px; font-size:.8rem; font-weight:800; }
+    #mobile-activity-options button.active { outline:3px solid var(--accent-soft); border-color:var(--accent); }
+    .mobile-clear-day { width:100%; margin-top:10px; color:var(--text-muted); background:var(--input-bg); }
+  }
+</style>
+
+
+<script id="mobile-portrait-v3-script">
+(function(){
+  const mq=window.matchMedia('(max-width:700px) and (orientation:portrait)');
+  const previousRender=window.renderPersonalCalendar;
+  let selectedMobileDate=new Date();
+  const categories={presence:['TT','LAD','CAR'],absence:['CA','JDR','Formation'],travel:['ALE','ARA','CGR','SPA','NKE','WAT','LVL','HBG','VLD','UCH','ZAL','CTX','COM','Autres']};
+  const labels={presence:'Présence',absence:'Absences',travel:'Déplacements'};
+  function active(){return mq.matches;}
+  function monday(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d;}
+  function dateKey(date){return formatDateKeyStatic(date);}
+  function sameDate(a,b){return dateKey(a)===dateKey(b);}
+  function activityLabel(){return selectedSecondaryCode?`${selectedTool} · ${selectedSecondaryCode}`:selectedTool==='PRESENT'?'Bureau':selectedTool;}
+  function updateActivityLabels(){document.getElementById('mobile-current-activity').textContent=activityLabel();document.getElementById('mobile-sheet-selection').textContent=activityLabel();}
+  function weekText(start){const end=new Date(start);end.setDate(start.getDate()+6);const f=new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short'});return `${f.format(start)} – ${f.format(end)}`;}
+  function makeSlot(key,status,slot,label){
+    const box=document.createElement('div');box.className='mobile-focus-slot';box.dataset.brushDate=key;box.dataset.brushSlot=slot;box.dataset.calendarTooltip='true';box.dataset.tooltipDate=key;box.dataset.tooltipUser=currentUser;box.dataset.tooltipSlot=slot;
+    const top=document.createElement('div');top.className='mobile-focus-slot-label';top.textContent=label;box.appendChild(top);
+    const value=document.createElement('div');value.className='mobile-focus-slot-value';const resolved=status||'PRESENT';
+    if(resolved==='PRESENT') value.textContent='Bureau'; else {box.classList.add(`bg-${resolved}`);renderStatusWithSecondary(value,resolved,key,currentUser,slot);}
+    box.appendChild(value);const hint=document.createElement('div');hint.className='mobile-focus-hint';hint.textContent='Toucher pour appliquer le type sélectionné';box.appendChild(hint);
+    box.onclick=()=>applyMobileStatus(key,slot);return box;
+  }
+  function applyMobileStatus(key,slot){
+    const apply=()=>{if(!setStatus(key,currentUser,selectedTool,slot))return;savePlanningAndSecondaryData();notifySameDestination(key,selectedTool,currentUser,slot);renderFocus();};
+    if(requiresSecondaryCode(selectedTool)&&!selectedSecondaryCode){openSecondaryCodeModal(selectedTool,code=>{selectedSecondaryCode=code;updateActivityLabels();apply();});return;}apply();
+  }
+  function renderStrip(start){
+    const strip=document.getElementById('mobile-week-strip');strip.innerHTML='';const names=['L','M','M','J','V','S','D'];
+    for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=dateKey(d);const button=document.createElement('button');button.type='button';button.className='mobile-day-chip';if(sameDate(d,selectedMobileDate))button.classList.add('selected');if(isToday(d))button.classList.add('today');if(calendarData[key]?.[currentUser])button.classList.add('has-data');button.innerHTML=`<span>${names[i]}</span><strong>${d.getDate()}</strong><i></i>`;button.onclick=()=>{selectedMobileDate=d;currentDate=new Date(d);renderFocus();};strip.appendChild(button);}
+  }
+  function renderFocus(){
+    if(!active())return previousRender(currentDate.getFullYear(),currentDate.getMonth());
+    const container=document.getElementById('personal-grids-container');container.innerHTML='';container.className='mobile-focus-view';
+    const start=monday(selectedMobileDate);document.getElementById('mobile-week-label').textContent=weekText(start);renderStrip(start);
+    const key=dateKey(selectedMobileDate),value=calendarData[key]?.[currentUser],holidays=getFrenchPublicHolidays(selectedMobileDate.getFullYear());
+    const card=document.createElement('section');card.className='mobile-focus-card';if([0,6].includes(selectedMobileDate.getDay()))card.classList.add('weekend');if(holidays.has(key))card.classList.add('holiday');
+    const fullDate=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long'}).format(selectedMobileDate);
+    card.innerHTML=`<header class="mobile-focus-date"><div><h2>${fullDate}</h2><p>${holidays.has(key)?'Jour férié':'Votre planning de la journée'}</p></div>${isToday(selectedMobileDate)?'<span class="mobile-focus-date-badge">Aujourd’hui</span>':''}</header><div class="mobile-focus-slots"></div>`;
+    const slots=card.querySelector('.mobile-focus-slots');
+    if(value&&typeof value==='object'){slots.appendChild(makeSlot(key,value.am,'am','Matin'));slots.appendChild(makeSlot(key,value.pm,'pm','Après-midi'));}
+    else {const status=typeof value==='string'?value:'PRESENT';slots.appendChild(makeSlot(key,status,'am','Matin'));slots.appendChild(makeSlot(key,status,'pm','Après-midi'));}
+    container.appendChild(card);updateActivityLabels();
+  }
+  window.renderPersonalCalendar=function(y,m){return active()?renderFocus():previousRender(y,m);};
+  document.getElementById('mobile-prev-week').onclick=()=>{selectedMobileDate.setDate(selectedMobileDate.getDate()-7);currentDate=new Date(selectedMobileDate);renderFocus();};
+  document.getElementById('mobile-next-week').onclick=()=>{selectedMobileDate.setDate(selectedMobileDate.getDate()+7);currentDate=new Date(selectedMobileDate);renderFocus();};
+  document.getElementById('mobile-go-today').onclick=()=>{selectedMobileDate=new Date();currentDate=new Date();renderFocus();};
+  function renderCategory(category){document.querySelectorAll('.mobile-activity-categories button').forEach(b=>b.classList.toggle('active',b.dataset.category===category));const root=document.getElementById('mobile-activity-options');root.innerHTML='';categories[category].forEach(status=>{const original=document.querySelector(`.tool-btn[data-status="${status}"]`);const button=document.createElement('button');button.type='button';button.dataset.mobileStatus=status;button.className=`tool-${status}`;button.textContent=status==='Formation'?'Formation':status;button.classList.toggle('active',selectedTool===status);button.onclick=()=>selectMobileStatus(status,original);root.appendChild(button);});}
+  function selectMobileStatus(status,original){if(requiresSecondaryCode(status)){openSecondaryCodeModal(status,code=>{original?.click();selectedTool=status;selectedSecondaryCode=code;updateActivityLabels();closeMobileActivitySheet();});}else{original?.click();selectedTool=status;selectedSecondaryCode=null;updateActivityLabels();closeMobileActivitySheet();}}
+  window.openMobileActivitySheet=function(){document.getElementById('mobile-activity-sheet').classList.add('visible');document.getElementById('mobile-activity-backdrop').classList.add('visible');document.getElementById('mobile-activity-button').setAttribute('aria-expanded','true');renderCategory(requiresSecondaryCode(selectedTool)?'travel':['CA','JDR','Formation'].includes(selectedTool)?'absence':'presence');};
+  window.closeMobileActivitySheet=function(){document.getElementById('mobile-activity-sheet').classList.remove('visible');document.getElementById('mobile-activity-backdrop').classList.remove('visible');document.getElementById('mobile-activity-button').setAttribute('aria-expanded','false');};
+  document.querySelectorAll('.mobile-activity-categories button').forEach(button=>button.onclick=()=>renderCategory(button.dataset.category));
+  document.querySelector('.mobile-clear-day').onclick=()=>selectMobileStatus('PRESENT',document.querySelector('.tool-btn[data-status="PRESENT"]'));
+  const priorSwitch=window.switchTab;window.switchTab=function(view){const result=priorSwitch(view);setTimeout(()=>{document.getElementById('mobile-day-toolbar').style.display=active()&&view==='view-personal'?'block':'none';document.getElementById('mobile-activity-button').style.display=active()&&view==='view-personal'?'flex':'none';},0);return result;};
+  mq.addEventListener?.('change',()=>{if(document.getElementById('view-personal').classList.contains('active'))renderPersonalCalendar(currentDate.getFullYear(),currentDate.getMonth());});
+  window.addEventListener('load',()=>{selectedMobileDate=new Date(currentDate);document.getElementById('mobile-day-toolbar').style.display='none';document.getElementById('mobile-activity-button').style.display='none';});
+})();
+</script>
+
 </body>
 </html>
