@@ -988,8 +988,43 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
 
+
+<style id="remember-session-boot-styles">
+  #remember-session-boot {
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:20000;
+    place-items:center;
+    background:var(--bg, #0a0e1a);
+    color:var(--text, #f8fafc);
+  }
+  html.remember-session-booting #remember-session-boot { display:grid; }
+  html.remember-session-booting body > *:not(#remember-session-boot) { visibility:hidden !important; }
+  .remember-session-boot-card { display:flex; flex-direction:column; align-items:center; gap:13px; padding:24px; text-align:center; }
+  .remember-session-spinner { width:34px; height:34px; border:3px solid rgba(99,102,241,.23); border-top-color:#6366f1; border-radius:50%; animation:remember-spin .75s linear infinite; }
+  .remember-session-boot-card strong { font-size:.95rem; }
+  .remember-session-boot-card small { color:#94a3b8; font-size:.7rem; }
+  @keyframes remember-spin { to { transform:rotate(360deg); } }
+</style>
+<script id="remember-session-early-boot">
+(function () {
+  try {
+    const raw = localStorage.getItem('planning_remembered_session');
+    if (!raw) return;
+    const session = JSON.parse(raw);
+    if (session && session.user && Number.isFinite(session.expiresAt) && session.expiresAt > Date.now()) {
+      document.documentElement.classList.add('remember-session-booting');
+    }
+  } catch (error) {
+    console.error('[Session locale] Préchargement impossible', error);
+  }
+})();
+</script>
+
 </head>
 <body>
+<div id="remember-session-boot" role="status" aria-live="polite"><div class="remember-session-boot-card"><div class="remember-session-spinner"></div><strong>Reconnexion…</strong><small>Chargement sécurisé de votre session</small></div></div>
 
   <div class="container">
     <div class="storage-banner">
@@ -5255,6 +5290,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
   }
 
+  function finishRememberedSessionBoot() {
+    document.documentElement.classList.remove('remember-session-booting');
+  }
+
   function clearRememberedSession() {
     try { localStorage.removeItem(SESSION_KEY); } catch (error) { console.error('[Session locale] Suppression impossible', error); }
     const checkbox = document.getElementById('remember-session-week');
@@ -5305,23 +5344,27 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   function tryAutomaticLogin() {
     if (automaticLoginCompleted || automaticLoginInProgress || currentUser) return;
     const session = readRememberedSession();
-    if (!session) return;
+    if (!session) { finishRememberedSessionBoot(); return; }
     const state = getSessionState(session);
     if (state === 'waiting') {
       if (Date.now() - startupStartedAt < DATA_WAIT_LIMIT_MS) return;
       console.error('[Session locale] Les données Firebase nécessaires ne sont pas arrivées');
+      finishRememberedSessionBoot();
       return;
     }
     if (state === 'expired' || state === 'invalid') {
       clearRememberedSession();
       automaticLoginCompleted = true;
+      finishRememberedSessionBoot();
       return;
     }
     if (state !== 'valid') return;
     automaticLoginInProgress = true;
     automaticLoginCompleted = true;
-    try { loginSuccess(session.user); }
-    finally { automaticLoginInProgress = false; }
+    try {
+      loginSuccess(session.user);
+      requestAnimationFrame(finishRememberedSessionBoot);
+    } finally { automaticLoginInProgress = false; }
   }
 
   function renderRememberedDevicePanel() {
