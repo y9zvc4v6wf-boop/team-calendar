@@ -4607,6 +4607,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     'serviceWorker' in navigator &&
     (location.protocol === 'https:' || location.hostname === 'localhost')
   ) {
+    let serviceWorkerReloading = false;
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (serviceWorkerReloading) return;
+      serviceWorkerReloading = true;
+      window.location.reload();
+    });
+
     window.addEventListener('load', async () => {
       try {
         const registration = await navigator.serviceWorker.register(
@@ -4619,10 +4627,30 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         // Vérifie immédiatement si une nouvelle version du service worker existe.
         await registration.update();
 
-        console.info('[PWA] Service worker enregistré et vérifié.');
+        // Active immédiatement un worker déjà en attente.
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+
+        // Active aussi les futures mises à jour dès leur installation.
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (!newWorker) return;
+
+          newWorker.addEventListener('statechange', () => {
+            if (
+              newWorker.state === 'installed' &&
+              navigator.serviceWorker.controller
+            ) {
+              newWorker.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
+
+        console.info('[PWA] Service worker enregistré, vérifié et activé.');
       } catch (error) {
         console.error(
-          '[PWA] Erreur lors de l’enregistrement du service worker :',
+          '[PWA] Erreur lors de la mise à jour du service worker :',
           error
         );
       }
