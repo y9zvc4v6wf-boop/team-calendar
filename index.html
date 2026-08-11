@@ -1064,10 +1064,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
             <option value="ULT ARA">ULT ARA</option>
           </select>
         </div>
-        <label class="checkbox-group">
-          <input type="checkbox" id="cp-manager">
-          <strong>Je suis Manager</strong>
-        </label>
         <div class="form-group">
           <label for="cp-pin">Code PIN (4 chiffres) :</label>
           <input type="password" id="cp-pin" maxlength="4" placeholder="Ex: 1234">
@@ -1605,6 +1601,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 
   function updateAllMembersList() {
+    let adminProfileUpdated = false;
+    customMembers = customMembers.map(member => {
+      if (member.firstName === 'Adrien' && (!member.isManager || !member.isAdmin)) adminProfileUpdated = true;
+      return member.firstName === 'Adrien'
+        ? { ...member, isManager: true, isAdmin: true }
+        : { ...member, isAdmin: Boolean(member.isAdmin) };
+    });
+    if (adminProfileUpdated) saveCustomUsers();
     ALL_MEMBERS = [...BASE_TEAM_MEMBERS, ...customMembers];
     populateDropdowns();
     if(currentUser || document.getElementById('view-team').classList.contains('active') || document.getElementById('view-kpi').classList.contains('active') || document.getElementById('view-presence').classList.contains('active') || document.getElementById('view-annual').classList.contains('active')) {
@@ -1796,7 +1800,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     const user = ALL_MEMBERS.find(member => member.firstName === firstName);
     const content = document.getElementById('login-name-trigger-content');
     if (user) {
-      const badge = user.isManager ? '<span class="manager-badge">Manager</span>' : '';
+      const badge = user.isAdmin ? '<span class="manager-badge">Admin</span>' : user.isManager ? '<span class="manager-badge">Manager</span>' : '';
       content.innerHTML = `<span>${user.firstName} ${user.lastName}</span>${badge}<span style="color: var(--text-muted);">${user.pit}</span>`;
     } else {
       content.textContent = '-- Aucun profil dans ce PIT --';
@@ -1833,7 +1837,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         visualOption.type = 'button';
         visualOption.className = 'login-name-option';
         visualOption.dataset.value = user.firstName;
-        const badge = user.isManager ? '<span class="manager-badge">Manager</span>' : '';
+        const badge = user.isAdmin ? '<span class="manager-badge">Admin</span>' : user.isManager ? '<span class="manager-badge">Manager</span>' : '';
         visualOption.innerHTML = `<span>${user.firstName} ${user.lastName}</span>${badge}<span class="login-option-pit">${user.pit}</span>`;
         visualOption.onclick = () => selectLoginName(user.firstName);
         visualOptions.appendChild(visualOption);
@@ -1933,14 +1937,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   document.getElementById('login-name').addEventListener('keydown', handleLoginEnter);
   document.getElementById('login-pit-filter').addEventListener('keydown', handleLoginEnter);
 
-  function handleLogin() {
+  async function handleLogin() {
     const name = document.getElementById('login-name').value;
     const pin = document.getElementById('login-pin').value;
     if (!name) { alert("Aucun utilisateur sélectionné ou aucun profil disponible."); return; }
     if (!/^\d{4}$/.test(pin)) { alert("Veuillez entrer un code PIN à 4 chiffres."); return; }
 
     if (!usersPins[name]) {
-      if(confirm(`Créer le mot de passe pour ${name} avec le code ${pin} ?`)) {
+      if (await appConfirm(`Créer le mot de passe pour ${name} avec le code ${pin} ?`)) {
         usersPins[name] = pin;
         savePinData();
         loginSuccess(name);
@@ -1956,7 +1960,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     document.getElementById('login-pin').value = '';
     const userObj = ALL_MEMBERS.find(m => m.firstName === name);
     let greetingHtml = `Bonjour, ${currentUser}`;
-    if (userObj && userObj.isManager) greetingHtml += ` <span class="manager-badge">Manager</span>`;
+    if (userObj && userObj.isAdmin) greetingHtml += ` <span class="manager-badge">Admin</span>`;
+    else if (userObj && userObj.isManager) greetingHtml += ` <span class="manager-badge">Manager</span>`;
 
     document.getElementById('main-header').style.display = 'flex';
     document.getElementById('main-tabs').style.display = 'flex';
@@ -2108,9 +2113,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     switchTab('view-personal');
   }
 
-  function deleteMyAccount() {
+  async function deleteMyAccount() {
     if (!currentUser) return;
-    if (confirm(`Êtes-vous sûr de vouloir supprimer votre compte (${currentUser}) ?`)) {
+    if (await appConfirm(`Êtes-vous sûr de vouloir supprimer votre compte (${currentUser}) ?`, { danger: true })) {
       customMembers = customMembers.filter(m => m.firstName !== currentUser);
       saveCustomUsers();
       delete usersPins[currentUser];
@@ -2129,11 +2134,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
   }
 
-  function deleteTeamMemberAccount(memberName) {
+  async function deleteTeamMemberAccount(memberName) {
     const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
     if (!userObj || !userObj.isManager) return;
 
-    if (confirm(`Voulez-vous vraiment supprimer le compte de ${memberName} ?`)) {
+    if (await appConfirm(`Voulez-vous vraiment supprimer le compte de ${memberName} ?`, { danger: true })) {
       customMembers = customMembers.filter(m => m.firstName !== memberName);
       saveCustomUsers();
       delete usersPins[memberName];
@@ -2410,12 +2415,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       } else {
         teamMembers.forEach(member => {
           const row = document.createElement('div');
+          row.className = 'team-account-deletion-row';
           row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.alignItems = 'center';
           row.style.background = 'var(--bg)'; row.style.padding = '4px 8px'; row.style.borderRadius = '6px'; row.style.border = '1px solid var(--border)';
           const nameSpan = document.createElement('span');
           nameSpan.style.fontSize = '0.8rem'; nameSpan.textContent = `${member.firstName} ${member.lastName}`;
           const delBtn = document.createElement('button');
-          delBtn.className = 'btn-secondary'; delBtn.style.width = 'auto'; delBtn.style.padding = '2px 6px'; delBtn.style.fontSize = '0.7rem';
+          delBtn.className = 'btn-secondary team-account-delete-btn'; delBtn.style.width = 'auto'; delBtn.style.padding = '2px 8px'; delBtn.style.fontSize = '0.7rem';
           delBtn.style.borderColor = '#e11d48'; delBtn.style.color = '#e11d48'; delBtn.textContent = 'Supprimer';
           delBtn.onclick = () => deleteTeamMemberAccount(member.firstName);
           row.appendChild(nameSpan); row.appendChild(delBtn);
@@ -2467,7 +2473,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         const infoDiv = document.createElement('div');
         infoDiv.className = 'presence-member-info';
         infoDiv.style.fontSize = '0.85rem';
-        const managerBadge = member.isManager ? '<span class="manager-badge">Manager</span>' : '';
+        const managerBadge = member.isAdmin ? '<span class="manager-badge">Admin</span>' : member.isManager ? '<span class="manager-badge">Manager</span>' : '';
         infoDiv.innerHTML = `
           <span class="presence-member-name-line"><strong>${member.firstName} ${member.lastName}</strong>${managerBadge}</span>
           <span class="presence-member-pit-line">${member.pit}</span>
@@ -3170,7 +3176,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         // Colonne de gauche (Membre)
         const nameTd = document.createElement('td');
         nameTd.className = 'member-col';
-        const managerBadge = member.isManager ? '<span class="manager-badge">Manager</span>' : '';
+        const managerBadge = member.isAdmin ? '<span class="manager-badge">Admin</span>' : member.isManager ? '<span class="manager-badge">Manager</span>' : '';
         nameTd.innerHTML = `${member.firstName} ${member.lastName}${managerBadge}<br><span class="member-pit">${member.pit}</span>`;
         tr.appendChild(nameTd);
 
@@ -4028,6 +4034,420 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   window.addEventListener('blur', hideTooltip);
 })();
 </script>
+
+
+<style id="light-security-styles">
+  .security-panel { margin: 14px 0; padding: 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg); text-align: left; }
+  .security-panel h3 { margin: 0 0 8px; color: var(--text); font-size: .9rem; }
+  .security-panel p { margin: 0 0 8px; font-size: .72rem; color: var(--text-muted); }
+  .security-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  .security-actions { display:flex; flex-wrap:wrap; gap:5px; margin-left:auto; }
+  .security-actions button { width:auto; margin:0; padding:4px 7px; font-size:.67rem; }
+  .security-member-row { display:flex; gap:8px; align-items:center; padding:7px; border:1px solid var(--border); border-radius:7px; background:var(--input-bg); }
+  .security-member-label { min-width:0; flex:1; font-size:.76rem; }
+  .security-note { padding:7px 9px; border-radius:7px; background:var(--accent-soft); color:var(--text-muted); font-size:.7rem; }
+  @media(max-width:600px){.security-grid{grid-template-columns:1fr}.security-member-row{align-items:flex-start;flex-direction:column}.security-actions{margin-left:0}}
+</style>
+<script id="light-security-script">
+(function () {
+  'use strict';
+  const MAX_LOGIN_ATTEMPTS = 5;
+  const LOCK_DURATION_MS = 10 * 60 * 1000;
+  let securityData = { adminCode: null, loginAttempts: {} };
+
+  function friendlyStorageError(operation, error) {
+    console.error(`[Sécurité] ${operation}`, error);
+    alert(operation === 'lecture'
+      ? 'Les données sont momentanément indisponibles. Veuillez réessayer.'
+      : "La modification n’a pas pu être enregistrée. Veuillez réessayer.");
+  }
+  function bytesToHex(buffer) {
+    return Array.from(new Uint8Array(buffer)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+  function createSalt() {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return bytesToHex(bytes);
+  }
+  async function pinHash(pin, salt) {
+    if (!window.crypto?.subtle) throw new Error('Web Crypto indisponible');
+    const data = new TextEncoder().encode(`${salt}:${pin}`);
+    return bytesToHex(await crypto.subtle.digest('SHA-256', data));
+  }
+  async function createProtectedSecret(pin) {
+    const salt = createSalt();
+    return { hash: await pinHash(pin, salt), salt, version: 2 };
+  }
+  async function verifyProtectedSecret(stored, pin) {
+    if (typeof stored === 'string') return stored === pin;
+    if (!stored || typeof stored !== 'object' || !stored.hash || !stored.salt) return false;
+    return (await pinHash(pin, stored.salt)) === stored.hash;
+  }
+  async function setProtectedPin(name, pin) {
+    usersPins[name] = await createProtectedSecret(pin);
+    savePinData();
+  }
+  async function saveSecurityData() {
+    try {
+      if (db) await db.ref('security').set(securityData);
+      else localStorage.setItem('team_security_data', JSON.stringify(securityData));
+    } catch (error) { friendlyStorageError('enregistrement', error); throw error; }
+  }
+  function loginState(name) {
+    if (!securityData.loginAttempts) securityData.loginAttempts = {};
+    return securityData.loginAttempts[name] || { failedAttempts: 0, lockedUntil: 0 };
+  }
+  function remainingLockMinutes(name) {
+    const state = loginState(name);
+    return state.lockedUntil > Date.now() ? Math.max(1, Math.ceil((state.lockedUntil - Date.now()) / 60000)) : 0;
+  }
+  async function recordLoginFailure(name) {
+    const previous = loginState(name);
+    const failedAttempts = (previous.failedAttempts || 0) + 1;
+    securityData.loginAttempts[name] = {
+      failedAttempts,
+      lockedUntil: failedAttempts >= MAX_LOGIN_ATTEMPTS ? Date.now() + LOCK_DURATION_MS : 0
+    };
+    await saveSecurityData();
+  }
+  async function clearLoginFailures(name) {
+    if (!securityData.loginAttempts) securityData.loginAttempts = {};
+    delete securityData.loginAttempts[name];
+    await saveSecurityData();
+  }
+  function currentMember() { return ALL_MEMBERS.find(member => member.firstName === currentUser); }
+  function memberByName(name) { return ALL_MEMBERS.find(member => member.firstName === name); }
+  function isCurrentAdmin() { return Boolean(currentMember()?.isAdmin); }
+  function canManageMember(target) {
+    const actor = currentMember();
+    return Boolean(actor && target && (actor.isAdmin || (actor.isManager && target.pit === actor.pit)));
+  }
+  function assertFourDigitPin(pin, message) {
+    if (!/^\d{4}$/.test(pin)) { alert(message || 'Le code PIN doit contenir exactement 4 chiffres.'); return false; }
+    return true;
+  }
+  async function verifyCurrentManagerPin(pin) {
+    const member = currentMember();
+    return Boolean(member?.isManager && await verifyProtectedSecret(usersPins[currentUser], pin));
+  }
+
+  // Synchronisation légère des informations de sécurité.
+  function loadSecurityData() {
+    if (db) {
+      db.ref('security').on('value', snap => {
+        const value = snap.val() || {};
+        securityData = { adminCode: value.adminCode || null, loginAttempts: value.loginAttempts || {} };
+        if (document.getElementById('view-settings')?.classList.contains('active')) renderSettingsView();
+      }, error => { console.error('[Sécurité] Synchronisation indisponible', error); });
+    } else {
+      try {
+        const local = localStorage.getItem('team_security_data');
+        if (local) securityData = JSON.parse(local);
+      } catch (error) { console.error('[Sécurité] Données locales illisibles', error); }
+    }
+  }
+
+  // Messages de connexion neutres, sans exposer Firebase.
+  if (banner) banner.textContent = db ? '🟢 Synchronisation en ligne active' : '🟡 Mode local actif';
+
+  window.handleLogin = async function () {
+    const name = document.getElementById('login-name').value;
+    const pin = document.getElementById('login-pin').value;
+    if (!name || !assertFourDigitPin(pin, 'Informations de connexion incorrectes.')) return;
+    const remaining = remainingLockMinutes(name);
+    if (remaining) { alert(`Connexion temporairement verrouillée. Réessayez dans ${remaining} minute${remaining > 1 ? 's' : ''}.`); return; }
+    try {
+      const stored = usersPins[name];
+      if (!stored) { alert('Informations de connexion incorrectes.'); return; }
+      const valid = await verifyProtectedSecret(stored, pin);
+      if (!valid) {
+        await recordLoginFailure(name);
+        const nowRemaining = remainingLockMinutes(name);
+        alert(nowRemaining ? `Trop de tentatives incorrectes. Connexion verrouillée pendant ${nowRemaining} minutes.` : 'Informations de connexion incorrectes.');
+        return;
+      }
+      // Migration automatique du PIN historique en texte vers une empreinte salée.
+      if (typeof stored === 'string') await setProtectedPin(name, pin);
+      await clearLoginFailures(name);
+      loginSuccess(name);
+    } catch (error) { friendlyStorageError('lecture', error); }
+  };
+
+  window.handleCreateProfile = async function () {
+    const firstName = formatPersonName(document.getElementById('cp-firstname').value);
+    const lastName = formatPersonName(document.getElementById('cp-lastname').value);
+    const pit = document.getElementById('cp-pit').value;
+    const pin = document.getElementById('cp-pin').value;
+    if (!firstName || !lastName || !pit) { alert('Veuillez remplir le Prénom et le Nom.'); return; }
+    if (!assertFourDigitPin(pin)) return;
+    if (ALL_MEMBERS.some(member => member.firstName.toLowerCase() === firstName.toLowerCase())) { alert('Un utilisateur avec ce prénom existe déjà.'); return; }
+    try {
+      customMembers.push({ pit, firstName, lastName, isManager: false });
+      usersPins[firstName] = await createProtectedSecret(pin);
+      saveCustomUsers(); savePinData();
+      ['cp-firstname','cp-lastname','cp-pin'].forEach(id => document.getElementById(id).value = '');
+      alert('Profil utilisateur créé avec succès. Le rôle Manager est attribué uniquement depuis les paramètres sécurisés.');
+      updateAllMembersList(); switchTab('view-login');
+    } catch (error) { friendlyStorageError('enregistrement', error); }
+  };
+
+  window.changePin = async function () {
+    const oldPin = document.getElementById('old-pin').value;
+    const newPin = document.getElementById('new-pin').value;
+    if (!assertFourDigitPin(oldPin, "L’ancien code est incorrect.") || !assertFourDigitPin(newPin, 'Le nouveau code doit contenir 4 chiffres.')) return;
+    try {
+      if (!await verifyProtectedSecret(usersPins[currentUser], oldPin)) { alert("L’ancien code est incorrect."); return; }
+      await setProtectedPin(currentUser, newPin);
+      document.getElementById('old-pin').value = '';
+      document.getElementById('new-pin').value = '';
+      alert('Votre code a été modifié avec succès.');
+      switchTab('view-personal');
+    } catch (error) { friendlyStorageError('enregistrement', error); }
+  };
+
+  async function initialiseOrVerifyAdminCode(inputCode) {
+    if (!/^\d{6,12}$/.test(inputCode)) { alert('Le code administrateur doit contenir entre 6 et 12 chiffres.'); return false; }
+    if (!securityData.adminCode) {
+      if (!currentMember()?.isManager && !isCurrentAdmin()) { alert('Seul un Manager ou Administrateur existant peut initialiser le code administrateur.'); return false; }
+      if (!await appConfirm('Aucun code administrateur n’existe. Voulez-vous définir ce code maintenant ?')) return false;
+      securityData.adminCode = await createProtectedSecret(inputCode);
+      await saveSecurityData();
+      alert('Code administrateur initialisé. Conservez-le dans un emplacement sécurisé.');
+      return true;
+    }
+    if (!await verifyProtectedSecret(securityData.adminCode, inputCode)) { alert('Code administrateur incorrect.'); return false; }
+    return true;
+  }
+
+  window.applyRoleChange = async function () {
+    if (!isCurrentAdmin()) { alert('Cette fonction est réservée à l’Administrateur.'); return; }
+    const targetName = document.getElementById('security-role-person')?.value;
+    const role = document.getElementById('security-role-value')?.value;
+    const adminCode = document.getElementById('security-admin-code')?.value || '';
+    const target = customMembers.find(member => member.firstName === targetName);
+    if (!target) { alert('Profil introuvable.'); return; }
+    try {
+      if (!await initialiseOrVerifyAdminCode(adminCode)) return;
+      if (target.firstName === 'Adrien' && role !== 'admin') { alert('Le profil Administrateur principal Adrien ne peut pas être rétrogradé.'); return; }
+      if (role === 'admin' && !isCurrentAdmin()) { alert('Seul un Administrateur peut attribuer le rôle Administrateur.'); return; }
+      const roleLabel = role === 'admin' ? 'Administrateur' : role === 'manager' ? 'Manager' : 'Utilisateur';
+      if (!await appConfirm(`${target.firstName} ${target.lastName} sera ${roleLabel}. Confirmer ?`)) return;
+      target.isAdmin = role === 'admin';
+      target.isManager = role === 'manager' || role === 'admin';
+      saveCustomUsers(); updateAllMembersList();
+      document.getElementById('security-admin-code').value = '';
+      alert('Rôle modifié avec succès.');
+      renderSettingsView();
+    } catch (error) { friendlyStorageError('enregistrement', error); }
+  };
+
+  window.resetMemberPin = async function (memberName) {
+    const manager = currentMember();
+    const target = memberByName(memberName);
+    if (!canManageMember(target)) { alert('Vous n’êtes pas autorisé à effectuer cette action.'); return; }
+    const managerPin = await appPrompt('Saisissez votre propre PIN pour confirmer :', { title: 'Confirmation Manager', inputType: 'password', maxlength: 4, inputMode: 'numeric' });
+    if (managerPin === null) return;
+    if (!assertFourDigitPin(managerPin, 'Confirmation incorrecte.')) return;
+    try {
+      if (!await verifyCurrentManagerPin(managerPin)) { alert('Confirmation incorrecte.'); return; }
+      const newPin = await appPrompt(`Nouveau PIN temporaire à 4 chiffres pour ${memberName} :`, { title: 'Réinitialiser le PIN', inputType: 'password', maxlength: 4, inputMode: 'numeric' });
+      if (newPin === null) return;
+      if (!assertFourDigitPin(newPin)) return;
+      const confirmation = await appPrompt('Confirmez le nouveau PIN temporaire :', { title: 'Confirmer le nouveau PIN', inputType: 'password', maxlength: 4, inputMode: 'numeric' });
+      if (confirmation === null) return;
+      if (newPin !== confirmation) { alert('Les deux PIN ne correspondent pas.'); return; }
+      await setProtectedPin(memberName, newPin);
+      await clearLoginFailures(memberName);
+      alert(`Le PIN de ${memberName} a été réinitialisé.`);
+    } catch (error) { friendlyStorageError('enregistrement', error); }
+  };
+
+  window.unlockMember = async function (memberName) {
+    const manager = currentMember();
+    const target = memberByName(memberName);
+    if (!canManageMember(target)) { alert('Vous n’êtes pas autorisé à effectuer cette action.'); return; }
+    try { await clearLoginFailures(memberName); alert(`Le compte de ${memberName} est déverrouillé.`); }
+    catch (error) { friendlyStorageError('enregistrement', error); }
+  };
+
+  const originalRenderSettings = window.renderSettingsView;
+  window.renderSettingsView = function () {
+    originalRenderSettings.apply(this, arguments);
+    const manager = currentMember();
+    const form = document.querySelector('#view-settings .form-box');
+    if (!form) return;
+    form.querySelectorAll('.security-panel').forEach(panel => panel.remove());
+    if (!manager?.isManager) return;
+
+    if (manager.isAdmin) {
+      const rolePanel = document.createElement('div');
+      rolePanel.className = 'security-panel';
+      rolePanel.dataset.adminOnly = 'true';
+      const roleOptions = customMembers.map(member => `<option value="${member.firstName}">${member.firstName} ${member.lastName} (${member.pit})</option>`).join('');
+      rolePanel.innerHTML = `
+        <h3>🔐 Administration des rôles</h3>
+        <p>Cette section est réservée à l’Administrateur. Le code administrateur est requis pour attribuer ou retirer un rôle.</p>
+        <div class="security-grid">
+          <div class="form-group"><label for="security-role-person">Personne</label><select id="security-role-person">${roleOptions}</select></div>
+          <div class="form-group"><label for="security-role-value">Rôle</label><select id="security-role-value"><option value="user">Utilisateur</option><option value="manager">Manager</option><option value="admin">Administrateur</option></select></div>
+        </div>
+        <div class="form-group"><label for="security-admin-code">Code administrateur (6 à 12 chiffres)</label><input type="password" id="security-admin-code" maxlength="12" inputmode="numeric"></div>
+        <button type="button" class="btn-primary" onclick="applyRoleChange()">Appliquer le rôle</button>
+        <div class="security-note" style="margin-top:8px">${securityData.adminCode ? 'Le code administrateur est configuré.' : 'Aucun code administrateur : définissez-le lors de la première modification.'}</div>`;
+      form.appendChild(rolePanel);
+    }
+
+    const teamPanel = document.createElement('div');
+    teamPanel.className = 'security-panel';
+    teamPanel.innerHTML = '<h3>🔑 Sécurité des comptes de mon équipe</h3><p>Réinitialisez un PIN ou déverrouillez un compte après plusieurs erreurs.</p>';
+    const members = ALL_MEMBERS.filter(member => member.firstName !== currentUser && (manager.isAdmin || member.pit === manager.pit));
+    if (!members.length) teamPanel.insertAdjacentHTML('beforeend','<div class="security-note">Aucun autre membre dans votre équipe.</div>');
+    members.forEach(member => {
+      const row = document.createElement('div'); row.className = 'security-member-row';
+      const locked = remainingLockMinutes(member.firstName);
+      row.innerHTML = `<div class="security-member-label"><strong>${member.firstName} ${member.lastName}</strong><br><span style="color:var(--text-muted)">${member.isAdmin ? 'Administrateur' : member.isManager ? 'Manager' : 'Utilisateur'}${locked ? ` · verrouillé encore ${locked} min` : ''}</span></div><div class="security-actions"><button type="button" onclick="resetMemberPin('${member.firstName}')">Réinitialiser le PIN</button><button type="button" onclick="unlockMember('${member.firstName}')">Déverrouiller</button></div>`;
+      teamPanel.appendChild(row);
+    });
+    form.appendChild(teamPanel);
+  };
+
+  // Sauvegardes avec erreurs techniques uniquement dans la console.
+  window.addEventListener('unhandledrejection', event => {
+    console.error('[Application] Opération asynchrone non aboutie', event.reason);
+    event.preventDefault();
+  });
+  loadSecurityData();
+})();
+</script>
+
+
+<style id="unified-app-modal-styles">
+  #unified-app-modal { z-index: 9000; }
+  #unified-app-modal .app-modal-card { width: min(470px, 100%); }
+  #unified-modal-message { white-space: pre-line; overflow-wrap: anywhere; }
+  #unified-modal-input-wrap { display:none; margin: 0 0 16px; }
+  #unified-modal-input { width:100%; min-height:40px; font-size:.92rem; }
+  #unified-modal-actions { display:flex; justify-content:flex-end; gap:8px; }
+  #unified-modal-actions button { width:auto; min-width:92px; margin:0; }
+  #unified-modal-confirm.danger { background:var(--danger); border-color:var(--danger); color:#fff; }
+</style>
+<div id="unified-app-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="unified-modal-title">
+  <div class="app-modal-card">
+    <div id="unified-modal-accent" class="app-modal-accent"></div>
+    <div class="app-modal-content">
+      <div class="app-modal-heading">
+        <div id="unified-modal-icon" class="app-modal-icon">ℹ️</div>
+        <div>
+          <h2 id="unified-modal-title" class="app-modal-title">Information</h2>
+          <p id="unified-modal-subtitle" class="app-modal-subtitle">Planning Équipe</p>
+        </div>
+      </div>
+      <p id="unified-modal-message" class="app-modal-message"></p>
+      <div id="unified-modal-input-wrap" class="form-group">
+        <label id="unified-modal-input-label" for="unified-modal-input">Valeur</label>
+        <input id="unified-modal-input" type="text" autocomplete="off">
+      </div>
+      <div id="unified-modal-actions" class="app-modal-actions">
+        <button type="button" id="unified-modal-cancel" class="btn-secondary">Annuler</button>
+        <button type="button" id="unified-modal-confirm" class="btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script id="unified-app-modal-script">
+(function () {
+  const modal = document.getElementById('unified-app-modal');
+  const title = document.getElementById('unified-modal-title');
+  const subtitle = document.getElementById('unified-modal-subtitle');
+  const icon = document.getElementById('unified-modal-icon');
+  const message = document.getElementById('unified-modal-message');
+  const inputWrap = document.getElementById('unified-modal-input-wrap');
+  const inputLabel = document.getElementById('unified-modal-input-label');
+  const input = document.getElementById('unified-modal-input');
+  const cancelButton = document.getElementById('unified-modal-cancel');
+  const confirmButton = document.getElementById('unified-modal-confirm');
+  let resolver = null;
+  let mode = 'alert';
+  let previousFocus = null;
+
+  function closeModal(value) {
+    if (!modal.classList.contains('visible')) return;
+    modal.classList.remove('visible');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    const resolve = resolver;
+    resolver = null;
+    if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
+    if (resolve) resolve(value);
+  }
+  function openModal(kind, text, options = {}) {
+    if (resolver) closeModal(kind === 'prompt' ? null : false);
+    mode = kind;
+    previousFocus = document.activeElement;
+    title.textContent = options.title || (kind === 'confirm' ? 'Confirmation' : kind === 'prompt' ? 'Saisie requise' : 'Information');
+    subtitle.textContent = options.subtitle || 'Planning Équipe';
+    icon.textContent = options.icon || (options.danger ? '⚠️' : kind === 'confirm' ? '❓' : kind === 'prompt' ? '🔐' : 'ℹ️');
+    message.textContent = String(text ?? '');
+    cancelButton.style.display = kind === 'alert' ? 'none' : 'inline-flex';
+    cancelButton.textContent = options.cancelText || 'Annuler';
+    confirmButton.textContent = options.confirmText || 'OK';
+    confirmButton.classList.toggle('danger', Boolean(options.danger));
+    inputWrap.style.display = kind === 'prompt' ? 'block' : 'none';
+    inputLabel.textContent = options.inputLabel || 'Valeur';
+    input.type = options.inputType || 'text';
+    input.value = options.defaultValue || '';
+    input.maxLength = options.maxlength || 524288;
+    input.inputMode = options.inputMode || 'text';
+    input.placeholder = options.placeholder || '';
+    modal.classList.add('visible');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(() => (kind === 'prompt' ? input : confirmButton).focus());
+    return new Promise(resolve => { resolver = resolve; });
+  }
+
+  window.appAlert = function (text, options = {}) { return openModal('alert', text, options); };
+  window.appConfirm = function (text, options = {}) { return openModal('confirm', text, options); };
+  window.appPrompt = function (text, options = {}) { return openModal('prompt', text, options); };
+  // Tous les anciens alert() du code utilisent désormais la fenêtre de l'application.
+  window.alert = function (text) { void window.appAlert(text); };
+
+  confirmButton.addEventListener('click', () => closeModal(mode === 'prompt' ? input.value : true));
+  cancelButton.addEventListener('click', () => closeModal(mode === 'prompt' ? null : false));
+  modal.addEventListener('click', event => { if (event.target === modal && mode !== 'alert') closeModal(mode === 'prompt' ? null : false); });
+  modal.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && mode !== 'alert') { event.preventDefault(); closeModal(mode === 'prompt' ? null : false); }
+    if (event.key === 'Enter' && (mode !== 'prompt' || document.activeElement === input)) { event.preventDefault(); closeModal(mode === 'prompt' ? input.value : true); }
+    if (event.key === 'Tab') {
+      const focusables = [cancelButton, input, confirmButton].filter(element => element.offsetParent !== null);
+      if (!focusables.length) return;
+      const first = focusables[0], last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+  });
+})();
+</script>
+
+
+<style id="team-account-delete-button-centering">
+  #team-members-list-for-deletion .team-account-deletion-row {
+    min-height: 38px;
+  }
+
+  #team-members-list-for-deletion .team-account-delete-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    align-self: center !important;
+    min-width: 78px;
+    min-height: 28px;
+    margin: 0 !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+  }
+</style>
 
 </body>
 </html>
