@@ -1617,7 +1617,12 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           renderViews();
         }
       });
-      db.ref('secondary_codes').on('value', (snap) => { secondaryCodesData = snap.val() || {}; });
+      db.ref('secondary_codes').on('value', (snap) => {
+        secondaryCodesData = snap.val() || {};
+        if (currentUser || document.getElementById('view-team').classList.contains('active') || document.getElementById('view-presence').classList.contains('active')) {
+          renderViews();
+        }
+      });
       db.ref('users_pins').on('value', (snap) => {
         usersPins = snap.val() || {};
         if (migrateLegacyPinKeys()) db.ref('users_pins').set(usersPins);
@@ -2538,21 +2543,43 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         `;
         const statusDiv = document.createElement('div');
         statusDiv.className = 'presence-status-block';
-        const statusVal = calendarData[dateKey] && calendarData[dateKey][member.firstName];
-        if (!statusVal || statusVal === 'PRESENT') {
-          statusDiv.innerHTML = `<span class="status-badge" style="background: var(--badge-neutral-bg); color: var(--badge-neutral-text); padding: 2px 5px; border-radius: 4px;">Bureau (Présent)</span>`;
-        } else if (typeof statusVal === 'string') {
-          statusDiv.innerHTML = `<span class="status-badge bg-${statusVal}" style="padding: 2px 5px; border-radius: 4px;">${statusVal}</span>`;
-        } else if (typeof statusVal === 'object') {
-          let amStat = statusVal.am || 'PRESENT';
-          let pmStat = statusVal.pm || 'PRESENT';
-          statusDiv.innerHTML = `
-            <div class="presence-half-status" style="font-size: 0.72rem;">
-              <span>Matin : <strong class="${amStat !== 'PRESENT' ? 'status-badge bg-' + amStat : ''}" style="border-radius: 4px;">${amStat}</strong></span>
-              <span>Après-midi : <strong class="${pmStat !== 'PRESENT' ? 'status-badge bg-' + pmStat : ''}" style="border-radius: 4px;">${pmStat}</strong></span>
-            </div>
-          `;
-        }
+        // Utilise exactement la même source et la même normalisation que Vue Équipe.
+        const amStat = getStatus(dateKey, member.firstName, 'am');
+        const pmStat = getStatus(dateKey, member.firstName, 'pm');
+        const halves = document.createElement('div');
+        halves.className = 'presence-half-status';
+        halves.style.fontSize = '0.72rem';
+
+        [
+          { slot: 'am', label: 'Matin', status: amStat },
+          { slot: 'pm', label: 'Après-midi', status: pmStat }
+        ].forEach(({ slot, label, status }) => {
+          const slotLine = document.createElement('span');
+          const labelNode = document.createElement('span');
+          labelNode.className = 'presence-slot-label';
+          labelNode.textContent = `${label} : `;
+          slotLine.appendChild(labelNode);
+
+          const valueNode = document.createElement('strong');
+          valueNode.className = 'status-badge';
+          valueNode.style.borderRadius = '4px';
+          valueNode.dataset.calendarTooltip = 'true';
+          valueNode.dataset.tooltipDate = dateKey;
+          valueNode.dataset.tooltipUser = member.firstName;
+          valueNode.dataset.tooltipSlot = slot;
+
+          if (status === 'PRESENT') {
+            valueNode.classList.add('presence-office-status');
+            valueNode.textContent = 'Bureau';
+          } else {
+            valueNode.classList.add(`bg-${status}`);
+            renderStatusWithSecondary(valueNode, status, dateKey, member.firstName, slot);
+          }
+          slotLine.appendChild(valueNode);
+          halves.appendChild(slotLine);
+        });
+        statusDiv.appendChild(halves);
+
         card.appendChild(infoDiv); card.appendChild(statusDiv);
         listDiv.appendChild(card);
       });
@@ -5505,6 +5532,39 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   @media (max-width:700px) and (orientation:portrait) {
     #team-table-container th:not(.member-col) { min-width:48px; }
     #team-table-container .team-weekday-name { font-size:.5rem; }
+  }
+</style>
+
+
+<style id="presence-team-shared-status-styles">
+  #view-presence .presence-office-status {
+    background: var(--badge-neutral-bg) !important;
+    color: var(--badge-neutral-text) !important;
+  }
+  #view-presence .presence-half-status > span {
+    position: relative;
+    overflow: visible;
+  }
+  #view-presence .presence-half-status .status-badge {
+    position: relative;
+    min-width: 50px;
+  }
+  #view-presence .presence-half-status .secondary-code-initial {
+    top: 2px !important;
+    right: 2px !important;
+  }
+  #view-presence .presence-slot-label {
+    flex: 0 0 auto;
+  }
+  @media (max-width:700px) and (orientation:portrait) {
+    #view-presence .presence-half-status {
+      grid-template-columns: 1fr !important;
+      gap: 6px !important;
+    }
+    #view-presence .presence-half-status > span {
+      justify-content: space-between !important;
+      padding: 5px 7px !important;
+    }
   }
 </style>
 
