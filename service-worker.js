@@ -1,4 +1,4 @@
-const CACHE_NAME = 'planning-equipe-cache-2026';
+const CACHE_NAME = 'planning-equipe-cache-r2';
 
 /*
  * Fichiers statiques disponibles hors connexion.
