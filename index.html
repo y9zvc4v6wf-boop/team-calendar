@@ -1049,6 +1049,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           <label for="login-pin">Code PIN (4 chiffres) :</label>
           <input type="password" id="login-pin" maxlength="4" placeholder="Ex: 1234" pattern="\d{4}">
         </div>
+        <label class="remember-session-option" for="remember-session-week">
+          <input type="checkbox" id="remember-session-week">
+          <span><strong>Rester connecté pendant 7 jours</strong><small>À utiliser uniquement sur un appareil protégé.</small></span>
+        </label>
         <button class="btn-primary" onclick="handleLogin()">Se connecter</button>
         <button class="btn-outline" onclick="showCreateProfile()">➕ Créer un profil</button>
         <button class="btn-secondary" onclick="accessPublicTeamView()">👀 Voir la Vue Équipe (Public)</button>
@@ -5119,6 +5123,225 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
   }
 </style>
+
+
+<style id="remember-session-styles">
+  .remember-session-option {
+    display:flex;
+    align-items:flex-start;
+    gap:9px;
+    margin:10px 0 8px;
+    padding:10px 11px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:var(--input-bg);
+    color:var(--text);
+    text-align:left;
+    cursor:pointer;
+  }
+  .remember-session-option input {
+    width:18px;
+    height:18px;
+    flex:0 0 18px;
+    margin:1px 0 0;
+    accent-color:var(--accent);
+  }
+  .remember-session-option span { min-width:0; }
+  .remember-session-option strong {
+    display:block;
+    font-size:.78rem;
+    line-height:1.25;
+  }
+  .remember-session-option small {
+    display:block;
+    margin-top:3px;
+    color:var(--text-muted);
+    font-size:.66rem;
+    line-height:1.3;
+  }
+  .remember-device-panel {
+    margin:14px 0;
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:var(--bg);
+    text-align:left;
+  }
+  .remember-device-panel h3 { margin:0 0 7px; font-size:.9rem; color:var(--text); }
+  .remember-device-panel p { margin:0 0 9px; font-size:.72rem; color:var(--text-muted); line-height:1.4; }
+  .remember-device-panel button { width:100%; margin:0; }
+  @media (max-width:700px) {
+    .remember-session-option { min-height:52px; }
+    .remember-session-option strong { font-size:.82rem; }
+  }
+</style>
+
+<script id="remember-session-7-days-script">
+(function () {
+  'use strict';
+  const SESSION_KEY = 'planning_remembered_session';
+  const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+  const SESSION_VERSION = 1;
+  let automaticLoginInProgress = false;
+  let automaticLoginCompleted = false;
+
+  function credentialFingerprint(value) {
+    const source = JSON.stringify(value || null);
+    let hash = 2166136261;
+    for (let index = 0; index < source.length; index++) {
+      hash ^= source.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16);
+  }
+
+  function readRememberedSession() {
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return null;
+      const session = JSON.parse(raw);
+      if (!session || session.version !== SESSION_VERSION || !session.user || !Number.isFinite(session.expiresAt)) {
+        localStorage.removeItem(SESSION_KEY);
+        return null;
+      }
+      return session;
+    } catch (error) {
+      console.error('[Session locale] Lecture impossible', error);
+      try { localStorage.removeItem(SESSION_KEY); } catch (ignored) {}
+      return null;
+    }
+  }
+
+  function clearRememberedSession() {
+    try { localStorage.removeItem(SESSION_KEY); } catch (error) { console.error('[Session locale] Suppression impossible', error); }
+    const checkbox = document.getElementById('remember-session-week');
+    if (checkbox) checkbox.checked = false;
+    renderRememberedDevicePanel();
+  }
+
+  function saveRememberedSession(userName) {
+    const protectedCredential = usersPins?.[userName];
+    if (!protectedCredential) return;
+    const session = {
+      user: userName,
+      expiresAt: Date.now() + SESSION_DURATION_MS,
+      version: SESSION_VERSION,
+      credentialFingerprint: credentialFingerprint(protectedCredential)
+    };
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); }
+    catch (error) { console.error('[Session locale] Enregistrement impossible', error); }
+  }
+
+  function formatExpiry(expiresAt) {
+    return new Intl.DateTimeFormat('fr-FR', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    }).format(new Date(expiresAt));
+  }
+
+  function sessionIsValid(session) {
+    if (!session || session.expiresAt <= Date.now()) return false;
+    const memberExists = ALL_MEMBERS.some(member => member.firstName === session.user);
+    const protectedCredential = usersPins?.[session.user];
+    if (!memberExists || !protectedCredential) return false;
+    return session.credentialFingerprint === credentialFingerprint(protectedCredential);
+  }
+
+  function tryAutomaticLogin() {
+    if (automaticLoginCompleted || automaticLoginInProgress || currentUser) return;
+    const session = readRememberedSession();
+    if (!session) return;
+    if (!sessionIsValid(session)) {
+      clearRememberedSession();
+      automaticLoginCompleted = true;
+      return;
+    }
+    automaticLoginInProgress = true;
+    automaticLoginCompleted = true;
+    try {
+      loginSuccess(session.user);
+    } finally {
+      automaticLoginInProgress = false;
+    }
+  }
+
+  function renderRememberedDevicePanel() {
+    const form = document.querySelector('#view-settings .form-box');
+    if (!form) return;
+    form.querySelector('.remember-device-panel')?.remove();
+    const panel = document.createElement('div');
+    panel.className = 'remember-device-panel';
+    const session = readRememberedSession();
+    if (session && sessionIsValid(session) && session.user === currentUser) {
+      panel.innerHTML = `<h3>📱 Session sur cet appareil</h3><p>Connexion automatique active jusqu’au ${formatExpiry(session.expiresAt)}. Le PIN n’est pas enregistré sur l’appareil.</p><button type="button" class="btn-secondary" id="forget-this-device">Oublier cet appareil</button>`;
+      panel.querySelector('#forget-this-device').addEventListener('click', () => {
+        clearRememberedSession();
+        alert('La connexion automatique a été désactivée sur cet appareil.');
+      });
+    } else {
+      panel.innerHTML = '<h3>📱 Session sur cet appareil</h3><p>La connexion automatique n’est pas active sur cet appareil.</p>';
+    }
+    form.appendChild(panel);
+  }
+
+  const originalLoginSuccess = window.loginSuccess;
+  window.loginSuccess = function (name) {
+    const result = originalLoginSuccess.apply(this, arguments);
+    if (!automaticLoginInProgress && document.getElementById('remember-session-week')?.checked) {
+      saveRememberedSession(name);
+    }
+    renderRememberedDevicePanel();
+    return result;
+  };
+
+  const originalLogout = window.logout;
+  window.logout = function () {
+    clearRememberedSession();
+    automaticLoginCompleted = false;
+    return originalLogout.apply(this, arguments);
+  };
+
+  const originalChangePin = window.changePin;
+  window.changePin = async function () {
+    clearRememberedSession();
+    return await originalChangePin.apply(this, arguments);
+  };
+
+  const originalDeleteMyAccount = window.deleteMyAccount;
+  window.deleteMyAccount = async function () {
+    clearRememberedSession();
+    return await originalDeleteMyAccount.apply(this, arguments);
+  };
+
+  const originalRenderSettingsView = window.renderSettingsView;
+  window.renderSettingsView = function () {
+    const result = originalRenderSettingsView.apply(this, arguments);
+    renderRememberedDevicePanel();
+    return result;
+  };
+
+  const originalUpdateAllMembersList = window.updateAllMembersList;
+  window.updateAllMembersList = function () {
+    const result = originalUpdateAllMembersList.apply(this, arguments);
+    queueMicrotask(tryAutomaticLogin);
+    return result;
+  };
+
+  window.forgetRememberedSession = clearRememberedSession;
+
+  // Firebase may deliver profiles and protected PINs in either order.
+  const startupProbe = window.setInterval(() => {
+    tryAutomaticLogin();
+    if (automaticLoginCompleted || currentUser || !readRememberedSession()) window.clearInterval(startupProbe);
+  }, 250);
+  window.setTimeout(() => window.clearInterval(startupProbe), 10000);
+
+  window.addEventListener('load', () => {
+    const checkbox = document.getElementById('remember-session-week');
+    if (checkbox) checkbox.checked = false;
+    tryAutomaticLogin();
+  });
+})();
+</script>
 
 </body>
 </html>
