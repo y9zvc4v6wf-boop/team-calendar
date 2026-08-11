@@ -5708,5 +5708,203 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
+
+<style id="iphone-mobile-calendar-presence-fixes">
+  @media (display-mode: standalone) and (max-width:430px) and (orientation:portrait) {
+    /* Calendrier : ne pas découper la vue ni les panneaux flottants. */
+    #view-personal.view.active {
+      overflow:visible !important;
+      border-radius:0 !important;
+    }
+    #view-personal {
+      width:100% !important;
+      max-width:100% !important;
+      min-width:0 !important;
+      padding:0 !important;
+    }
+    #mobile-day-toolbar {
+      width:100% !important;
+      max-width:100% !important;
+      margin:0 0 8px !important;
+      padding:0 2px !important;
+      box-sizing:border-box !important;
+      overflow:visible !important;
+    }
+    .mobile-week-controls {
+      width:100% !important;
+      grid-template-columns:42px minmax(0,1fr) 42px !important;
+      gap:6px !important;
+      margin-bottom:7px !important;
+    }
+    .mobile-week-controls > button {
+      width:42px !important;
+      height:40px !important;
+      min-height:40px !important;
+    }
+    #mobile-week-label {
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      font-size:.84rem !important;
+    }
+    #mobile-week-strip {
+      width:100% !important;
+      max-width:100% !important;
+      gap:3px !important;
+      overflow:visible !important;
+    }
+    .mobile-day-chip {
+      min-width:0 !important;
+      min-height:52px !important;
+      padding:5px 1px !important;
+      border-radius:11px !important;
+    }
+    #personal-grids-container.mobile-focus-view {
+      width:100% !important;
+      max-width:100% !important;
+      min-width:0 !important;
+      padding:0 0 78px !important;
+      overflow:visible !important;
+    }
+    .mobile-focus-card {
+      width:100% !important;
+      max-width:100% !important;
+      margin:0 !important;
+      border-radius:17px !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+    }
+    .mobile-focus-date {
+      padding:12px 13px 10px !important;
+    }
+    .mobile-focus-date h2 {
+      font-size:1.03rem !important;
+      overflow-wrap:anywhere;
+    }
+    .mobile-focus-date-badge {
+      padding:5px 7px !important;
+      font-size:.59rem !important;
+    }
+    .mobile-focus-slots {
+      gap:7px !important;
+      padding:9px 10px 10px !important;
+    }
+    .mobile-focus-slot {
+      width:100% !important;
+      min-height:70px !important;
+      padding:8px 10px !important;
+      box-sizing:border-box !important;
+      overflow:hidden !important;
+    }
+    .mobile-focus-slot-value {
+      min-height:30px !important;
+      padding:2px 27px !important;
+      font-size:.98rem !important;
+    }
+    .mobile-focus-hint { font-size:.54rem !important; }
+    #mobile-activity-button {
+      max-width:calc(100vw - (2 * var(--iphone-side-inset)) - 8px) !important;
+    }
+
+    /* Présence : cartes plus denses, identité et statuts sur une grille compacte. */
+    #view-presence.view.active {
+      overflow:visible !important;
+      border-radius:0 !important;
+    }
+    #view-presence .form-box {
+      padding:9px !important;
+      border-radius:17px !important;
+    }
+    #view-presence .form-box > h2 {
+      margin:0 0 3px !important;
+      font-size:.98rem !important;
+    }
+    #view-presence .form-box > p {
+      margin:0 0 8px !important;
+      font-size:.65rem !important;
+    }
+    #view-presence .presence-days-grid {
+      gap:8px !important;
+    }
+    #view-presence .presence-day-panel {
+      padding:8px !important;
+      border-radius:15px !important;
+    }
+    #view-presence .presence-day-title {
+      margin:0 0 6px !important;
+      padding-bottom:5px !important;
+      font-size:.75rem !important;
+      line-height:1.2 !important;
+    }
+    #view-presence .presence-member-card {
+      display:grid !important;
+      grid-template-columns:minmax(98px,.85fr) minmax(0,1.35fr) !important;
+      align-items:center !important;
+      gap:7px !important;
+      min-height:55px !important;
+      padding:6px 7px !important;
+      border-radius:11px !important;
+    }
+    #view-presence .presence-member-info {
+      min-width:0 !important;
+      overflow:hidden !important;
+    }
+    #view-presence .presence-member-name-line {
+      display:flex !important;
+      align-items:flex-start !important;
+      gap:3px !important;
+      line-height:1.15 !important;
+    }
+    #view-presence .presence-member-name-line strong {
+      font-size:.72rem !important;
+      line-height:1.15 !important;
+      overflow-wrap:anywhere !important;
+    }
+    #view-presence .presence-member-pit-line {
+      margin-top:2px !important;
+      font-size:.56rem !important;
+      line-height:1.1 !important;
+    }
+    #view-presence .manager-badge {
+      padding:1px 3px !important;
+      font-size:.46rem !important;
+    }
+    #view-presence .presence-status-block {
+      min-width:0 !important;
+      min-height:0 !important;
+    }
+    #view-presence .presence-half-status {
+      display:grid !important;
+      grid-template-columns:1fr !important;
+      gap:3px !important;
+      font-size:.6rem !important;
+    }
+    #view-presence .presence-half-status > span {
+      display:grid !important;
+      grid-template-columns:minmax(52px,auto) minmax(43px,1fr) !important;
+      align-items:center !important;
+      gap:4px !important;
+      min-height:22px !important;
+      padding:2px 4px !important;
+      border-radius:7px !important;
+      background:var(--input-bg);
+    }
+    #view-presence .presence-half-status .status-badge {
+      min-width:0 !important;
+      width:100% !important;
+      padding:3px 16px 3px 4px !important;
+      font-size:.59rem !important;
+      text-align:center !important;
+      box-sizing:border-box !important;
+    }
+    #view-presence .presence-half-status .secondary-code-initial {
+      top:2px !important;
+      right:2px !important;
+      transform:scale(.86);
+      transform-origin:top right;
+    }
+  }
+</style>
+
 </body>
 </html>
