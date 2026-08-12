@@ -1031,6 +1031,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 </head>
 <body>
+<div id="visual-save-toast" role="status" aria-live="polite">✓ Enregistré</div>
 <div id="remember-session-boot" role="status" aria-live="polite"><div class="remember-session-boot-card"><div class="remember-session-spinner"></div><strong>Reconnexion…</strong><small>Chargement sécurisé de votre session</small></div></div>
 
   <div class="container">
@@ -1048,6 +1049,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       <div class="nav-controls" id="month-nav">
         <button id="prev-month">◄</button>
         <div class="month-title" id="month-display">-</div>
+        <button type="button" id="visual-go-today" title="Revenir au mois actuel" aria-label="Revenir à aujourd’hui">Aujourd’hui</button>
         <button id="next-month">►</button>
       </div>
     </header>
@@ -1620,6 +1622,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       db.ref('planning').on('value', (snap) => {
         calendarData = snap.val() || {};
         if (migrateLegacyPlanningKeys()) db.ref('planning').set(calendarData);
+        // Met à jour le compteur LAD même si la vue Présence n'est pas ouverte.
+        window.updateLadPresenceCounter?.();
         if(currentUser || document.getElementById('view-team').classList.contains('active') || document.getElementById('view-kpi').classList.contains('active') || document.getElementById('view-presence').classList.contains('active') || document.getElementById('view-annual').classList.contains('active')) {
           renderViews();
         }
@@ -6245,6 +6249,924 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
   }
 </style>
+
+
+<style id="visual-polish-v1">
+  :root {
+    --ui-radius-sm: 8px;
+    --ui-radius-md: 12px;
+    --ui-radius-lg: 18px;
+  }
+
+  /* Arrondis harmonisés sans changer les dimensions des composants. */
+  .form-box,
+  .month-section,
+  .presence-day-panel,
+  .chart-box,
+  .remember-device-panel,
+  .security-panel,
+  .team-table-wrapper { border-radius: var(--ui-radius-md) !important; }
+
+  button,
+  select,
+  input,
+  textarea,
+  .presence-member-card,
+  .day-card,
+  .mobile-focus-slot { border-radius: var(--ui-radius-sm) !important; }
+
+  .app-modal-card,
+  .mobile-focus-card { border-radius: var(--ui-radius-lg) !important; }
+
+  /* Compteur intégré à l’onglet Présence. */
+  .presence-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    margin-left: 4px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 20%, var(--card));
+    color: var(--text);
+    font-size: .62rem;
+    font-weight: 850;
+    line-height: 1;
+  }
+  #tab-presence.active .presence-tab-count {
+    background: rgba(255,255,255,.22);
+    color: inherit;
+  }
+
+  /* Bouton Aujourd’hui visible seulement lorsqu’on navigue ailleurs. */
+  #visual-go-today {
+    display: none;
+    width: auto;
+    padding: 5px 9px;
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    color: var(--accent);
+    font-size: .68rem;
+    font-weight: 800;
+  }
+  #visual-go-today.visible { display: inline-flex; align-items: center; justify-content: center; }
+
+  /* Retour visuel discret après sauvegarde. */
+  #visual-save-toast {
+    position: fixed;
+    right: max(14px, env(safe-area-inset-right));
+    bottom: max(14px, env(safe-area-inset-bottom));
+    z-index: 20000;
+    padding: 7px 11px;
+    border: 1px solid rgba(16,185,129,.38);
+    border-radius: 999px;
+    background: color-mix(in srgb, #10b981 18%, var(--card));
+    color: var(--text);
+    box-shadow: var(--shadow-md);
+    font-size: .7rem;
+    font-weight: 800;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px) scale(.96);
+    transition: opacity .18s ease, transform .18s ease;
+  }
+  #visual-save-toast.visible { opacity: 1; transform: translateY(0) scale(1); }
+  #storage-info.visual-saving { animation: visual-save-pulse .55s ease; }
+  @keyframes visual-save-pulse {
+    0%,100% { opacity: 1; }
+    45% { opacity: .48; }
+  }
+
+  @media (max-width:700px) {
+    #visual-save-toast {
+      right: var(--iphone-side-inset, 12px);
+      bottom: calc(76px + env(safe-area-inset-bottom));
+    }
+    #visual-go-today { padding: 4px 7px; font-size: .62rem; }
+  }
+</style>
+
+<script id="visual-polish-behaviour">
+(function () {
+  let saveToastTimer = null;
+
+  function showVisualSaveFeedback() {
+    const toast = document.getElementById('visual-save-toast');
+    const storageInfo = document.getElementById('storage-info');
+    if (storageInfo) {
+      storageInfo.classList.remove('visual-saving');
+      void storageInfo.offsetWidth;
+      storageInfo.classList.add('visual-saving');
+    }
+    if (!toast) return;
+    toast.classList.add('visible');
+    clearTimeout(saveToastTimer);
+    saveToastTimer = setTimeout(() => toast.classList.remove('visible'), 1150);
+  }
+
+  const originalSavePlanningAndSecondaryData = window.savePlanningAndSecondaryData;
+  if (typeof originalSavePlanningAndSecondaryData === 'function') {
+    window.savePlanningAndSecondaryData = function () {
+      const result = originalSavePlanningAndSecondaryData.apply(this, arguments);
+      showVisualSaveFeedback();
+      updatePresenceTabCount();
+      return result;
+    };
+  }
+
+  function updatePresenceTabCount() {
+    const tab = document.getElementById('tab-presence');
+    if (!tab || typeof currentUser === 'undefined' || !currentUser) return;
+
+    let badge = tab.querySelector('.presence-tab-count');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'presence-tab-count';
+      tab.appendChild(badge);
+    }
+
+    const currentProfile = ALL_MEMBERS.find(member => member.firstName === currentUser);
+    const visibleMembers = currentProfile
+      ? ALL_MEMBERS.filter(member => member.pit === currentProfile.pit)
+      : [];
+    const todayKey = formatDateKeyStatic(new Date());
+    const ladCount = visibleMembers.filter(member => {
+      const morning = getStatus(todayKey, member.firstName, 'am');
+      const afternoon = getStatus(todayKey, member.firstName, 'pm');
+      return morning === 'LAD' || afternoon === 'LAD';
+    }).length;
+
+    badge.textContent = String(ladCount);
+    badge.title = `${ladCount} personne${ladCount > 1 ? 's' : ''} en LAD aujourd’hui`;
+    tab.setAttribute('aria-label', `Présence Équipe, ${ladCount} personne${ladCount > 1 ? 's' : ''} en LAD aujourd’hui`);
+  }
+
+  // Accessible depuis les écouteurs Firebase déclarés plus haut dans le fichier.
+  window.updateLadPresenceCounter = updatePresenceTabCount;
+
+  // Recalcule aussi lors du retour dans l'application ou après minuit.
+  let ladCounterDateKey = formatDateKeyStatic(new Date());
+  function refreshLadCounterForCurrentDay() {
+    const nextDateKey = formatDateKeyStatic(new Date());
+    if (nextDateKey !== ladCounterDateKey) ladCounterDateKey = nextDateKey;
+    updatePresenceTabCount();
+  }
+  window.addEventListener('focus', refreshLadCounterForCurrentDay);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshLadCounterForCurrentDay();
+  });
+
+  function updateTodayShortcut() {
+    const button = document.getElementById('visual-go-today');
+    if (!button || typeof currentDate === 'undefined') return;
+    const now = new Date();
+    const outsideCurrentMonth = currentDate.getFullYear() !== now.getFullYear() || currentDate.getMonth() !== now.getMonth();
+    button.classList.toggle('visible', outsideCurrentMonth);
+  }
+
+  document.getElementById('visual-go-today')?.addEventListener('click', () => {
+    currentDate = new Date();
+    renderViews();
+    updateTodayShortcut();
+  });
+
+  const presenceObserver = new MutationObserver(updatePresenceTabCount);
+  const presenceContainer = document.getElementById('presence-list-container');
+  if (presenceContainer) presenceObserver.observe(presenceContainer, { childList: true, subtree: true });
+
+
+  ['prev-month', 'next-month', 'btn-team-1m', 'btn-team-3m', 'btn-personal-1m', 'btn-personal-3m', 'btn-personal-annual']
+    .forEach(id => document.getElementById(id)?.addEventListener('click', () => setTimeout(updateTodayShortcut, 0)));
+
+  window.addEventListener('load', () => {
+    updatePresenceTabCount();
+    updateTodayShortcut();
+  });
+})();
+</script>
+
+
+<style id="login-pit-person-visual-parity">
+  /*
+   * Connexion : le sélecteur PIT reprend exactement les dimensions,
+   * la typographie, le fond et les états du sélecteur visuel Personne.
+   */
+  #view-login #login-pit-filter {
+    width: 100% !important;
+    min-height: 38px !important;
+    height: 38px !important;
+    margin: 0 !important;
+    padding: 8px 34px 8px 10px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--ui-radius-sm, 8px) !important;
+    background-color: var(--input-bg) !important;
+    color: var(--text) !important;
+    font-family: inherit !important;
+    font-size: .8rem !important;
+    font-weight: 400 !important;
+    line-height: 1.2 !important;
+    text-align: left !important;
+    cursor: pointer !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+      linear-gradient(135deg, var(--text-muted) 50%, transparent 50%) !important;
+    background-position:
+      calc(100% - 15px) 50%,
+      calc(100% - 10px) 50% !important;
+    background-size: 5px 5px, 5px 5px !important;
+    background-repeat: no-repeat !important;
+    box-shadow: none !important;
+  }
+
+  #view-login #login-pit-filter:hover {
+    border-color: var(--accent) !important;
+  }
+
+  #view-login #login-pit-filter:focus,
+  #view-login #login-pit-filter:focus-visible {
+    border-color: var(--accent) !important;
+    outline: 2px solid color-mix(in srgb, var(--accent) 22%, transparent) !important;
+    outline-offset: 1px !important;
+  }
+
+  #view-login #login-pit-filter option {
+    background: var(--card);
+    color: var(--text);
+    font-family: inherit;
+    font-size: .8rem;
+    font-weight: 400;
+  }
+
+  /* Même rayon exact pour le déclencheur Personne. */
+  #view-login .login-name-trigger {
+    border-radius: var(--ui-radius-sm, 8px) !important;
+  }
+</style>
+
+
+<style id="personal-activity-favourites-styles">
+  .activity-favourites {
+    margin: 8px 0 10px;
+    padding: 8px;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--ui-radius-md, 12px);
+    background: color-mix(in srgb, var(--card) 88%, transparent);
+  }
+  .activity-favourites-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:6px;
+    color:var(--text-muted);
+    font-size:.65rem;
+    font-weight:850;
+  }
+  .activity-favourites-header small { font-size:.55rem; font-weight:650; opacity:.82; }
+  .activity-favourites-list {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    min-height:34px;
+    overflow-x:auto;
+    padding:2px 1px 4px;
+    scrollbar-width:thin;
+  }
+  .activity-favourite-chip {
+    position:relative;
+    flex:0 0 auto;
+    min-width:54px;
+    min-height:34px;
+    margin:0 !important;
+    padding:6px 22px 6px 9px !important;
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    border:1px solid color-mix(in srgb, var(--accent) 24%, var(--border)) !important;
+    border-radius:999px !important;
+    color:var(--status-text-color, #fff);
+    font-family:inherit;
+    font-size:.67rem !important;
+    font-weight:850 !important;
+    white-space:nowrap;
+    box-shadow:0 3px 10px rgba(0,0,0,.12);
+    touch-action:manipulation;
+  }
+  .activity-favourite-chip.active {
+    outline:2px solid color-mix(in srgb, var(--accent) 52%, transparent);
+    outline-offset:1px;
+  }
+  .activity-favourite-chip::after {
+    content:'★';
+    position:absolute;
+    right:7px;
+    top:50%;
+    transform:translateY(-50%);
+    color:rgba(255,255,255,.82);
+    font-size:.55rem;
+  }
+  .activity-favourite-chip .fav-secondary {
+    padding:1px 4px;
+    border-radius:999px;
+    background:rgba(15,23,42,.72);
+    color:#fff;
+    font-size:.5rem;
+    line-height:1.2;
+  }
+  .activity-favourites-empty {
+    color:var(--text-muted);
+    font-size:.61rem;
+    font-style:italic;
+  }
+  .favourite-hold-hint {
+    margin:4px 0 0;
+    color:var(--text-muted);
+    font-size:.54rem;
+    text-align:center;
+  }
+  .tool-btn.favourite-hold-ready,
+  #mobile-activity-options button.favourite-hold-ready {
+    box-shadow:0 0 0 2px color-mix(in srgb, #fbbf24 65%, transparent) !important;
+  }
+  @media (max-width:700px) and (orientation:portrait) {
+    #mobile-activity-sheet .activity-favourites { margin:4px 0 8px; padding:7px; }
+    #mobile-activity-sheet .activity-favourites-list { gap:5px; }
+    #mobile-activity-sheet .activity-favourite-chip { min-height:38px; font-size:.7rem !important; }
+  }
+</style>
+
+<script id="personal-activity-favourites-script">
+(function () {
+  'use strict';
+  const MAX_FAVOURITES = 6;
+  const DEFAULT_FAVOURITES = [
+    { status: 'LAD', secondaryCode: null },
+    { status: 'TT', secondaryCode: null },
+    { status: 'CA', secondaryCode: null }
+  ];
+  let activityFavourites = [];
+  let favouriteUser = null;
+  let favouriteFirebaseRef = null;
+  let holdTimer = null;
+  let holdTriggered = false;
+
+  function safeUserKey(name) {
+    return String(name || '').replace(/[.#$\[\]\/]/g, '_');
+  }
+  function normaliseFavourite(item) {
+    if (!item || typeof item.status !== 'string') return null;
+    const status = item.status;
+    const validButton = document.querySelector(`.tool-btn[data-status="${CSS.escape(status)}"]`);
+    if (!validButton && status !== 'PRESENT') return null;
+    const secondaryCode = requiresSecondaryCode(status) && SECONDARY_CODES.includes(item.secondaryCode)
+      ? item.secondaryCode : null;
+    if (requiresSecondaryCode(status) && !secondaryCode) return null;
+    return { status, secondaryCode };
+  }
+  function normaliseList(value) {
+    const source = Array.isArray(value) ? value : value && typeof value === 'object' ? Object.values(value) : [];
+    const unique = [];
+    source.forEach(raw => {
+      const item = normaliseFavourite(raw);
+      if (!item) return;
+      const key = `${item.status}|${item.secondaryCode || ''}`;
+      if (!unique.some(existing => `${existing.status}|${existing.secondaryCode || ''}` === key)) unique.push(item);
+    });
+    return unique.slice(0, MAX_FAVOURITES);
+  }
+  function favouriteLabel(item) {
+    return item.secondaryCode ? `${item.status} · ${item.secondaryCode}` : item.status === 'PRESENT' ? 'Bureau' : item.status;
+  }
+  function favouriteKey(item) { return `${item.status}|${item.secondaryCode || ''}`; }
+  function localStorageKey() { return `planning_activity_favourites_${safeUserKey(favouriteUser)}`; }
+
+  async function persistFavourites() {
+    if (!favouriteUser) return;
+    try { localStorage.setItem(localStorageKey(), JSON.stringify(activityFavourites)); } catch (_) {}
+    if (favouriteFirebaseRef) {
+      try { await favouriteFirebaseRef.set(activityFavourites); }
+      catch (error) { console.error('[Favoris] Sauvegarde Firebase impossible', error); }
+    }
+    renderFavouriteBars();
+  }
+
+  function setFavouriteData(value, initialiseWhenEmpty) {
+    const normalised = normaliseList(value);
+    if (!normalised.length && initialiseWhenEmpty) {
+      activityFavourites = DEFAULT_FAVOURITES.slice();
+      persistFavourites();
+    } else {
+      activityFavourites = normalised;
+      renderFavouriteBars();
+    }
+  }
+
+  function bindUserFavourites() {
+    if (!currentUser || currentUser === favouriteUser) return;
+    if (favouriteFirebaseRef) favouriteFirebaseRef.off();
+    favouriteUser = currentUser;
+    favouriteFirebaseRef = null;
+    let local = null;
+    try { local = JSON.parse(localStorage.getItem(localStorageKey()) || 'null'); } catch (_) {}
+    setFavouriteData(local, true);
+    if (db) {
+      favouriteFirebaseRef = db.ref('user_favourites').child(safeUserKey(currentUser));
+      favouriteFirebaseRef.on('value', snapshot => {
+        const value = snapshot.val();
+        setFavouriteData(value, value == null);
+      });
+    }
+  }
+
+  function ensureFavouriteContainers() {
+    const mobileCategories = document.querySelector('#mobile-activity-sheet .mobile-activity-categories');
+    if (mobileCategories && !document.getElementById('mobile-activity-favourites')) {
+      const block = buildFavouriteBlock('mobile-activity-favourites');
+      mobileCategories.parentNode.insertBefore(block, mobileCategories);
+    }
+    const firstTool = document.querySelector('#view-personal .tool-btn');
+    const toolParent = firstTool?.parentElement;
+    if (toolParent && !document.getElementById('desktop-activity-favourites')) {
+      const block = buildFavouriteBlock('desktop-activity-favourites');
+      toolParent.parentNode.insertBefore(block, toolParent);
+    }
+  }
+
+  function buildFavouriteBlock(id) {
+    const block = document.createElement('section');
+    block.id = id;
+    block.className = 'activity-favourites';
+    block.innerHTML = `<div class="activity-favourites-header"><span>⭐ Mes favoris</span><small>${MAX_FAVOURITES} maximum</small></div><div class="activity-favourites-list"></div><p class="favourite-hold-hint">Appui long sur une activité pour l’ajouter ou la retirer.</p>`;
+    return block;
+  }
+
+  function renderFavouriteBars() {
+    ensureFavouriteContainers();
+    document.querySelectorAll('.activity-favourites-list').forEach(list => {
+      list.innerHTML = '';
+      if (!activityFavourites.length) {
+        const empty = document.createElement('span');
+        empty.className = 'activity-favourites-empty';
+        empty.textContent = 'Aucun favori';
+        list.appendChild(empty);
+        return;
+      }
+      activityFavourites.forEach(item => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `activity-favourite-chip tool-${item.status}`;
+        button.dataset.favoriteKey = favouriteKey(item);
+        button.innerHTML = `<span>${item.status === 'PRESENT' ? 'Bureau' : item.status}</span>${item.secondaryCode ? `<span class="fav-secondary">${item.secondaryCode}</span>` : ''}`;
+        button.title = `${favouriteLabel(item)} · Appui long pour retirer`;
+        button.classList.toggle('active', selectedTool === item.status && (selectedSecondaryCode || null) === item.secondaryCode);
+        button.addEventListener('click', event => {
+          if (holdTriggered) { holdTriggered = false; event.preventDefault(); return; }
+          selectFavourite(item);
+        });
+        attachLongPress(button, () => removeFavourite(item));
+        list.appendChild(button);
+      });
+    });
+  }
+
+  function selectFavourite(item) {
+    document.querySelectorAll('.tool-btn').forEach(button => button.classList.remove('active'));
+    const original = document.querySelector(`.tool-btn[data-status="${CSS.escape(item.status)}"]`);
+    original?.classList.add('active');
+    selectedTool = item.status;
+    selectedSecondaryCode = item.secondaryCode || null;
+    if (original) original.title = item.secondaryCode ? `${item.status} • ${item.secondaryCode}` : item.status;
+    if (typeof updateActivityLabels === 'function') updateActivityLabels();
+    renderFavouriteBars();
+    if (document.getElementById('mobile-activity-sheet')?.classList.contains('visible')) closeMobileActivitySheet();
+  }
+
+  async function addFavourite(status, secondaryCode) {
+    const item = normaliseFavourite({ status, secondaryCode });
+    if (!item) return;
+    if (activityFavourites.some(existing => favouriteKey(existing) === favouriteKey(item))) {
+      await removeFavourite(item);
+      return;
+    }
+    if (activityFavourites.length >= MAX_FAVOURITES) {
+      await appAlert(`Vous pouvez enregistrer jusqu’à ${MAX_FAVOURITES} favoris. Retirez-en un avant d’en ajouter un nouveau.`);
+      return;
+    }
+    const confirmed = await appConfirm(`Ajouter ${favouriteLabel(item)} à vos favoris ?`);
+    if (!confirmed) return;
+    activityFavourites.push(item);
+    await persistFavourites();
+  }
+
+  async function removeFavourite(item) {
+    const confirmed = await appConfirm(`Retirer ${favouriteLabel(item)} de vos favoris ?`, { danger: true });
+    if (!confirmed) return;
+    activityFavourites = activityFavourites.filter(existing => favouriteKey(existing) !== favouriteKey(item));
+    await persistFavourites();
+  }
+
+  function requestFavourite(status) {
+    if (requiresSecondaryCode(status)) {
+      openSecondaryCodeModal(status, code => addFavourite(status, code));
+    } else {
+      addFavourite(status, null);
+    }
+  }
+
+  function attachLongPress(element, callback) {
+    if (element.dataset.longPressBound === 'true') return;
+    element.dataset.longPressBound = 'true';
+    const start = event => {
+      if (event.button != null && event.button !== 0) return;
+      holdTriggered = false;
+      element.classList.add('favourite-hold-ready');
+      holdTimer = setTimeout(() => {
+        holdTriggered = true;
+        element.classList.remove('favourite-hold-ready');
+        navigator.vibrate?.(35);
+        callback();
+      }, 650);
+    };
+    const cancel = () => {
+      clearTimeout(holdTimer);
+      element.classList.remove('favourite-hold-ready');
+    };
+    element.addEventListener('pointerdown', start);
+    ['pointerup','pointercancel','pointerleave'].forEach(type => element.addEventListener(type, cancel));
+    element.addEventListener('contextmenu', event => event.preventDefault());
+  }
+
+  function bindLongPressToActivityButtons() {
+    document.querySelectorAll('.tool-btn[data-status]').forEach(button => {
+      attachLongPress(button, () => requestFavourite(button.dataset.status));
+    });
+    document.querySelectorAll('#mobile-activity-options button[data-mobile-status]').forEach(button => {
+      attachLongPress(button, () => requestFavourite(button.dataset.mobileStatus));
+    });
+  }
+
+  const mobileOptionsObserver = new MutationObserver(() => bindLongPressToActivityButtons());
+  const mobileOptions = document.getElementById('mobile-activity-options');
+  if (mobileOptions) mobileOptionsObserver.observe(mobileOptions, { childList: true });
+
+  const originalOpenMobileActivitySheet = window.openMobileActivitySheet;
+  if (typeof originalOpenMobileActivitySheet === 'function') {
+    window.openMobileActivitySheet = function () {
+      const result = originalOpenMobileActivitySheet.apply(this, arguments);
+      bindUserFavourites();
+      renderFavouriteBars();
+      bindLongPressToActivityButtons();
+      return result;
+    };
+  }
+
+  const originalLoginSuccessForFavourites = window.loginSuccess;
+  window.loginSuccess = function () {
+    const result = originalLoginSuccessForFavourites.apply(this, arguments);
+    setTimeout(() => { bindUserFavourites(); renderFavouriteBars(); bindLongPressToActivityButtons(); }, 0);
+    return result;
+  };
+
+  window.addEventListener('load', () => {
+    ensureFavouriteContainers();
+    bindLongPressToActivityButtons();
+    const userProbe = setInterval(() => {
+      if (currentUser) { bindUserFavourites(); renderFavouriteBars(); clearInterval(userProbe); }
+    }, 300);
+    setTimeout(() => clearInterval(userProbe), 15000);
+  });
+})();
+</script>
+
+
+<style id="copy-previous-week-styles">
+  .copy-week-button {
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    min-height:34px;
+    padding:6px 10px !important;
+    border:1px solid color-mix(in srgb, var(--accent) 42%, var(--border)) !important;
+    border-radius:var(--ui-radius-sm, 8px) !important;
+    background:color-mix(in srgb, var(--accent) 10%, var(--card)) !important;
+    color:var(--accent) !important;
+    font:inherit;
+    font-size:.68rem !important;
+    font-weight:850 !important;
+    white-space:nowrap;
+  }
+  .copy-week-button:hover { background:color-mix(in srgb, var(--accent) 18%, var(--card)) !important; }
+  #desktop-copy-week-button { margin-left:auto !important; }
+  #mobile-copy-week-button {
+    display:none !important;
+    width:auto;
+    min-height:28px;
+    margin:4px auto 0 !important;
+    padding:4px 8px !important;
+    font-size:.58rem !important;
+  }
+  .copy-week-modal-card { width:min(620px, 100%); }
+  .copy-week-intro {
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    align-items:center;
+    gap:8px;
+    margin:8px 0 10px;
+    padding:9px;
+    border:1px solid var(--border-soft);
+    border-radius:var(--ui-radius-md, 12px);
+    background:var(--input-bg);
+  }
+  .copy-week-period { min-width:0; text-align:center; }
+  .copy-week-period small { display:block; color:var(--text-muted); font-size:.55rem; font-weight:800; text-transform:uppercase; }
+  .copy-week-period strong { display:block; margin-top:2px; color:var(--text); font-size:.72rem; }
+  .copy-week-arrow { color:var(--accent); font-size:1rem; font-weight:900; }
+  .copy-week-days { display:grid; gap:5px; margin:8px 0; }
+  .copy-week-day {
+    display:grid;
+    grid-template-columns:24px minmax(76px,.7fr) minmax(0,1.3fr);
+    align-items:center;
+    gap:7px;
+    min-height:43px;
+    padding:6px 8px;
+    border:1px solid var(--border-soft);
+    border-radius:var(--ui-radius-sm, 8px);
+    background:var(--card);
+  }
+  .copy-week-day input { width:16px; height:16px; margin:0; accent-color:var(--accent); }
+  .copy-week-day-name strong { display:block; color:var(--text); font-size:.68rem; }
+  .copy-week-day-name small { display:block; color:var(--text-muted); font-size:.53rem; }
+  .copy-week-slots { display:grid; grid-template-columns:1fr 1fr; gap:5px; min-width:0; }
+  .copy-week-slot {
+    position:relative;
+    min-width:0;
+    padding:5px 18px 5px 5px;
+    border-radius:6px;
+    background:var(--badge-neutral-bg);
+    color:var(--badge-neutral-text);
+    font-size:.58rem;
+    font-weight:800;
+    text-align:center;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .copy-week-slot[class*="bg-"] { color:var(--status-text-color, #fff); }
+  .copy-week-slot .secondary-code-initial { transform:scale(.72); transform-origin:top right; }
+  .copy-week-options {
+    display:grid;
+    gap:6px;
+    margin:10px 0;
+    padding:9px;
+    border:1px solid var(--border-soft);
+    border-radius:var(--ui-radius-md, 12px);
+    background:var(--input-bg);
+  }
+  .copy-week-options label { display:flex; align-items:flex-start; gap:7px; color:var(--text); font-size:.65rem; line-height:1.3; }
+  .copy-week-options input { margin-top:1px; accent-color:var(--accent); }
+  .copy-week-summary {
+    min-height:34px;
+    padding:8px 9px;
+    border-radius:var(--ui-radius-sm, 8px);
+    background:color-mix(in srgb, var(--accent) 8%, var(--card));
+    color:var(--text-muted);
+    font-size:.62rem;
+    line-height:1.4;
+  }
+  .copy-week-actions { display:flex; justify-content:flex-end; gap:7px; margin-top:10px; }
+  @media (max-width:700px) and (orientation:portrait) {
+    #mobile-copy-week-button { display:inline-flex !important; }
+    .copy-week-modal-card { max-height:calc(100dvh - 28px); overflow-y:auto; }
+    .copy-week-intro { grid-template-columns:1fr; gap:3px; }
+    .copy-week-arrow { transform:rotate(90deg); }
+    .copy-week-day { grid-template-columns:22px minmax(70px,.65fr) minmax(0,1.35fr); padding:5px 6px; }
+    .copy-week-slot { font-size:.54rem; padding-inline:4px 15px; }
+    .copy-week-actions { position:sticky; bottom:0; padding-top:8px; background:var(--card); }
+  }
+</style>
+
+<div id="copy-week-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="copy-week-title">
+  <div class="app-modal-card copy-week-modal-card">
+    <h2 id="copy-week-title">📋 Copier la semaine précédente</h2>
+    <p style="margin:3px 0 0;color:var(--text-muted);font-size:.65rem;">Choisissez les jours à reproduire dans la semaine affichée.</p>
+    <div class="copy-week-intro">
+      <div class="copy-week-period"><small>Semaine source</small><strong id="copy-week-source-label">-</strong></div>
+      <span class="copy-week-arrow">→</span>
+      <div class="copy-week-period"><small>Semaine cible</small><strong id="copy-week-target-label">-</strong></div>
+    </div>
+    <div id="copy-week-days" class="copy-week-days"></div>
+    <div class="copy-week-options">
+      <label><input type="radio" name="copy-week-mode" value="empty" checked> Copier uniquement dans les demi-journées vides</label>
+      <label><input type="radio" name="copy-week-mode" value="replace"> Remplacer les données déjà renseignées</label>
+      <label><input type="checkbox" id="copy-week-office" checked> Copier également les périodes Bureau</label>
+    </div>
+    <div id="copy-week-summary" class="copy-week-summary">Sélectionnez les jours à copier.</div>
+    <div class="copy-week-actions">
+      <button type="button" class="btn-outline" onclick="closeCopyWeekModal()">Annuler</button>
+      <button type="button" class="btn-primary" onclick="confirmCopyPreviousWeek()">Copier la semaine</button>
+    </div>
+  </div>
+</div>
+
+<script id="copy-previous-week-script">
+(function () {
+  'use strict';
+  let copyWeekSourceMonday = null;
+  let copyWeekTargetMonday = null;
+  const DAY_NAMES = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+
+  function mondayOf(date) {
+    const value = new Date(date);
+    value.setHours(0,0,0,0);
+    const day = value.getDay();
+    value.setDate(value.getDate() - (day === 0 ? 6 : day - 1));
+    return value;
+  }
+  function addDays(date, days) {
+    const value = new Date(date);
+    value.setDate(value.getDate() + days);
+    value.setHours(0,0,0,0);
+    return value;
+  }
+  function periodLabel(monday) {
+    const sunday = addDays(monday, 6);
+    const formatter = new Intl.DateTimeFormat('fr-FR', { day:'numeric', month:'short' });
+    return `${formatter.format(monday)} au ${formatter.format(sunday)}`;
+  }
+  function selectedTargetDate() {
+    const isMobile = window.matchMedia('(max-width:700px) and (orientation:portrait)').matches;
+    return isMobile && typeof selectedMobileDate !== 'undefined' ? new Date(selectedMobileDate) : new Date(currentDate);
+  }
+  function rawStatus(dateKey, user, slot) {
+    const value = calendarData[dateKey]?.[user];
+    if (!value) return null;
+    if (typeof value === 'string') return value === 'PRESENT' ? null : value;
+    const result = value?.[slot];
+    return !result || result === 'PRESENT' ? null : result;
+  }
+  function rawSecondary(dateKey, user, slot) {
+    const value = secondaryCodesData[dateKey]?.[user];
+    if (!value) return null;
+    if (typeof value === 'string') return value;
+    return value?.[slot] || null;
+  }
+  function setCopiedSlot(dateKey, user, slot, status, secondaryCode) {
+    if (!calendarData[dateKey]) calendarData[dateKey] = {};
+    const current = calendarData[dateKey][user];
+    let object = typeof current === 'object' && current !== null
+      ? { ...current }
+      : typeof current === 'string'
+        ? { am: current, pm: current }
+        : {};
+    if (!status || status === 'PRESENT') delete object[slot];
+    else object[slot] = status;
+    if (!object.am && !object.pm) delete calendarData[dateKey][user];
+    else calendarData[dateKey][user] = object;
+    if (calendarData[dateKey] && !Object.keys(calendarData[dateKey]).length) delete calendarData[dateKey];
+    setSecondaryCode(dateKey, user, status || 'PRESENT', slot, secondaryCode);
+  }
+  function slotLabel(status, code) {
+    if (!status) return 'Bureau';
+    return code ? `${status} · ${code}` : status === 'Formation' ? 'For' : status;
+  }
+  function buildSlot(status, code) {
+    const span = document.createElement('span');
+    span.className = `copy-week-slot${status ? ` bg-${status}` : ''}`;
+    span.textContent = slotLabel(status, code);
+    if (code) {
+      const badge = document.createElement('span');
+      badge.className = 'secondary-code-initial';
+      badge.textContent = code === 'VMA' ? 'VM' : code === 'VFO' ? 'VF' : code.charAt(0);
+      span.appendChild(badge);
+    }
+    return span;
+  }
+  function updateCopyWeekSummary() {
+    const selected = Array.from(document.querySelectorAll('.copy-week-day input[type="checkbox"]:checked'));
+    const mode = document.querySelector('input[name="copy-week-mode"]:checked')?.value || 'empty';
+    const copyOffice = document.getElementById('copy-week-office')?.checked;
+    let candidates = 0, occupied = 0, travel = 0;
+    selected.forEach(input => {
+      const index = Number(input.dataset.dayIndex);
+      ['am','pm'].forEach(slot => {
+        const sourceKey = formatDateKeyStatic(addDays(copyWeekSourceMonday, index));
+        const targetKey = formatDateKeyStatic(addDays(copyWeekTargetMonday, index));
+        const sourceStatus = rawStatus(sourceKey, currentUser, slot);
+        if (!sourceStatus && !copyOffice) return;
+        candidates++;
+        if (rawStatus(targetKey, currentUser, slot)) occupied++;
+        if (sourceStatus && requiresSecondaryCode(sourceStatus)) travel++;
+      });
+    });
+    const effective = mode === 'empty' ? candidates - occupied : candidates;
+    const message = `${selected.length} jour${selected.length > 1 ? 's' : ''} sélectionné${selected.length > 1 ? 's' : ''} · ${Math.max(0,effective)} demi-journée${effective > 1 ? 's' : ''} à copier · ${travel} déplacement${travel > 1 ? 's' : ''}${mode === 'empty' && occupied ? ` · ${occupied} case${occupied > 1 ? 's' : ''} conservée${occupied > 1 ? 's' : ''}` : mode === 'replace' && occupied ? ` · ${occupied} case${occupied > 1 ? 's' : ''} remplacée${occupied > 1 ? 's' : ''}` : ''}`;
+    document.getElementById('copy-week-summary').textContent = message;
+  }
+
+  window.openCopyWeekModal = function () {
+    if (!currentUser) return;
+    copyWeekTargetMonday = mondayOf(selectedTargetDate());
+    copyWeekSourceMonday = addDays(copyWeekTargetMonday, -7);
+    document.getElementById('copy-week-source-label').textContent = periodLabel(copyWeekSourceMonday);
+    document.getElementById('copy-week-target-label').textContent = periodLabel(copyWeekTargetMonday);
+    const root = document.getElementById('copy-week-days');
+    root.innerHTML = '';
+    for (let index=0; index<7; index++) {
+      const sourceDate = addDays(copyWeekSourceMonday, index);
+      const key = formatDateKeyStatic(sourceDate);
+      const am = rawStatus(key, currentUser, 'am');
+      const pm = rawStatus(key, currentUser, 'pm');
+      const amCode = rawSecondary(key, currentUser, 'am');
+      const pmCode = rawSecondary(key, currentUser, 'pm');
+      const row = document.createElement('label');
+      row.className = 'copy-week-day';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.dataset.dayIndex = String(index);
+      checkbox.checked = index < 5;
+      checkbox.addEventListener('change', updateCopyWeekSummary);
+      const name = document.createElement('span');
+      name.className = 'copy-week-day-name';
+      name.innerHTML = `<strong>${DAY_NAMES[index]}</strong><small>${new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short'}).format(sourceDate)}</small>`;
+      const slots = document.createElement('span');
+      slots.className = 'copy-week-slots';
+      slots.append(buildSlot(am, amCode), buildSlot(pm, pmCode));
+      row.append(checkbox, name, slots);
+      root.appendChild(row);
+    }
+    document.querySelectorAll('input[name="copy-week-mode"], #copy-week-office').forEach(input => input.addEventListener('change', updateCopyWeekSummary));
+    updateCopyWeekSummary();
+    document.getElementById('copy-week-modal').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  };
+  window.closeCopyWeekModal = function () {
+    document.getElementById('copy-week-modal').classList.remove('visible');
+    document.body.style.overflow = '';
+  };
+  window.confirmCopyPreviousWeek = async function () {
+    const selected = Array.from(document.querySelectorAll('.copy-week-day input[type="checkbox"]:checked'));
+    if (!selected.length) { await appAlert('Sélectionnez au moins un jour à copier.'); return; }
+    const mode = document.querySelector('input[name="copy-week-mode"]:checked')?.value || 'empty';
+    const copyOffice = document.getElementById('copy-week-office').checked;
+    let copied = 0, preserved = 0;
+    selected.forEach(input => {
+      const index = Number(input.dataset.dayIndex);
+      const sourceKey = formatDateKeyStatic(addDays(copyWeekSourceMonday, index));
+      const targetKey = formatDateKeyStatic(addDays(copyWeekTargetMonday, index));
+      ['am','pm'].forEach(slot => {
+        const sourceStatus = rawStatus(sourceKey, currentUser, slot);
+        const targetStatus = rawStatus(targetKey, currentUser, slot);
+        if (!sourceStatus && !copyOffice) return;
+        if (mode === 'empty' && targetStatus) { preserved++; return; }
+        const sourceCode = sourceStatus ? rawSecondary(sourceKey, currentUser, slot) : null;
+        setCopiedSlot(targetKey, currentUser, slot, sourceStatus, sourceCode);
+        copied++;
+      });
+    });
+    if (!copied) { await appAlert('Aucune demi-journée ne peut être copiée avec les options sélectionnées.'); return; }
+    savePlanningAndSecondaryData();
+    renderViews();
+    window.updateLadPresenceCounter?.();
+    if (typeof renderFocus === 'function' && window.matchMedia('(max-width:700px) and (orientation:portrait)').matches) renderFocus();
+    closeCopyWeekModal();
+    await appAlert(`Semaine copiée : ${copied} demi-journée${copied > 1 ? 's' : ''}${preserved ? `, ${preserved} conservée${preserved > 1 ? 's' : ''}` : ''}.`);
+  };
+
+  function installCopyButtons() {
+    const brush = document.querySelector('#view-personal .brush-toolbar, #view-personal .tool-selector, #view-personal .team-subnav + div');
+    const firstTool = document.querySelector('#view-personal .tool-btn');
+    const host = firstTool?.parentElement || brush;
+    if (host && !document.getElementById('desktop-copy-week-button')) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.id = 'desktop-copy-week-button';
+      button.className = 'copy-week-button';
+      button.innerHTML = '📋 Copier la semaine passée';
+      button.onclick = openCopyWeekModal;
+      host.appendChild(button);
+    }
+    const centre = document.querySelector('.mobile-week-controls > div');
+    if (centre && !document.getElementById('mobile-copy-week-button')) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.id = 'mobile-copy-week-button';
+      button.className = 'copy-week-button';
+      button.textContent = '📋 Copier S-1';
+      button.onclick = openCopyWeekModal;
+      centre.appendChild(button);
+    }
+  }
+  document.getElementById('copy-week-modal').addEventListener('click', event => {
+    if (event.target.id === 'copy-week-modal') closeCopyWeekModal();
+  });
+  window.addEventListener('load', installCopyButtons);
+  setTimeout(installCopyButtons, 0);
+})();
+</script>
 
 </body>
 </html>
