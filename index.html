@@ -7453,5 +7453,78 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
+
+<style id="desktop-favourites-classic-button-style">
+  /* Favoris de Mon Calendrier : même rendu que les boutons d'activité classiques. */
+  #desktop-activity-favourites {
+    padding: 7px 8px !important;
+  }
+
+  #desktop-activity-favourites .activity-favourites-list {
+    align-items: center !important;
+    gap: 6px !important;
+    min-height: 34px !important;
+    overflow-x: auto !important;
+  }
+
+  #desktop-activity-favourites .activity-favourite-chip {
+    position: relative !important;
+    width: auto !important;
+    min-width: 46px !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    margin: 0 !important;
+    padding: 5px 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--ui-radius-sm, 8px) !important;
+    color: var(--status-text-color, #ffffff) !important;
+    font-family: inherit !important;
+    font-size: .68rem !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    letter-spacing: normal !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  /* Suppression de l'étoile intégrée pour retrouver le format des boutons standards. */
+  #desktop-activity-favourites .activity-favourite-chip::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  #desktop-activity-favourites .activity-favourite-chip:hover {
+    filter: brightness(1.07);
+    border-color: color-mix(in srgb, var(--accent) 48%, var(--border)) !important;
+  }
+
+  #desktop-activity-favourites .activity-favourite-chip.active {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent) !important;
+    transform: none !important;
+  }
+
+  #desktop-activity-favourites .activity-favourite-chip .fav-secondary {
+    min-width: 20px !important;
+    min-height: 16px !important;
+    padding: 2px 4px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 4px !important;
+    background: rgba(15, 23, 42, .72) !important;
+    color: #ffffff !important;
+    font-size: .48rem !important;
+    font-weight: 850 !important;
+    line-height: 1 !important;
+  }
+</style>
+
 </body>
 </html>
