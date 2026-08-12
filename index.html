@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <meta name="application-version" content="2.1.0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Planning Équipe — TT, Congés & KPI</title>
 
@@ -7167,6 +7168,290 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   setTimeout(installCopyButtons, 0);
 })();
 </script>
+
+
+<style id="application-release-notes-styles">
+  #app-version-indicator {
+    position:fixed;
+    left:max(10px, env(safe-area-inset-left));
+    bottom:max(9px, env(safe-area-inset-bottom));
+    z-index:19000;
+    min-width:48px;
+    min-height:26px;
+    margin:0;
+    padding:4px 8px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid var(--border-soft);
+    border-radius:999px !important;
+    background:color-mix(in srgb, var(--card) 88%, transparent);
+    color:var(--text-muted);
+    font-family:inherit;
+    font-size:.56rem;
+    font-weight:850;
+    line-height:1;
+    letter-spacing:.02em;
+    box-shadow:0 4px 14px rgba(0,0,0,.16);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    cursor:pointer;
+  }
+  #app-version-indicator:hover,
+  #app-version-indicator:focus-visible {
+    border-color:color-mix(in srgb, var(--accent) 55%, var(--border));
+    color:var(--accent);
+    outline:none;
+  }
+  #app-version-tooltip {
+    position:fixed;
+    left:max(10px, env(safe-area-inset-left));
+    bottom:calc(max(9px, env(safe-area-inset-bottom)) + 34px);
+    z-index:19001;
+    width:min(310px, calc(100vw - 20px));
+    padding:10px 11px;
+    border:1px solid var(--border-soft);
+    border-radius:var(--ui-radius-md, 12px);
+    background:color-mix(in srgb, var(--card) 96%, transparent);
+    color:var(--text);
+    box-shadow:var(--shadow-lg);
+    opacity:0;
+    visibility:hidden;
+    transform:translateY(5px);
+    transition:opacity .15s ease, transform .15s ease, visibility .15s ease;
+    pointer-events:none;
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+  }
+  #app-version-indicator:hover + #app-version-tooltip,
+  #app-version-indicator:focus-visible + #app-version-tooltip {
+    opacity:1;
+    visibility:visible;
+    transform:translateY(0);
+  }
+  #app-version-tooltip strong { display:block; margin-bottom:5px; font-size:.68rem; }
+  #app-version-tooltip ul { margin:0; padding-left:17px; color:var(--text-muted); font-size:.59rem; line-height:1.45; }
+  #release-notes-modal .release-notes-card { width:min(530px, 100%); }
+  .release-notes-hero {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:7px 0 12px;
+    padding:10px;
+    border:1px solid color-mix(in srgb, var(--accent) 26%, var(--border));
+    border-radius:var(--ui-radius-md, 12px);
+    background:color-mix(in srgb, var(--accent) 9%, var(--card));
+  }
+  .release-notes-icon {
+    width:38px;
+    height:38px;
+    flex:0 0 38px;
+    display:grid;
+    place-items:center;
+    border-radius:11px;
+    background:var(--accent);
+    color:var(--accent-contrast);
+    font-size:1.05rem;
+  }
+  .release-notes-hero strong { display:block; color:var(--text); font-size:.82rem; }
+  .release-notes-hero small { display:block; margin-top:2px; color:var(--text-muted); font-size:.58rem; }
+  .release-notes-list { display:grid; gap:7px; margin:0; padding:0; list-style:none; }
+  .release-notes-list li {
+    display:grid;
+    grid-template-columns:28px minmax(0,1fr);
+    gap:8px;
+    align-items:start;
+    padding:8px;
+    border:1px solid var(--border-soft);
+    border-radius:var(--ui-radius-sm, 8px);
+    background:var(--input-bg);
+  }
+  .release-note-symbol {
+    width:28px;
+    height:28px;
+    display:grid;
+    place-items:center;
+    border-radius:8px;
+    background:color-mix(in srgb, var(--accent) 13%, var(--card));
+    font-size:.78rem;
+  }
+  .release-notes-list strong { display:block; color:var(--text); font-size:.67rem; }
+  .release-notes-list span { display:block; margin-top:2px; color:var(--text-muted); font-size:.59rem; line-height:1.35; }
+  .release-notes-actions { display:flex; justify-content:flex-end; margin-top:11px; }
+  @media (max-width:700px) and (orientation:portrait) {
+    #app-version-indicator {
+      left:max(8px, env(safe-area-inset-left));
+      bottom:calc(72px + env(safe-area-inset-bottom));
+      min-height:24px;
+      padding:3px 7px;
+      font-size:.52rem;
+    }
+    #app-version-tooltip { display:none; }
+    #release-notes-modal { padding:max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)); }
+    #release-notes-modal .release-notes-card { max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y:auto; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #app-version-tooltip { transition:none; }
+  }
+</style>
+
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.1.0</button>
+<div id="app-version-tooltip" role="tooltip">
+  <strong>Version 2.1.0 · Nouveautés</strong>
+  <ul>
+    <li>Favoris personnels de présence et déplacement</li>
+    <li>Copie sécurisée de la semaine précédente</li>
+    <li>Compteur LAD actualisé en temps réel</li>
+    <li>Finitions visuelles et navigation améliorées</li>
+  </ul>
+</div>
+<div id="release-notes-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="release-notes-title">
+  <div class="app-modal-card release-notes-card">
+    <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
+    <div class="release-notes-hero">
+      <span class="release-notes-icon">✦</span>
+      <span><strong>Version 2.1.0</strong><small>Publiée le 12 août 2026</small></span>
+    </div>
+    <ul class="release-notes-list">
+      <li><span class="release-note-symbol">⭐</span><div><strong>Favoris personnels</strong><span>Ajoutez jusqu’à 6 favoris, y compris les combinaisons destination et code secondaire. Les favoris suivent votre profil via Firebase.</span></div></li>
+      <li><span class="release-note-symbol">📋</span><div><strong>Copier S-1</strong><span>Prévisualisez et copiez la semaine précédente, en conservant les cases remplies ou en choisissant de les remplacer.</span></div></li>
+      <li><span class="release-note-symbol">🏭</span><div><strong>Compteur LAD en temps réel</strong><span>Le compteur de l’onglet Présence se met à jour immédiatement et à chaque synchronisation Firebase.</span></div></li>
+      <li><span class="release-note-symbol">✨</span><div><strong>Interface harmonisée</strong><span>Listes PIT et Personne alignées, bouton Aujourd’hui, arrondis cohérents et retour visuel après enregistrement.</span></div></li>
+    </ul>
+    <div class="release-notes-actions"><button type="button" class="btn-primary" onclick="closeReleaseNotes()">J’ai compris</button></div>
+  </div>
+</div>
+
+<script id="application-release-notes-script">
+(function () {
+  'use strict';
+
+  /*
+   * À CHAQUE PUBLICATION :
+   * 1. incrémenter APP_VERSION ;
+   * 2. mettre à jour APP_RELEASE_DATE ;
+   * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
+   * Le changement de version déclenche automatiquement la popup une fois par profil.
+   */
+  const APP_VERSION = '2.1.0';
+  const APP_RELEASE_DATE = '12 août 2026';
+  const APP_RELEASE_ITEMS = [
+    'Favoris personnels de présence et déplacement',
+    'Copie sécurisée de la semaine précédente',
+    'Compteur LAD actualisé en temps réel',
+    'Finitions visuelles et navigation améliorées'
+  ];
+
+  window.PLANNING_APP_RELEASE = Object.freeze({
+    version: APP_VERSION,
+    date: APP_RELEASE_DATE,
+    items: APP_RELEASE_ITEMS.slice()
+  });
+  document.documentElement.dataset.appVersion = APP_VERSION;
+
+  function releaseSeenKey(userName) {
+    const safeName = String(userName || 'anonymous').replace(/[^a-z0-9_-]/gi, '_');
+    return `planning_release_seen_${safeName}_${APP_VERSION}`;
+  }
+  function hasSeenRelease(userName) {
+    try { return localStorage.getItem(releaseSeenKey(userName)) === '1'; }
+    catch (_) { return false; }
+  }
+  function markReleaseSeen(userName) {
+    try { localStorage.setItem(releaseSeenKey(userName), '1'); } catch (_) {}
+  }
+
+  window.openReleaseNotes = function (options = {}) {
+    const modal = document.getElementById('release-notes-modal');
+    if (!modal) return;
+    modal.dataset.firstLogin = options.firstLogin ? 'true' : 'false';
+    modal.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  };
+  window.closeReleaseNotes = function () {
+    const modal = document.getElementById('release-notes-modal');
+    if (!modal) return;
+    if (currentUser) markReleaseSeen(currentUser);
+    modal.classList.remove('visible');
+    document.body.style.overflow = '';
+  };
+
+  const modal = document.getElementById('release-notes-modal');
+  modal?.addEventListener('click', event => {
+    if (event.target === modal) closeReleaseNotes();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && modal?.classList.contains('visible')) closeReleaseNotes();
+  });
+
+  const previousLoginSuccessForReleaseNotes = window.loginSuccess;
+  window.loginSuccess = function (name) {
+    const result = previousLoginSuccessForReleaseNotes.apply(this, arguments);
+    const profileName = name || currentUser;
+    if (profileName && !hasSeenRelease(profileName)) {
+      setTimeout(() => openReleaseNotes({ firstLogin: true }), 220);
+    }
+    return result;
+  };
+
+  window.addEventListener('load', () => {
+    const indicator = document.getElementById('app-version-indicator');
+    if (indicator) {
+      indicator.textContent = `v${APP_VERSION}`;
+      indicator.setAttribute('aria-label', `Version ${APP_VERSION}. Afficher les nouveautés.`);
+      indicator.title = `Version ${APP_VERSION} · ${APP_RELEASE_ITEMS.join(' · ')}`;
+    }
+  });
+})();
+</script>
+
+
+<style id="release-notes-uniform-spacing-fix">
+  /* Espacement extérieur constant autour de la fenêtre Nouveautés. */
+  #release-notes-modal.app-modal-overlay {
+    padding: 24px !important;
+    box-sizing: border-box !important;
+  }
+
+  #release-notes-modal .release-notes-card {
+    width: min(530px, calc(100vw - 48px)) !important;
+    max-width: calc(100vw - 48px) !important;
+    max-height: calc(100dvh - 48px) !important;
+    margin: auto !important;
+    padding: 20px !important;
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  #release-notes-modal .release-notes-card > :first-child {
+    margin-top: 0 !important;
+  }
+
+  #release-notes-modal .release-notes-card > :last-child {
+    margin-bottom: 0 !important;
+  }
+
+  @media (max-width: 700px) and (orientation: portrait) {
+    #release-notes-modal.app-modal-overlay {
+      padding:
+        max(14px, env(safe-area-inset-top))
+        14px
+        max(14px, env(safe-area-inset-bottom)) !important;
+    }
+
+    #release-notes-modal .release-notes-card {
+      width: 100% !important;
+      max-width: 100% !important;
+      max-height: calc(
+        100dvh
+        - max(14px, env(safe-area-inset-top))
+        - max(14px, env(safe-area-inset-bottom))
+      ) !important;
+      margin: auto !important;
+      padding: 16px !important;
+    }
+  }
+</style>
 
 </body>
 </html>
