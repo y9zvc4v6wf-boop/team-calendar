@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.30">
+  <meta name="application-version" content="2.2.31">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -7427,9 +7427,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.30</button>
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.31</button>
 <div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.2.30 · Nouveautés</strong>
+  <strong>Version 2.2.31 · Nouveautés</strong>
   <ul>
     <li>Bloc de mise à jour supprimé</li>
     <li>Navigation mensuelle mobile réalignée</li>
@@ -7442,7 +7442,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
     <div class="release-notes-hero">
       <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.2.30</strong><small>Publiée le 13 août 2026</small></span>
+      <span><strong>Version 2.2.31</strong><small>Publiée le 13 août 2026</small></span>
     </div>
     <ul class="release-notes-list release-notes-list-no-icons">
       <li><div><strong>Paramètres allégés</strong><span>La section Mise à jour de l’application a été retirée de l’interface Paramètres.</span></div></li>
@@ -7465,13 +7465,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
    * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
    * Le changement de version déclenche automatiquement la popup une fois par profil.
    */
-  const APP_VERSION = '2.2.30';
+  const APP_VERSION = '2.2.31';
   const APP_RELEASE_DATE = '13 août 2026';
   const APP_RELEASE_ITEMS = [
-    'Page blanche corrigée sur la base stable v2.2.28',
-    'Navigation mensuelle intégrée aux filtres Équipe mobile',
-    'Navigation retirée du bandeau Calendrier mobile',
-    'Bouton Type de jour remonté sans observation du DOM'
+    'Affichage iOS en mode application stabilisé',
+    'Zones sûres appliquées une seule fois',
+    'Hauteur d’écran autonome corrigée au démarrage',
+    'Safari et fonctionnement métier inchangés'
   ];
 
   window.PLANNING_APP_RELEASE = Object.freeze({
@@ -8996,6 +8996,122 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     #personal-grids-container.mobile-focus-view { padding-bottom:18px !important; }
   }
 </style>
+
+
+<style id="ios-standalone-viewport-fix-v2231">
+  /* Correctifs strictement limités à l'application iOS ajoutée à l'écran d'accueil. */
+  html.ios-standalone {
+    --ios-app-height: 100vh;
+    width: 100%;
+    min-height: var(--ios-app-height) !important;
+    overflow-x: hidden !important;
+    background: var(--bg);
+  }
+
+  html.ios-standalone body {
+    width: 100% !important;
+    min-height: var(--ios-app-height) !important;
+    height: auto !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+    overscroll-behavior-y: none;
+    scroll-padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  }
+
+  html.ios-standalone body > .container {
+    min-height: calc(
+      var(--ios-app-height)
+      - var(--iphone-top-inset, env(safe-area-inset-top, 0px))
+      - var(--iphone-bottom-inset, env(safe-area-inset-bottom, 0px))
+      - 78px
+    ) !important;
+  }
+
+  /* Le body gère déjà la zone sûre supérieure. Les éléments sticky ne la recompte pas. */
+  html.ios-standalone header {
+    top: 0 !important;
+  }
+
+  html.ios-standalone .tabs {
+    top: 52px !important;
+  }
+
+  /* Les calques utilisent la hauteur stabilisée au lieu de 100dvh au démarrage. */
+  html.ios-standalone .app-modal-card {
+    max-height: calc(
+      var(--ios-app-height)
+      - env(safe-area-inset-top, 0px)
+      - env(safe-area-inset-bottom, 0px)
+      - 24px
+    ) !important;
+  }
+
+  html.ios-standalone #release-notes-modal .release-notes-card,
+  html.ios-standalone .copy-week-modal-card {
+    max-height: calc(
+      var(--ios-app-height)
+      - env(safe-area-inset-top, 0px)
+      - env(safe-area-inset-bottom, 0px)
+      - 20px
+    ) !important;
+  }
+
+  @media (max-width: 430px) and (orientation: portrait) {
+    html.ios-standalone body {
+      padding-top: var(--iphone-top-inset, max(12px, env(safe-area-inset-top, 0px))) !important;
+      padding-right: var(--iphone-side-inset, max(12px, env(safe-area-inset-right, 0px))) !important;
+      padding-bottom: calc(78px + var(--iphone-bottom-inset, max(10px, env(safe-area-inset-bottom, 0px)))) !important;
+      padding-left: var(--iphone-side-inset, max(12px, env(safe-area-inset-left, 0px))) !important;
+    }
+
+    html.ios-standalone #mobile-bottom-nav {
+      padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    html.ios-standalone #personal-grids-container,
+    html.ios-standalone #team-table-container {
+      max-width: 100% !important;
+    }
+  }
+</style>
+
+<script id="ios-standalone-viewport-script-v2231">
+(function () {
+  const standaloneMedia = window.matchMedia
+    ? window.matchMedia('(display-mode: standalone)')
+    : null;
+  const isIosStandalone = Boolean(
+    window.navigator.standalone === true ||
+    (standaloneMedia && standaloneMedia.matches)
+  );
+
+  if (!isIosStandalone) return;
+
+  const root = document.documentElement;
+  root.classList.add('ios-standalone');
+
+  function setStableIosHeight() {
+    const candidates = [
+      window.innerHeight || 0,
+      root.clientHeight || 0,
+      window.screen && window.screen.height ? window.screen.height : 0
+    ];
+    const height = Math.max.apply(null, candidates);
+    if (height > 0) root.style.setProperty('--ios-app-height', height + 'px');
+  }
+
+  setStableIosHeight();
+  requestAnimationFrame(function () {
+    setStableIosHeight();
+    requestAnimationFrame(setStableIosHeight);
+  });
+
+  window.addEventListener('pageshow', setStableIosHeight, { passive: true });
+  window.addEventListener('orientationchange', function () {
+    window.setTimeout(setStableIosHeight, 250);
+  }, { passive: true });
+})();
+</script>
 
 </body>
 </html>
