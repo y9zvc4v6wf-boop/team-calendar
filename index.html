@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.24">
+  <meta name="application-version" content="2.2.26">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -1904,6 +1904,21 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     trigger.setAttribute('aria-expanded', String(willOpen));
   }
 
+  function previewLoginGreeting(firstName) {
+    if (currentUser) return;
+    const greeting = document.getElementById('header-greeting');
+    if (!greeting) return;
+    const member = ALL_MEMBERS.find(item => item.firstName === firstName);
+    if (!member) {
+      greeting.textContent = 'Bonjour';
+      return;
+    }
+    let html = `Bonjour, ${member.firstName}`;
+    if (member.isAdmin) html += ' <span class="manager-badge">Admin</span>';
+    else if (member.isManager) html += ' <span class="manager-badge">Manager</span>';
+    greeting.innerHTML = html;
+  }
+
   function selectLoginName(firstName) {
     const userSelect = document.getElementById('login-name');
     userSelect.value = firstName;
@@ -1920,6 +1935,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     });
     document.getElementById('login-name-options').classList.remove('open');
     document.getElementById('login-name-trigger').setAttribute('aria-expanded', 'false');
+    previewLoginGreeting(firstName);
   }
 
   function filterLoginNames() {
@@ -7408,14 +7424,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.24</button>
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.26</button>
 <div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.2.24 · Nouveautés</strong>
+  <strong>Version 2.2.26 · Nouveautés</strong>
   <ul>
-    <li>Bandeaux déplacés à droite du médaillon</li>
-    <li>Bords gauches incurvés</li>
-    <li>Médaillon blanc en mode sombre</li>
-    <li>Hauteurs fixes conservées</li>
+    <li>Connexion restaurée</li>
+    <li>Bonjour dynamique sécurisé</li>
+    <li>Cycle de sécurité intact</li>
+    <li>Design Bibendum conservé</li>
   </ul>
 </div>
 <div id="release-notes-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="release-notes-title">
@@ -7423,13 +7439,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
     <div class="release-notes-hero">
       <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.2.24</strong><small>Publiée le 13 août 2026</small></span>
+      <span><strong>Version 2.2.26</strong><small>Publiée le 13 août 2026</small></span>
     </div>
     <ul class="release-notes-list release-notes-list-no-icons">
-      <li><div><strong>Bandeaux repositionnés</strong><span>Synchronisation et Bonjour commencent maintenant entièrement à droite du médaillon.</span></div></li>
-      <li><div><strong>Courbe gauche affinée</strong><span>L’extrémité gauche de chaque bandeau est arrondie sans passer sous le logo.</span></div></li>
-      <li><div><strong>Médaillon lisible en mode sombre</strong><span>L’intérieur reste blanc afin de préserver le contraste du Bibendum noir.</span></div></li>
-      <li><div><strong>Dimensions stabilisées</strong><span>Les hauteurs fixes des deux bandeaux restent identiques sur toutes les pages.</span></div></li>
+      <li><div><strong>Connexion restaurée</strong><span>Le flux de connexion et la vérification sécurisée des données sont repris sans modification depuis la version stable.</span></div></li>
+      <li><div><strong>Bonjour dynamique sécurisé</strong><span>Le prénom et le badge sont uniquement prévisualisés lors du choix dans la liste de connexion.</span></div></li>
+      <li><div><strong>Logique métier intacte</strong><span>La fonction de connexion, Firebase, les sessions mémorisées et les rôles ne sont plus modifiés par cet ajout.</span></div></li>
+      <li><div><strong>Design conservé</strong><span>Le médaillon blanc en mode sombre et les bandeaux positionnés à droite restent inchangés.</span></div></li>
     </ul>
     <div class="release-notes-actions"><button type="button" class="btn-primary" onclick="closeReleaseNotes()">J’ai compris</button></div>
   </div>
@@ -7446,13 +7462,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
    * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
    * Le changement de version déclenche automatiquement la popup une fois par profil.
    */
-  const APP_VERSION = '2.2.24';
+  const APP_VERSION = '2.2.26';
   const APP_RELEASE_DATE = '13 août 2026';
   const APP_RELEASE_ITEMS = [
-    'Bandeaux positionnés entièrement à droite du médaillon',
-    'Extrémités gauches incurvées selon la capture',
-    'Fond intérieur du médaillon maintenu blanc en mode sombre',
-    'Hauteurs fixes Synchronisation et Bonjour conservées'
+    'Connexion restaurée sur la base stable v2.2.24',
+    'Aperçu Bonjour mis à jour selon le profil sélectionné',
+    'Cycle de connexion et sécurité laissé intact',
+    'Design Bibendum et bandeaux conservé'
   ];
 
   window.PLANNING_APP_RELEASE = Object.freeze({
