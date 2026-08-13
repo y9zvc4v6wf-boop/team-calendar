@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.28">
+  <meta name="application-version" content="2.2.30">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -1248,6 +1248,12 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           <select id="pit-select-filter" style="width: auto;">
             <option value="ALL">Tous les PITs</option>
           </select>
+          <div id="team-mobile-month-nav" aria-label="Navigation mensuelle Équipe">
+            <button type="button" onclick="document.getElementById('prev-month')?.click()" aria-label="Mois précédent">◄</button>
+            <span id="team-mobile-month-label">-</span>
+            <button type="button" id="team-mobile-today" onclick="document.getElementById('visual-go-today')?.click()">Aujourd’hui</button>
+            <button type="button" onclick="document.getElementById('next-month')?.click()" aria-label="Mois suivant">►</button>
+          </div>
         </div>
       </div>
       <div id="team-table-container"></div>
@@ -3021,7 +3027,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     const activeView = document.querySelector('.view.active');
     if (!activeView) return;
 
-    document.getElementById('month-display').textContent = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(currentDate);
+    const formattedMonth = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(currentDate);
+    document.getElementById('month-display').textContent = formattedMonth;
+    const teamMobileMonthLabel = document.getElementById('team-mobile-month-label');
+    if (teamMobileMonthLabel) teamMobileMonthLabel.textContent = formattedMonth;
 
     if (activeView.id === 'view-personal') renderPersonalCalendar(currentDate.getFullYear(), currentDate.getMonth());
     else if (activeView.id === 'view-team') renderTeamCalendar(currentDate.getFullYear(), currentDate.getMonth());
@@ -4973,12 +4982,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <button type="button" id="mobile-next-week" aria-label="Semaine suivante">›</button>
   </div>
   <div id="mobile-week-strip" role="tablist" aria-label="Jours de la semaine"></div>
-</div>
-
-<button type="button" id="mobile-activity-button" onclick="openMobileActivitySheet()" aria-expanded="false">
+  <button type="button" id="mobile-activity-button" onclick="openMobileActivitySheet()" aria-expanded="false">
   <span class="mobile-activity-plus">＋</span>
   <span><small>Type de jour</small><strong id="mobile-current-activity">CA</strong></span>
 </button>
+</div>
+
+
 <div id="mobile-activity-backdrop" onclick="closeMobileActivitySheet()"></div>
 <section id="mobile-activity-sheet" aria-label="Sélectionner un type de jour">
   <div class="mobile-sheet-handle"></div>
@@ -7428,9 +7438,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.28</button>
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.30</button>
 <div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.2.28 · Nouveautés</strong>
+  <strong>Version 2.2.30 · Nouveautés</strong>
   <ul>
     <li>Bloc de mise à jour supprimé</li>
     <li>Navigation mensuelle mobile réalignée</li>
@@ -7443,7 +7453,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
     <div class="release-notes-hero">
       <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.2.28</strong><small>Publiée le 13 août 2026</small></span>
+      <span><strong>Version 2.2.30</strong><small>Publiée le 13 août 2026</small></span>
     </div>
     <ul class="release-notes-list release-notes-list-no-icons">
       <li><div><strong>Paramètres allégés</strong><span>La section Mise à jour de l’application a été retirée de l’interface Paramètres.</span></div></li>
@@ -7466,13 +7476,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
    * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
    * Le changement de version déclenche automatiquement la popup une fois par profil.
    */
-  const APP_VERSION = '2.2.28';
+  const APP_VERSION = '2.2.30';
   const APP_RELEASE_DATE = '13 août 2026';
   const APP_RELEASE_ITEMS = [
-    'Bloc Mise à jour de l’application retiré des Paramètres',
-    'Navigation des mois réalignée sur mobile',
-    'Contrôles Calendrier et Vue Équipe rendus plus compacts',
-    'Présence par PIT et salutation horaire conservées'
+    'Page blanche corrigée sur la base stable v2.2.28',
+    'Navigation mensuelle intégrée aux filtres Équipe mobile',
+    'Navigation retirée du bandeau Calendrier mobile',
+    'Bouton Type de jour remonté sans observation du DOM'
   ];
 
   window.PLANNING_APP_RELEASE = Object.freeze({
@@ -8976,6 +8986,26 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     #month-nav .month-title {
       font-size: .62rem !important;
     }
+  }
+</style>
+
+
+<style id="mobile-context-controls-safe-v2230">
+  #team-mobile-month-nav { display:none; }
+  @media (max-width:700px) {
+    body:has(#view-personal.active) #main-header #month-nav,
+    body:has(#view-team.active) #main-header #month-nav { display:none !important; }
+    body:has(#view-personal.active) #main-header,
+    body:has(#view-team.active) #main-header { display:flex !important; justify-content:flex-start !important; }
+    #view-team .team-subnav { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:7px !important; }
+    #view-team .team-subnav > span { display:none !important; }
+    #view-team #pit-select-filter { grid-column:1/-1; width:100% !important; }
+    #team-mobile-month-nav { grid-column:1/-1; display:grid; grid-template-columns:34px minmax(90px,1fr) auto 34px; align-items:center; gap:5px; padding-top:7px; border-top:1px solid var(--border); }
+    #team-mobile-month-nav button { min-width:34px !important; height:32px !important; margin:0 !important; padding:0 6px !important; }
+    #team-mobile-month-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; font-size:.7rem; font-weight:700; }
+    #team-mobile-today { font-size:.57rem !important; white-space:nowrap; }
+    #mobile-day-toolbar #mobile-activity-button { position:static !important; display:flex !important; width:100% !important; max-width:none !important; min-width:0 !important; height:46px !important; margin:9px 0 0 !important; padding:0 13px !important; border-radius:12px !important; justify-content:center !important; z-index:auto !important; box-shadow:0 5px 14px rgba(79,70,229,.24) !important; }
+    #personal-grids-container.mobile-focus-view { padding-bottom:18px !important; }
   }
 </style>
 
