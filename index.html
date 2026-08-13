@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.6">
+  <meta name="application-version" content="2.2.7">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Planning Équipe — TT, Congés & KPI</title>
 
@@ -1675,14 +1675,28 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 
   function updateAllMembersList() {
-    let adminProfileUpdated = false;
+    if (!securityData.roleOverrides) securityData.roleOverrides = {};
+    let profilesChangedByOverride = false;
+
     customMembers = customMembers.map(member => {
-      if (member.firstName === 'Adrien' && !member.isAdmin) adminProfileUpdated = true;
-      return member.firstName === 'Adrien'
-        ? { ...member, isManager: Boolean(member.isManager), isAdmin: true }
-        : { ...member, isManager: Boolean(member.isManager), isAdmin: Boolean(member.isAdmin) };
+      const override = securityData.roleOverrides[member.firstName];
+      const nextManager = override && typeof override.isManager === 'boolean'
+        ? override.isManager
+        : Boolean(member.isManager);
+      const nextAdmin = member.firstName === 'Adrien'
+        ? true
+        : override && typeof override.isAdmin === 'boolean'
+          ? override.isAdmin
+          : Boolean(member.isAdmin);
+
+      if (Boolean(member.isManager) !== nextManager || Boolean(member.isAdmin) !== nextAdmin) {
+        profilesChangedByOverride = true;
+      }
+      return { ...member, isManager: nextManager, isAdmin: nextAdmin };
     });
-    if (adminProfileUpdated) saveCustomUsers();
+
+    // Répercute la source de vérité des rôles dans custom_users pour les anciens clients.
+    if (profilesChangedByOverride) saveCustomUsers();
     ALL_MEMBERS = [...BASE_TEAM_MEMBERS, ...customMembers];
     populateDropdowns();
     if(currentUser || document.getElementById('view-team').classList.contains('active') || document.getElementById('view-kpi').classList.contains('active') || document.getElementById('view-presence').classList.contains('active') || document.getElementById('view-annual').classList.contains('active')) {
@@ -4187,7 +4201,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   'use strict';
   const MAX_LOGIN_ATTEMPTS = 5;
   const LOCK_DURATION_MS = 10 * 60 * 1000;
-  let securityData = { adminCode: null, loginAttempts: {} };
+  let securityData = { adminCode: null, loginAttempts: {}, roleOverrides: {} };
 
   function friendlyStorageError(operation, error) {
     console.error(`[Sécurité] ${operation}`, error);
@@ -4270,13 +4284,19 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     if (db) {
       db.ref('security').on('value', snap => {
         const value = snap.val() || {};
-        securityData = { adminCode: value.adminCode || null, loginAttempts: value.loginAttempts || {} };
+        securityData = {
+          adminCode: value.adminCode || null,
+          loginAttempts: value.loginAttempts || {},
+          roleOverrides: value.roleOverrides || {}
+        };
+        updateAllMembersList();
         if (document.getElementById('view-settings')?.classList.contains('active')) renderSettingsView();
       }, error => { console.error('[Sécurité] Synchronisation indisponible', error); });
     } else {
       try {
         const local = localStorage.getItem('team_security_data');
         if (local) securityData = JSON.parse(local);
+        if (!securityData.roleOverrides) securityData.roleOverrides = {};
       } catch (error) { console.error('[Sécurité] Données locales illisibles', error); }
     }
   }
@@ -4361,13 +4381,16 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     const summary = document.getElementById('security-current-roles');
     if (!target || !managerCheckbox || !adminCheckbox || !summary) return;
 
-    managerCheckbox.checked = Boolean(target.isManager);
-    adminCheckbox.checked = Boolean(target.isAdmin);
+    const override = securityData.roleOverrides?.[target.firstName];
+    const effectiveManager = override && typeof override.isManager === 'boolean' ? override.isManager : Boolean(target.isManager);
+    const effectiveAdmin = target.firstName === 'Adrien' ? true : override && typeof override.isAdmin === 'boolean' ? override.isAdmin : Boolean(target.isAdmin);
+    managerCheckbox.checked = effectiveManager;
+    adminCheckbox.checked = effectiveAdmin;
     adminCheckbox.disabled = target.firstName === 'Adrien';
 
     const roles = [];
-    if (target.isManager) roles.push('Manager');
-    if (target.isAdmin) roles.push('Administrateur');
+    if (effectiveManager) roles.push('Manager');
+    if (effectiveAdmin) roles.push('Administrateur');
     if (!roles.length) roles.push('Utilisateur');
     summary.innerHTML = `<strong>Rôles actuels :</strong> ${roles.join(' + ')}${target.firstName === 'Adrien' ? '<br><span>Le rôle Administrateur principal ne peut pas être retiré.</span>' : ''}`;
   };
@@ -4388,19 +4411,28 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       // Le mot de passe Administrateur reste obligatoire à chaque modification.
       if (!await initialiseOrVerifyAdminCode(adminCode)) return;
 
-      const currentRoles = [target.isManager ? 'Manager' : null, target.isAdmin ? 'Administrateur' : null].filter(Boolean);
+      const savedOverride = securityData.roleOverrides?.[target.firstName];
+      const currentManager = savedOverride && typeof savedOverride.isManager === 'boolean' ? savedOverride.isManager : Boolean(target.isManager);
+      const currentAdmin = target.firstName === 'Adrien' ? true : savedOverride && typeof savedOverride.isAdmin === 'boolean' ? savedOverride.isAdmin : Boolean(target.isAdmin);
+      const currentRoles = [currentManager ? 'Manager' : null, currentAdmin ? 'Administrateur' : null].filter(Boolean);
       const nextRoles = [nextManager ? 'Manager' : null, nextAdmin ? 'Administrateur' : null].filter(Boolean);
       const currentLabel = currentRoles.length ? currentRoles.join(' + ') : 'Utilisateur';
       const nextLabel = nextRoles.length ? nextRoles.join(' + ') : 'Utilisateur';
 
-      if (Boolean(target.isManager) === nextManager && Boolean(target.isAdmin) === nextAdmin) {
+      if (currentManager === nextManager && currentAdmin === nextAdmin) {
         alert('Aucune modification de rôle à appliquer.');
         return;
       }
       if (!await appConfirm(`${target.firstName} ${target.lastName} : ${currentLabel} → ${nextLabel}. Confirmer ?`)) return;
 
+      if (!securityData.roleOverrides) securityData.roleOverrides = {};
+      securityData.roleOverrides[target.firstName] = {
+        isManager: nextManager,
+        isAdmin: nextAdmin
+      };
       target.isManager = nextManager;
       target.isAdmin = nextAdmin;
+      await saveSecurityData();
       saveCustomUsers();
       updateAllMembersList();
       document.getElementById('security-admin-code').value = '';
@@ -7345,14 +7377,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.6</button>
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.7</button>
 <div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.2.6 · Nouveautés</strong>
+  <strong>Version 2.2.7 · Nouveautés</strong>
   <ul>
-    <li>Rôle Manager d’Adrien modifiable</li>
-    <li>Seul le rôle Admin reste protégé</li>
-    <li>Plus de réattribution Manager automatique</li>
-    <li>Validation par mot de passe Admin conservée</li>
+    <li>Source persistante dédiée aux rôles</li>
+    <li>Retrait Manager d’Adrien protégé</li>
+    <li>Synchronisation Firebase corrigée</li>
+    <li>Sécurité Administrateur conservée</li>
   </ul>
 </div>
 <div id="release-notes-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="release-notes-title">
@@ -7360,13 +7392,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
     <div class="release-notes-hero">
       <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.2.6</strong><small>Publiée le 13 août 2026</small></span>
+      <span><strong>Version 2.2.7</strong><small>Publiée le 13 août 2026</small></span>
     </div>
     <ul class="release-notes-list release-notes-list-no-icons">
-      <li><div><strong>Rôle Manager d’Adrien modifiable</strong><span>Le rôle Manager peut maintenant être retiré du profil Adrien et reste retiré après actualisation.</span></div></li>
-      <li><div><strong>Protection limitée au rôle Administrateur</strong><span>Seul le rôle Administrateur principal du profil Adrien reste obligatoire et protégé.</span></div></li>
-      <li><div><strong>Synchronisation corrigée</strong><span>La synchronisation Firebase ne réattribue plus automatiquement le rôle Manager au profil Adrien.</span></div></li>
-      <li><div><strong>Sécurité conservée</strong><span>Le mot de passe Administrateur reste obligatoire pour toute modification des rôles.</span></div></li>
+      <li><div><strong>Source persistante dédiée aux rôles</strong><span>Les choix Manager et Administrateur sont maintenant enregistrés séparément dans les données de sécurité.</span></div></li>
+      <li><div><strong>Retrait Manager d’Adrien protégé</strong><span>Une ancienne version ouverte sur un autre appareil ne peut plus imposer durablement le rôle Manager au profil Adrien.</span></div></li>
+      <li><div><strong>Synchronisation corrigée</strong><span>À chaque synchronisation, le choix enregistré par l’Administrateur est réappliqué au profil.</span></div></li>
+      <li><div><strong>Sécurité conservée</strong><span>Le rôle Administrateur principal et la validation par mot de passe restent protégés.</span></div></li>
     </ul>
     <div class="release-notes-actions"><button type="button" class="btn-primary" onclick="closeReleaseNotes()">J’ai compris</button></div>
   </div>
@@ -7383,13 +7415,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
    * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
    * Le changement de version déclenche automatiquement la popup une fois par profil.
    */
-  const APP_VERSION = '2.2.6';
+  const APP_VERSION = '2.2.7';
   const APP_RELEASE_DATE = '13 août 2026';
   const APP_RELEASE_ITEMS = [
-    'Rôle Manager d’Adrien désormais réellement modifiable',
-    'Seul le rôle Administrateur principal reste protégé',
-    'Synchronisation Firebase sans réattribution automatique Manager',
-    'Administration des rôles et mot de passe Admin conservés'
+    'Rôles enregistrés dans une source dédiée et persistante',
+    'Retrait du rôle Manager d’Adrien protégé contre les anciennes versions',
+    'Synchronisation Firebase réappliquant le choix Administrateur',
+    'Rôle Administrateur principal et sécurité conservés'
   ];
 
   window.PLANNING_APP_RELEASE = Object.freeze({
