@@ -1102,7 +1102,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         <button class="btn-outline" onclick="showCreateProfile()">➕ Créer un profil</button>
         <button class="btn-secondary" onclick="accessPublicTeamView()">👀 Voir la Vue Équipe (Public)</button>
         <footer class="login-copyright" aria-label="Copyright de l’application">
-          <span>© 2026 MS B2B PIT Archi</span>
+          <span>© <span id="copyright-current-year">2026</span> MS B2B PIT Archi</span>
           <span class="login-copyright-separator" aria-hidden="true">·</span>
           <span>François Barris &amp; Adrien Ribiere</span>
         </footer>
@@ -7865,6 +7865,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     min-height: 2.8em;
   }
 </style>
+
+
+<script id="dynamic-copyright-year-script">
+(function () {
+  const yearElement = document.getElementById('copyright-current-year');
+  if (yearElement) yearElement.textContent = String(new Date().getFullYear());
+})();
+</script>
 
 </body>
 </html>
