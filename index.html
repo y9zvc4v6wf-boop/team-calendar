@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.3">
+  <meta name="application-version" content="2.2.6">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Planning Équipe — TT, Congés & KPI</title>
 
@@ -1677,10 +1677,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   function updateAllMembersList() {
     let adminProfileUpdated = false;
     customMembers = customMembers.map(member => {
-      if (member.firstName === 'Adrien' && (!member.isManager || !member.isAdmin)) adminProfileUpdated = true;
+      if (member.firstName === 'Adrien' && !member.isAdmin) adminProfileUpdated = true;
       return member.firstName === 'Adrien'
-        ? { ...member, isManager: true, isAdmin: true }
-        : { ...member, isAdmin: Boolean(member.isAdmin) };
+        ? { ...member, isManager: Boolean(member.isManager), isAdmin: true }
+        : { ...member, isManager: Boolean(member.isManager), isAdmin: Boolean(member.isAdmin) };
     });
     if (adminProfileUpdated) saveCustomUsers();
     ALL_MEMBERS = [...BASE_TEAM_MEMBERS, ...customMembers];
@@ -1874,7 +1874,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     const user = ALL_MEMBERS.find(member => member.firstName === firstName);
     const content = document.getElementById('login-name-trigger-content');
     if (user) {
-      const badge = user.isAdmin ? '<span class="manager-badge">Admin</span>' : user.isManager ? '<span class="manager-badge">Manager</span>' : '';
+      const badge = user.isManager ? '<span class="manager-badge">Manager</span>' : '';
       content.innerHTML = `<span>${user.firstName} ${user.lastName}</span>${badge}<span style="color: var(--text-muted);">${user.pit}</span>`;
     } else {
       content.textContent = '-- Aucun profil dans ce PIT --';
@@ -1893,7 +1893,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     userSelect.innerHTML = '';
     visualOptions.innerHTML = '';
     let membersToDisplay = (selectedPitVal === 'ALL') ? ALL_MEMBERS : ALL_MEMBERS.filter(m => m.pit === selectedPitVal);
-
+    membersToDisplay = [...membersToDisplay].sort((a, b) => {
+      const managerOrder = Number(b.isManager) - Number(a.isManager);
+      if (managerOrder !== 0) return managerOrder;
+      return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`, 'fr', { sensitivity: 'base' });
+    });
     if (membersToDisplay.length === 0) {
       const opt = document.createElement('option');
       opt.value = '';
@@ -1911,7 +1915,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         visualOption.type = 'button';
         visualOption.className = 'login-name-option';
         visualOption.dataset.value = user.firstName;
-        const badge = user.isAdmin ? '<span class="manager-badge">Admin</span>' : user.isManager ? '<span class="manager-badge">Manager</span>' : '';
+        const badge = user.isManager ? '<span class="manager-badge">Manager</span>' : '';
         visualOption.innerHTML = `<span>${user.firstName} ${user.lastName}</span>${badge}<span class="login-option-pit">${user.pit}</span>`;
         visualOption.onclick = () => selectLoginName(user.firstName);
         visualOptions.appendChild(visualOption);
@@ -2553,7 +2557,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         const infoDiv = document.createElement('div');
         infoDiv.className = 'presence-member-info';
         infoDiv.style.fontSize = '0.85rem';
-        const managerBadge = member.isAdmin ? '<span class="manager-badge">Admin</span>' : member.isManager ? '<span class="manager-badge">Manager</span>' : '';
+        const managerBadge = member.isManager ? '<span class="manager-badge">Manager</span>' : '';
         infoDiv.innerHTML = `
           <span class="presence-member-name-line"><strong>${member.firstName} ${member.lastName}</strong>${managerBadge}</span>
           <span class="presence-member-pit-line">${member.pit}</span>
@@ -3303,7 +3307,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         // Colonne de gauche (Membre)
         const nameTd = document.createElement('td');
         nameTd.className = 'member-col';
-        const managerBadge = member.isAdmin ? '<span class="manager-badge">Admin</span>' : member.isManager ? '<span class="manager-badge">Manager</span>' : '';
+        const managerBadge = member.isManager ? '<span class="manager-badge">Manager</span>' : '';
         nameTd.innerHTML = `${member.firstName} ${member.lastName}${managerBadge}<br><span class="member-pit">${member.pit}</span>`;
         tr.appendChild(nameTd);
 
@@ -4349,24 +4353,58 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     return true;
   }
 
+  window.updateRoleEditor = function () {
+    const targetName = document.getElementById('security-role-person')?.value;
+    const target = customMembers.find(member => member.firstName === targetName);
+    const managerCheckbox = document.getElementById('security-role-manager');
+    const adminCheckbox = document.getElementById('security-role-admin');
+    const summary = document.getElementById('security-current-roles');
+    if (!target || !managerCheckbox || !adminCheckbox || !summary) return;
+
+    managerCheckbox.checked = Boolean(target.isManager);
+    adminCheckbox.checked = Boolean(target.isAdmin);
+    adminCheckbox.disabled = target.firstName === 'Adrien';
+
+    const roles = [];
+    if (target.isManager) roles.push('Manager');
+    if (target.isAdmin) roles.push('Administrateur');
+    if (!roles.length) roles.push('Utilisateur');
+    summary.innerHTML = `<strong>Rôles actuels :</strong> ${roles.join(' + ')}${target.firstName === 'Adrien' ? '<br><span>Le rôle Administrateur principal ne peut pas être retiré.</span>' : ''}`;
+  };
+
   window.applyRoleChange = async function () {
     if (!isCurrentAdmin()) { alert('Cette fonction est réservée à l’Administrateur.'); return; }
     const targetName = document.getElementById('security-role-person')?.value;
-    const role = document.getElementById('security-role-value')?.value;
     const adminCode = document.getElementById('security-admin-code')?.value || '';
     const target = customMembers.find(member => member.firstName === targetName);
     if (!target) { alert('Profil introuvable.'); return; }
+
+    const nextManager = Boolean(document.getElementById('security-role-manager')?.checked);
+    const nextAdmin = target.firstName === 'Adrien'
+      ? true
+      : Boolean(document.getElementById('security-role-admin')?.checked);
+
     try {
+      // Le mot de passe Administrateur reste obligatoire à chaque modification.
       if (!await initialiseOrVerifyAdminCode(adminCode)) return;
-      if (target.firstName === 'Adrien' && role !== 'admin') { alert('Le profil Administrateur principal Adrien ne peut pas être rétrogradé.'); return; }
-      if (role === 'admin' && !isCurrentAdmin()) { alert('Seul un Administrateur peut attribuer le rôle Administrateur.'); return; }
-      const roleLabel = role === 'admin' ? 'Administrateur' : role === 'manager' ? 'Manager' : 'Utilisateur';
-      if (!await appConfirm(`${target.firstName} ${target.lastName} sera ${roleLabel}. Confirmer ?`)) return;
-      target.isAdmin = role === 'admin';
-      target.isManager = role === 'manager' || role === 'admin';
-      saveCustomUsers(); updateAllMembersList();
+
+      const currentRoles = [target.isManager ? 'Manager' : null, target.isAdmin ? 'Administrateur' : null].filter(Boolean);
+      const nextRoles = [nextManager ? 'Manager' : null, nextAdmin ? 'Administrateur' : null].filter(Boolean);
+      const currentLabel = currentRoles.length ? currentRoles.join(' + ') : 'Utilisateur';
+      const nextLabel = nextRoles.length ? nextRoles.join(' + ') : 'Utilisateur';
+
+      if (Boolean(target.isManager) === nextManager && Boolean(target.isAdmin) === nextAdmin) {
+        alert('Aucune modification de rôle à appliquer.');
+        return;
+      }
+      if (!await appConfirm(`${target.firstName} ${target.lastName} : ${currentLabel} → ${nextLabel}. Confirmer ?`)) return;
+
+      target.isManager = nextManager;
+      target.isAdmin = nextAdmin;
+      saveCustomUsers();
+      updateAllMembersList();
       document.getElementById('security-admin-code').value = '';
-      alert('Rôle modifié avec succès.');
+      alert('Rôles modifiés avec succès.');
       renderSettingsView();
     } catch (error) { friendlyStorageError('enregistrement', error); }
   };
@@ -4415,16 +4453,23 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       rolePanel.dataset.adminOnly = 'true';
       const roleOptions = customMembers.map(member => `<option value="${member.firstName}">${member.firstName} ${member.lastName} (${member.pit})</option>`).join('');
       rolePanel.innerHTML = `
-        <h3>🔐 Administration des rôles</h3>
-        <p>Cette section est réservée à l’Administrateur. Le code administrateur est requis pour attribuer ou retirer un rôle.</p>
-        <div class="security-grid">
-          <div class="form-group"><label for="security-role-person">Personne</label><select id="security-role-person">${roleOptions}</select></div>
-          <div class="form-group"><label for="security-role-value">Rôle</label><select id="security-role-value"><option value="user">Utilisateur</option><option value="manager">Manager</option><option value="admin">Administrateur</option></select></div>
+        <h3>Administration des rôles</h3>
+        <p>Sélectionnez une personne pour consulter ses rôles, puis ajoutez ou retirez les autorisations souhaitées. Le mot de passe Administrateur est demandé à chaque validation.</p>
+        <div class="form-group">
+          <label for="security-role-person">Personne</label>
+          <select id="security-role-person" onchange="updateRoleEditor()">${roleOptions}</select>
         </div>
-        <div class="form-group"><label for="security-admin-code">Code administrateur (6 à 12 chiffres)</label><input type="password" id="security-admin-code" maxlength="12" inputmode="numeric"></div>
-        <button type="button" class="btn-primary" onclick="applyRoleChange()">Appliquer le rôle</button>
-        <div class="security-note" style="margin-top:8px">${securityData.adminCode ? 'Le code administrateur est configuré.' : 'Aucun code administrateur : définissez-le lors de la première modification.'}</div>`;
+        <div id="security-current-roles" class="security-current-roles" aria-live="polite"></div>
+        <fieldset class="security-role-checkboxes">
+          <legend>Rôles attribués</legend>
+          <label><input type="checkbox" id="security-role-manager"> <span><strong>Manager</strong><small>Accès aux fonctions de gestion de l’équipe.</small></span></label>
+          <label><input type="checkbox" id="security-role-admin"> <span><strong>Administrateur</strong><small>Accès à l’administration des rôles et aux fonctions Admin.</small></span></label>
+        </fieldset>
+        <div class="form-group"><label for="security-admin-code">Mot de passe Administrateur (6 à 12 chiffres)</label><input type="password" id="security-admin-code" maxlength="12" inputmode="numeric" autocomplete="current-password" placeholder="Obligatoire pour valider"></div>
+        <button type="button" class="btn-primary" onclick="applyRoleChange()">Enregistrer les rôles</button>
+        <div class="security-note" style="margin-top:8px">${securityData.adminCode ? 'Le mot de passe Administrateur est configuré et sera vérifié à chaque modification.' : 'Aucun mot de passe Administrateur : définissez-le lors de la première modification.'}</div>`;
       form.appendChild(rolePanel);
+      updateRoleEditor();
     }
 
     const teamPanel = document.createElement('div');
@@ -7300,14 +7345,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.3</button>
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.6</button>
 <div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.2.3 · Nouveautés</strong>
+  <strong>Version 2.2.6 · Nouveautés</strong>
   <ul>
-    <li>Colonne Membre élargie</li>
-    <li>Noms affichés intégralement</li>
-    <li>Hauteur fixe des lignes conservée</li>
-    <li>Notes de version sans icônes</li>
+    <li>Rôle Manager d’Adrien modifiable</li>
+    <li>Seul le rôle Admin reste protégé</li>
+    <li>Plus de réattribution Manager automatique</li>
+    <li>Validation par mot de passe Admin conservée</li>
   </ul>
 </div>
 <div id="release-notes-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="release-notes-title">
@@ -7315,13 +7360,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
     <div class="release-notes-hero">
       <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.2.3</strong><small>Publiée le 13 août 2026</small></span>
+      <span><strong>Version 2.2.6</strong><small>Publiée le 13 août 2026</small></span>
     </div>
     <ul class="release-notes-list release-notes-list-no-icons">
-      <li><div><strong>Colonne Membre élargie</strong><span>La colonne Membre de Vue Équipe dispose désormais de plus d’espace pour afficher les noms complets.</span></div></li>
-      <li><div><strong>Noms affichés intégralement</strong><span>Les points de suspension ont été supprimés afin de ne plus masquer les noms des personnes.</span></div></li>
-      <li><div><strong>Hauteur fixe conservée</strong><span>Les lignes gardent une hauteur constante, indépendamment du contenu affiché.</span></div></li>
-      <li><div><strong>Notes de version simplifiées</strong><span>Les icônes devant les lignes de changement ont été retirées pour une présentation plus sobre.</span></div></li>
+      <li><div><strong>Rôle Manager d’Adrien modifiable</strong><span>Le rôle Manager peut maintenant être retiré du profil Adrien et reste retiré après actualisation.</span></div></li>
+      <li><div><strong>Protection limitée au rôle Administrateur</strong><span>Seul le rôle Administrateur principal du profil Adrien reste obligatoire et protégé.</span></div></li>
+      <li><div><strong>Synchronisation corrigée</strong><span>La synchronisation Firebase ne réattribue plus automatiquement le rôle Manager au profil Adrien.</span></div></li>
+      <li><div><strong>Sécurité conservée</strong><span>Le mot de passe Administrateur reste obligatoire pour toute modification des rôles.</span></div></li>
     </ul>
     <div class="release-notes-actions"><button type="button" class="btn-primary" onclick="closeReleaseNotes()">J’ai compris</button></div>
   </div>
@@ -7338,13 +7383,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
    * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
    * Le changement de version déclenche automatiquement la popup une fois par profil.
    */
-  const APP_VERSION = '2.2.3';
+  const APP_VERSION = '2.2.6';
   const APP_RELEASE_DATE = '13 août 2026';
   const APP_RELEASE_ITEMS = [
-    'Colonne Membre élargie dans Vue Équipe',
-    'Noms des personnes affichés intégralement',
-    'Hauteur fixe des lignes conservée',
-    'Notes de version simplifiées sans icônes'
+    'Rôle Manager d’Adrien désormais réellement modifiable',
+    'Seul le rôle Administrateur principal reste protégé',
+    'Synchronisation Firebase sans réattribution automatique Manager',
+    'Administration des rôles et mot de passe Admin conservés'
   ];
 
   window.PLANNING_APP_RELEASE = Object.freeze({
@@ -7986,6 +8031,54 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     width: 100%;
     min-width: 0;
   }
+</style>
+
+
+<style id="role-administration-editor-v225">
+  #view-settings .security-current-roles {
+    margin: 4px 0 10px;
+    padding: 9px 10px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text);
+    font-size: .68rem;
+    line-height: 1.4;
+  }
+  #view-settings .security-current-roles span { color: var(--text-muted); font-size: .58rem; }
+  #view-settings .security-role-checkboxes {
+    margin: 0 0 10px;
+    padding: 9px 10px;
+    display: grid;
+    gap: 8px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: var(--input-bg);
+  }
+  #view-settings .security-role-checkboxes legend {
+    padding: 0 5px;
+    color: var(--text-muted);
+    font-size: .62rem;
+    font-weight: 800;
+  }
+  #view-settings .security-role-checkboxes label {
+    display: grid;
+    grid-template-columns: 18px minmax(0,1fr);
+    align-items: start;
+    gap: 8px;
+    cursor: pointer;
+  }
+  #view-settings .security-role-checkboxes input {
+    width: 16px;
+    height: 16px;
+    margin: 1px 0 0;
+    accent-color: var(--accent);
+  }
+  #view-settings .security-role-checkboxes strong,
+  #view-settings .security-role-checkboxes small { display: block; }
+  #view-settings .security-role-checkboxes strong { color: var(--text); font-size: .68rem; }
+  #view-settings .security-role-checkboxes small { margin-top: 2px; color: var(--text-muted); font-size: .56rem; line-height: 1.3; }
+  #view-settings .security-role-checkboxes input:disabled { cursor: not-allowed; opacity: .55; }
 </style>
 
 </body>
