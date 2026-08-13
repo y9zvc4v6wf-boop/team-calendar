@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.12">
+  <meta name="application-version" content="2.2.19">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -1255,7 +1255,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       <div class="sticky-header-section" style="padding-bottom: 2px;">
         <div class="team-subnav" style="padding: 4px 8px; gap: 6px;">
           <span style="font-weight: bold; font-size: 0.78rem; color: var(--text-muted);">Année :</span>
-          <select id="annual-year" style="width: auto; padding: 3px 6px; font-size: 0.78rem;"></select>
+          <select id="annual-year" style="width: auto; padding: 3px 6px; font-size: 0.78rem;" onchange="renderAnnualReport()"></select>
           <span style="font-weight: bold; font-size: 0.78rem; margin-left: 6px; color: var(--text-muted);">Personne :</span>
           <select id="annual-person" style="width: auto; padding: 3px 6px; font-size: 0.78rem;" onchange="renderAnnualReport()"></select>
           <button class="btn-primary" style="width: auto; margin-top: 0; padding: 4px 10px; font-size: 0.78rem;" onclick="renderAnnualReport()">Actualiser</button>
@@ -7405,14 +7405,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.12</button>
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.19</button>
 <div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.2.12 · Nouveautés</strong>
+  <strong>Version 2.2.19 · Nouveautés</strong>
   <ul>
-    <li>Espacement entre les tuiles corrigé</li>
-    <li>Séparation avant Administration des rôles</li>
-    <li>Graphisme Paramètres conservé</li>
-    <li>Fonctions existantes conservées</li>
+    <li>Espaces du bilan strictement identiques</li>
+    <li>Padding transparent supprimé</li>
+    <li>Rythme vertical corrigé</li>
+    <li>Mobile compact conservé</li>
   </ul>
 </div>
 <div id="release-notes-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="release-notes-title">
@@ -7420,13 +7420,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
     <div class="release-notes-hero">
       <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.2.12</strong><small>Publiée le 13 août 2026</small></span>
+      <span><strong>Version 2.2.19</strong><small>Publiée le 13 août 2026</small></span>
     </div>
     <ul class="release-notes-list release-notes-list-no-icons">
-      <li><div><strong>Espacement entre les tuiles corrigé</strong><span>Une séparation régulière est maintenant appliquée après Gestion des comptes de mon équipe.</span></div></li>
-      <li><div><strong>Administration des rôles mieux séparée</strong><span>La tuile Administration des rôles ne touche plus la tuile précédente.</span></div></li>
-      <li><div><strong>Graphisme harmonisé conservé</strong><span>Les bordures, fonds, rayons, titres et espacements internes restent identiques.</span></div></li>
-      <li><div><strong>Fonctions inchangées</strong><span>Cette correction est uniquement visuelle et ne modifie aucun droit ni fonctionnement.</span></div></li>
+      <li><div><strong>Espaces strictement identiques</strong><span>Les intervalles entre la navigation, les filtres, le titre et les cartes KPI utilisent désormais une seule valeur visible.</span></div></li>
+      <li><div><strong>Cause réelle corrigée</strong><span>Le padding transparent de 18 px du conteneur du bilan, qui agrandissait artificiellement le deuxième espace, a été supprimé.</span></div></li>
+      <li><div><strong>Marges historiques neutralisées</strong><span>Aucune ancienne marge ne peut désormais s'ajouter aux séparations définies.</span></div></li>
+      <li><div><strong>Adaptation mobile conservée</strong><span>Le même principe s'applique avec un espacement plus compact sur petit écran.</span></div></li>
     </ul>
     <div class="release-notes-actions"><button type="button" class="btn-primary" onclick="closeReleaseNotes()">J’ai compris</button></div>
   </div>
@@ -7443,13 +7443,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
    * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
    * Le changement de version déclenche automatiquement la popup une fois par profil.
    */
-  const APP_VERSION = '2.2.12';
+  const APP_VERSION = '2.2.19';
   const APP_RELEASE_DATE = '13 août 2026';
   const APP_RELEASE_ITEMS = [
-    'Espacement ajouté après Gestion des comptes de mon équipe',
-    'Séparation régulière avant Administration des rôles',
-    'Tuiles Paramètres toujours harmonisées',
-    'Fonctions et droits existants conservés'
+    'Espaces visibles du Bilan Annuel rendus strictement identiques',
+    'Padding transparent responsable du grand écart supprimé',
+    'Navigation, filtres, titre et cartes alignés sur un rythme unique',
+    'Espacement mobile conservé en format compact'
   ];
 
   window.PLANNING_APP_RELEASE = Object.freeze({
@@ -8239,6 +8239,464 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   #view-settings #manager-team-deletion-section[style*="display: none"] {
     margin-bottom: 0 !important;
+  }
+</style>
+
+
+<style id="annual-report-modern-v2213">
+  #view-annual { padding-bottom: 24px; }
+  #view-annual .sticky-header-section { padding: 10px 12px !important; background: color-mix(in srgb, var(--card) 94%, transparent); border-bottom: 1px solid var(--border-soft); backdrop-filter: blur(12px); }
+  #view-annual .team-subnav { max-width: 1040px; margin: 0 auto; padding: 0 !important; display: grid !important; grid-template-columns: auto minmax(110px,160px) auto minmax(190px,1fr) auto; align-items: end; gap: 8px 10px !important; }
+  #view-annual .team-subnav > span { margin: 0 !important; align-self:center; font-size:.68rem !important; text-transform:uppercase; letter-spacing:.04em; }
+  #view-annual .team-subnav select { width:100% !important; }
+  #view-annual .team-subnav button { width:auto !important; margin:0 !important; }
+  #view-annual > .form-box { max-width:1040px !important; margin:14px auto !important; padding:18px !important; zoom:1 !important; display:grid !important; grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr); gap:14px !important; background:transparent !important; border:0 !important; box-shadow:none !important; }
+  #view-annual > .form-box > h2 { grid-column:1/-1; margin:0 !important; padding:16px 18px; border:1px solid var(--border); border-radius:14px; background:linear-gradient(135deg,var(--card),color-mix(in srgb,var(--accent-soft) 35%,var(--card))); font-size:1.05rem !important; line-height:1.3; }
+  #view-annual > .form-box > div[style*="grid-template-columns: repeat(4"] { grid-column:1/-1; display:grid !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; gap:10px !important; margin:0 !important; }
+  #view-annual > .form-box > div[style*="grid-template-columns: repeat(4"] > div { position:relative; min-height:82px; padding:13px 14px !important; display:flex; flex-direction:column; justify-content:space-between; align-items:flex-start; border:1px solid var(--border) !important; border-radius:12px !important; background:var(--card) !important; text-align:left !important; overflow:hidden; }
+  #view-annual > .form-box > div[style*="grid-template-columns: repeat(4"] > div::after { content:""; position:absolute; inset:auto 0 0; height:3px; background:var(--annual-card-accent,var(--accent)); }
+  #view-annual > .form-box > div[style*="grid-template-columns: repeat(4"] > div:nth-child(1){--annual-card-accent:#f59e0b} #view-annual > .form-box > div[style*="grid-template-columns: repeat(4"] > div:nth-child(2){--annual-card-accent:#ec4899} #view-annual > .form-box > div[style*="grid-template-columns: repeat(4"] > div:nth-child(3){--annual-card-accent:#7c3aed} #view-annual > .form-box > div[style*="grid-template-columns: repeat(4"] > div:nth-child(4){--annual-card-accent:#06b6d4}
+  #view-annual > .form-box > div[style*="grid-template-columns: repeat(4"] > div > div:first-child { font-size:.62rem !important; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+  #view-annual > .form-box > div[style*="grid-template-columns: repeat(4"] > div > div:last-child { font-size:1.55rem !important; line-height:1 !important; }
+  #view-annual .team-table-wrapper { grid-column:1; padding:0 !important; border:1px solid var(--border); border-radius:12px; background:var(--card); overflow:auto; }
+  #view-annual .team-table-wrapper table { width:100%; font-size:.7rem !important; border-collapse:separate; border-spacing:0; }
+  #view-annual .team-table-wrapper th { position:sticky; top:0; z-index:1; padding:10px 8px !important; background:var(--input-bg); color:var(--text-muted); text-transform:uppercase; letter-spacing:.035em; font-size:.58rem; }
+  #view-annual .team-table-wrapper td { padding:8px !important; line-height:1.2 !important; border-top:1px solid var(--border-soft); text-align:center; }
+  #view-annual .team-table-wrapper tbody tr:hover td { background:var(--accent-soft); }
+  #view-annual #annual-detail-tbody td:first-child { text-align:left !important; font-weight:800; color:var(--text); }
+  #view-annual #annual-destination-chart-box, #view-annual #annual-secondary-chart-box { margin:0 !important; padding:14px !important; border:1px solid var(--border) !important; border-radius:12px !important; background:var(--card) !important; box-shadow:none !important; }
+  #view-annual #annual-destination-chart-box { grid-column:2; }
+  #view-annual #annual-destination-chart-box h3, #view-annual #annual-secondary-chart-box h3 { margin:0 0 10px !important; font-size:.76rem !important; color:var(--text); }
+  #view-annual #annual-destination-chart-box > div { height:230px !important; }
+  #view-annual #annual-destination-chart { height:100% !important; }
+  #view-annual #annual-secondary-chart-box { grid-column:1/-1; }
+  #view-annual #annual-secondary-chart-wrap { height:210px !important; }
+  @media(max-width:820px){#view-annual > .form-box{grid-template-columns:1fr !important;padding:10px !important;gap:10px !important}#view-annual .team-table-wrapper,#view-annual #annual-destination-chart-box,#view-annual #annual-secondary-chart-box{grid-column:1 !important}#view-annual .team-subnav{grid-template-columns:1fr 1fr !important}#view-annual .team-subnav>span{display:none}#view-annual .team-subnav button{grid-column:1/-1}#view-annual > .form-box > div[style*="grid-template-columns: repeat(4"]{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
+  @media(max-width:480px){#view-annual > .form-box > div[style*="grid-template-columns: repeat(4"]{grid-template-columns:1fr 1fr !important}#view-annual > .form-box > h2{padding:13px;font-size:.88rem !important}#view-annual .team-table-wrapper th,#view-annual .team-table-wrapper td{padding:7px 5px !important}}
+</style>
+
+
+<style id="annual-filters-app-style-v2214">
+  #view-annual .team-subnav select,
+  #view-annual .team-subnav button {
+    font-family: inherit !important;
+    box-sizing: border-box !important;
+  }
+
+  #view-annual .team-subnav select {
+    min-height: unset !important;
+    padding: 6px 9px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+    background-color: var(--input-bg) !important;
+    color: var(--text) !important;
+    font-size: .72rem !important;
+    line-height: 1.25 !important;
+    box-shadow: none !important;
+  }
+
+  #view-annual .team-subnav select:hover {
+    border-color: var(--accent) !important;
+  }
+
+  #view-annual .team-subnav select:focus {
+    outline: none !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 2px var(--accent-soft) !important;
+  }
+
+  #view-annual .team-subnav button {
+    min-height: unset !important;
+    padding: 6px 12px !important;
+    border-radius: 6px !important;
+    font-size: .72rem !important;
+    line-height: 1.25 !important;
+  }
+
+  @media (max-width: 820px) {
+    #view-annual .team-subnav select,
+    #view-annual .team-subnav button {
+      min-height: 36px !important;
+    }
+  }
+</style>
+
+
+<style id="global-selects-unified-v2215">
+  /* Base commune pour toutes les listes déroulantes de l’application. */
+  select,
+  #view-team select,
+  #view-annual select,
+  #view-kpi select,
+  #view-settings select,
+  #view-login select,
+  #view-presence select {
+    min-height: 34px !important;
+    padding: 6px 30px 6px 9px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+    background-color: var(--input-bg) !important;
+    color: var(--text) !important;
+    font-family: inherit !important;
+    font-size: .72rem !important;
+    font-weight: 500 !important;
+    line-height: 1.25 !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+  }
+
+  select:hover { border-color: var(--accent) !important; }
+  select:focus {
+    outline: none !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 2px var(--accent-soft) !important;
+  }
+  select:disabled { opacity: .58; cursor: not-allowed; }
+  select option {
+    background: var(--card);
+    color: var(--text);
+    font-family: inherit;
+    font-size: .72rem;
+  }
+
+  /* Vue Équipe : mêmes police, taille et hauteur que les autres filtres. */
+  #view-team .team-subnav select,
+  #view-team .sticky-header-section select {
+    min-height: 34px !important;
+    font-size: .72rem !important;
+    font-family: inherit !important;
+  }
+
+  /* Bilan Annuel : zone de filtres sans cadre ni contour additionnel. */
+  #view-annual .sticky-header-section {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+  #view-annual .team-subnav {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+  #view-annual .team-subnav > span {
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    font-size: .72rem !important;
+    font-weight: 700 !important;
+  }
+
+  /* La largeur du filtre Personne suit le libellé sélectionné. */
+  #view-annual #annual-person {
+    width: auto !important;
+    min-width: 13ch !important;
+    max-width: min(42ch, 100%) !important;
+  }
+  #view-annual #annual-year {
+    width: auto !important;
+    min-width: 9ch !important;
+  }
+
+  @media (max-width: 820px) {
+    select,
+    #view-team select,
+    #view-annual select {
+      min-height: 36px !important;
+    }
+    #view-annual #annual-person,
+    #view-annual #annual-year {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+  }
+</style>
+
+<script id="annual-person-select-autosize-v2215">
+(function () {
+  function resizeAnnualPersonSelect() {
+    const select = document.getElementById('annual-person');
+    if (!select) return;
+    const label = select.options[select.selectedIndex]?.text || '';
+    const width = Math.max(13, Math.min(42, label.length + 5));
+    select.style.setProperty('--annual-person-width', width + 'ch');
+    if (!window.matchMedia('(max-width: 820px)').matches) {
+      select.style.setProperty('width', width + 'ch', 'important');
+    } else {
+      select.style.removeProperty('width');
+    }
+  }
+
+  document.addEventListener('change', function (event) {
+    if (event.target?.id === 'annual-person') resizeAnnualPersonSelect();
+  });
+  window.addEventListener('resize', resizeAnnualPersonSelect);
+
+  const originalRenderAnnualReport = window.renderAnnualReport;
+  if (typeof originalRenderAnnualReport === 'function') {
+    window.renderAnnualReport = function () {
+      const result = originalRenderAnnualReport.apply(this, arguments);
+      window.setTimeout(resizeAnnualPersonSelect, 0);
+      return result;
+    };
+  }
+  window.addEventListener('load', function () {
+    window.setTimeout(resizeAnnualPersonSelect, 0);
+  });
+})();
+</script>
+
+
+<style id="annual-filters-frame-v2216">
+  /* Cadre unique autour de la ligne de filtres du Bilan Annuel. */
+  #view-annual .sticky-header-section {
+    padding: 10px 12px !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  #view-annual .team-subnav {
+    width: min(1040px, calc(100% - 24px)) !important;
+    max-width: 1040px !important;
+    margin: 0 auto !important;
+    padding: 10px 12px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    background: var(--card) !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+  }
+
+  @media (max-width: 820px) {
+    #view-annual .sticky-header-section {
+      padding: 8px !important;
+    }
+    #view-annual .team-subnav {
+      width: 100% !important;
+      padding: 10px !important;
+      border-radius: 9px !important;
+    }
+  }
+</style>
+
+
+<style id="global-block-spacing-v2217">
+  :root {
+    --app-block-gap: 12px;
+    --app-section-gap: 16px;
+  }
+
+  /* Espacement cohérent entre les grands blocs de chaque vue. */
+  .view.active {
+    padding-bottom: var(--app-section-gap);
+  }
+
+  .view > .sticky-header-section,
+  .view > .form-box,
+  .view > .team-table-wrapper,
+  .view > .kpi-budget-summary,
+  .view > .kpi-grid,
+  .view > #team-table-container,
+  .view > #personal-grids-container,
+  .view > #presence-list-container {
+    margin-bottom: var(--app-block-gap) !important;
+  }
+
+  /* Les derniers blocs ne créent pas d’espace inutile en bas. */
+  .view > :last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* Espacement interne commun entre cartes, panneaux et sous-sections. */
+  .form-box > .settings-submenu-tile,
+  .form-box > .security-panel,
+  .form-box > .app-update-panel,
+  .form-box > .remember-device-panel,
+  .form-box > .team-table-wrapper,
+  .form-box > .annual-analysis-card,
+  .form-box > #annual-destination-chart-box,
+  .form-box > #annual-secondary-chart-box {
+    margin-bottom: var(--app-block-gap) !important;
+  }
+
+  .form-box > :last-child,
+  #view-settings .form-box > :last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* KPI : grille et cartes avec le même rythme visuel. */
+  #view-kpi .kpi-grid,
+  #view-kpi [class*="kpi-grid"],
+  #view-kpi [style*="display: grid"] {
+    gap: var(--app-block-gap) !important;
+  }
+
+  #view-kpi .chart-container,
+  #view-kpi .kpi-chart-box,
+  #view-kpi .kpi-budget-summary,
+  #view-kpi [id$="-chart-box"] {
+    margin-bottom: var(--app-block-gap) !important;
+  }
+
+  /* Bilan Annuel : même écart entre filtre, titre, KPI, tableau et graphiques. */
+  #view-annual > .form-box {
+    gap: var(--app-block-gap) !important;
+  }
+  #view-annual .sticky-header-section {
+    margin-bottom: var(--app-block-gap) !important;
+  }
+  #view-annual #annual-destination-chart-box,
+  #view-annual #annual-secondary-chart-box,
+  #view-annual .team-table-wrapper {
+    margin-bottom: 0 !important;
+  }
+
+  /* Paramètres : un seul espacement de référence entre toutes les tuiles. */
+  #view-settings .settings-submenu-tile,
+  #view-settings .security-panel,
+  #view-settings .app-update-panel,
+  #view-settings .remember-device-panel,
+  #view-settings #manager-team-deletion-section {
+    margin-bottom: var(--app-block-gap) !important;
+  }
+  #view-settings #manager-team-deletion-section {
+    gap: var(--app-block-gap) !important;
+  }
+  #view-settings #manager-team-deletion-section[style*="display: none"] {
+    margin-bottom: 0 !important;
+  }
+
+  /* Vues calendrier et présence : séparation constante des commandes et contenus. */
+  #view-team .sticky-header-section,
+  #view-personal .sticky-header-section,
+  #view-presence .sticky-header-section {
+    margin-bottom: var(--app-block-gap) !important;
+  }
+
+  @media (max-width: 700px) {
+    :root {
+      --app-block-gap: 10px;
+      --app-section-gap: 12px;
+    }
+  }
+</style>
+
+
+<style id="page-vertical-rhythm-v2218">
+  :root {
+    --page-block-space: 14px;
+  }
+
+  /* Même distance entre la navigation principale et le premier bloc de chaque page. */
+  #main-tabs {
+    margin-bottom: var(--page-block-space) !important;
+  }
+
+  /* Le conteneur de vue n'ajoute aucun espace invisible supplémentaire. */
+  .view.active {
+    padding-top: 0 !important;
+  }
+
+  /* Barre de filtres vers contenu : un seul espace mesuré, sans cumul de marges. */
+  .view.active > .sticky-header-section {
+    margin-top: 0 !important;
+    margin-bottom: var(--page-block-space) !important;
+  }
+
+  .view.active > .sticky-header-section + .form-box,
+  .view.active > .sticky-header-section + .team-table-wrapper,
+  .view.active > .sticky-header-section + #team-table-container,
+  .view.active > .sticky-header-section + #personal-grids-container,
+  .view.active > .sticky-header-section + .kpi-budget-summary {
+    margin-top: 0 !important;
+  }
+
+  /* Les grands blocs directs ont tous la même séparation verticale. */
+  .view.active > .form-box,
+  .view.active > .team-table-wrapper,
+  .view.active > .kpi-budget-summary,
+  .view.active > .kpi-grid,
+  .view.active > #team-table-container,
+  .view.active > #personal-grids-container,
+  .view.active > #presence-list-container {
+    margin-top: 0 !important;
+    margin-bottom: var(--page-block-space) !important;
+  }
+
+  /* Bilan Annuel : les trois espaces indiqués sur la capture sont identiques. */
+  #view-annual .sticky-header-section {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-bottom: var(--page-block-space) !important;
+  }
+
+  #view-annual > .form-box {
+    margin: 0 auto !important;
+    gap: var(--page-block-space) !important;
+  }
+
+  #view-annual > .form-box > h2,
+  #view-annual > .form-box > div[style*="grid-template-columns: repeat(4"] {
+    margin: 0 !important;
+  }
+
+  /* Évite qu'une ancienne marge inline ou historique s'ajoute à l'écart commun. */
+  #view-annual > .form-box > h2 + div[style*="grid-template-columns: repeat(4"] {
+    margin-top: 0 !important;
+  }
+
+  @media (max-width: 700px) {
+    :root {
+      --page-block-space: 10px;
+    }
+  }
+</style>
+
+
+<style id="annual-exact-visible-gaps-v2219">
+  :root {
+    --annual-visible-gap: 14px;
+  }
+
+  /* 1. Navigation principale vers cadre des filtres. */
+  #main-tabs {
+    margin-bottom: var(--annual-visible-gap) !important;
+  }
+
+  #view-annual {
+    padding-top: 0 !important;
+  }
+
+  #view-annual > .sticky-header-section {
+    margin: 0 0 var(--annual-visible-gap) 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 2. Cadre des filtres vers titre du bilan.
+     Le padding transparent de 18 px était la vraie source du grand écart. */
+  #view-annual > .form-box {
+    margin: 0 auto !important;
+    padding: 0 !important;
+    gap: var(--annual-visible-gap) !important;
+  }
+
+  /* 3. Titre vers cartes KPI. Le gap de la grille est la seule séparation. */
+  #view-annual > .form-box > h2,
+  #view-annual > .form-box > div[style*="grid-template-columns: repeat(4"] {
+    margin: 0 !important;
+  }
+
+  /* Neutralise toute marge historique susceptible de s'ajouter entre ces blocs. */
+  #view-annual > .sticky-header-section + .form-box,
+  #view-annual > .form-box > h2 + div[style*="grid-template-columns: repeat(4"] {
+    margin-top: 0 !important;
+  }
+
+  @media (max-width: 700px) {
+    :root {
+      --annual-visible-gap: 10px;
+    }
   }
 </style>
 
