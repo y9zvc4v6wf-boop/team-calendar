@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.1.0">
+  <meta name="application-version" content="2.2.1">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Planning Équipe — TT, Congés & KPI</title>
 
@@ -7300,14 +7300,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.1.0</button>
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.1</button>
 <div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.1.0 · Nouveautés</strong>
+  <strong>Version 2.2.1 · Nouveautés</strong>
   <ul>
-    <li>Favoris personnels de présence et déplacement</li>
-    <li>Copie sécurisée de la semaine précédente</li>
-    <li>Compteur LAD actualisé en temps réel</li>
-    <li>Finitions visuelles et navigation améliorées</li>
+    <li>Alertes de cohérence non bloquantes</li>
+    <li>Contrôle manuel des mises à jour</li>
+    <li>Favoris personnels et Copier S-1 conservés</li>
+    <li>Interface et navigation stabilisées</li>
   </ul>
 </div>
 <div id="release-notes-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="release-notes-title">
@@ -7315,7 +7315,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
     <div class="release-notes-hero">
       <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.1.0</strong><small>Publiée le 12 août 2026</small></span>
+      <span><strong>Version 2.2.1</strong><small>Publiée le 13 août 2026</small></span>
     </div>
     <ul class="release-notes-list">
       <li><span class="release-note-symbol">⭐</span><div><strong>Favoris personnels</strong><span>Ajoutez jusqu’à 6 favoris, y compris les combinaisons destination et code secondaire. Les favoris suivent votre profil via Firebase.</span></div></li>
@@ -7338,13 +7338,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
    * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
    * Le changement de version déclenche automatiquement la popup une fois par profil.
    */
-  const APP_VERSION = '2.1.0';
-  const APP_RELEASE_DATE = '12 août 2026';
+  const APP_VERSION = '2.2.1';
+  const APP_RELEASE_DATE = '13 août 2026';
   const APP_RELEASE_ITEMS = [
-    'Favoris personnels de présence et déplacement',
-    'Copie sécurisée de la semaine précédente',
-    'Compteur LAD actualisé en temps réel',
-    'Finitions visuelles et navigation améliorées'
+    'Alertes de cohérence non bloquantes',
+    'Contrôle manuel des mises à jour dans Paramètres',
+    'Favoris personnels et copie de semaine conservés',
+    'Interface et navigation stabilisées'
   ];
 
   window.PLANNING_APP_RELEASE = Object.freeze({
@@ -7565,6 +7565,304 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       gap: 3px;
       font-size: .5rem;
     }
+  }
+</style>
+
+
+
+
+
+<style id="alerts-and-update-controls-v220-styles">
+  .consistency-alerts-card,
+  .app-update-panel {
+    border: 1px solid var(--border-soft);
+    border-radius: var(--ui-radius-md, 12px);
+    background: var(--card);
+    color: var(--text);
+    box-sizing: border-box;
+  }
+  .consistency-alerts-card {
+    display: none;
+    margin: 7px 0;
+    padding: 8px 9px;
+    border-color: rgba(245,158,11,.42);
+    background: rgba(245,158,11,.07);
+  }
+  .consistency-alerts-card.visible { display: block; }
+  .consistency-alerts-header,
+  .app-update-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: .65rem;
+    font-weight: 850;
+  }
+  .consistency-alerts-header { color: #f59e0b; }
+  .consistency-alerts-list {
+    margin: 6px 0 0;
+    padding-left: 17px;
+    color: var(--text-muted);
+    font-size: .59rem;
+    line-height: 1.45;
+  }
+  .app-update-panel { margin-top: 14px; padding: 11px; text-align: left; }
+  .app-update-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 7px;
+    margin-top: 9px;
+  }
+  .app-update-item {
+    padding: 7px 8px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: var(--input-bg);
+  }
+  .app-update-item small { display: block; color: var(--text-muted); font-size: .54rem; }
+  .app-update-item strong { display: block; margin-top: 2px; color: var(--text); font-size: .66rem; }
+  .app-update-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px; }
+  .app-update-actions button { width: auto !important; margin: 0 !important; }
+  #app-update-message { margin: 8px 0 0; color: var(--text-muted); font-size: .58rem; line-height: 1.4; }
+  @media (max-width:700px) and (orientation:portrait) {
+    .consistency-alerts-card { margin: 6px 0; padding: 8px; }
+    .app-update-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<script id="alerts-and-update-controls-v220-script">
+(function () {
+  'use strict';
+
+  function mondayOf(date) {
+    const value = new Date(date);
+    value.setHours(0,0,0,0);
+    value.setDate(value.getDate() - (value.getDay() === 0 ? 6 : value.getDay() - 1));
+    return value;
+  }
+  function addDays(date, days) {
+    const value = new Date(date);
+    value.setDate(value.getDate() + days);
+    value.setHours(0,0,0,0);
+    return value;
+  }
+  function targetWeekDate() {
+    return window.matchMedia('(max-width:700px) and (orientation:portrait)').matches && typeof selectedMobileDate !== 'undefined'
+      ? new Date(selectedMobileDate)
+      : new Date(currentDate);
+  }
+  function ensureConsistencyAlerts() {
+    const grid = document.getElementById('personal-grids-container');
+    if (!grid || document.getElementById('consistency-alerts-card')) return;
+    const card = document.createElement('section');
+    card.id = 'consistency-alerts-card';
+    card.className = 'consistency-alerts-card';
+    card.innerHTML = '<div class="consistency-alerts-header"><span>⚠ Vérification du planning</span><small>Information non bloquante</small></div><ul id="consistency-alerts-list" class="consistency-alerts-list"></ul>';
+    grid.parentNode.insertBefore(card, grid);
+  }
+  function updateConsistencyAlerts() {
+    if (!currentUser) return;
+    ensureConsistencyAlerts();
+    const monday = mondayOf(targetWeekDate());
+    const alerts = [];
+    for (let index = 0; index < 7; index++) {
+      const date = addDays(monday, index);
+      const key = formatDateKeyStatic(date);
+      const destinations = new Set();
+      ['am','pm'].forEach(slot => {
+        const status = getStatus(key, currentUser, slot);
+        if (!requiresSecondaryCode(status)) return;
+        destinations.add(status);
+        if (!getSecondaryCode(key, currentUser, slot)) {
+          alerts.push(`${new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'short'}).format(date)} : ${status} sans code secondaire (${slot === 'am' ? 'matin' : 'après-midi'}).`);
+        }
+      });
+      if (destinations.size > 1) {
+        alerts.push(`${new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'short'}).format(date)} : deux destinations différentes sur la même journée.`);
+      }
+    }
+    const card = document.getElementById('consistency-alerts-card');
+    const list = document.getElementById('consistency-alerts-list');
+    if (!card || !list) return;
+    list.innerHTML = '';
+    alerts.forEach(text => {
+      const item = document.createElement('li');
+      item.textContent = text;
+      list.appendChild(item);
+    });
+    card.classList.toggle('visible', alerts.length > 0);
+  }
+
+  function ensureUpdatePanel() {
+    const form = document.querySelector('#view-settings .form-box');
+    if (!form || document.getElementById('app-update-panel')) return;
+    const panel = document.createElement('section');
+    panel.id = 'app-update-panel';
+    panel.className = 'app-update-panel';
+    panel.innerHTML = `<div class="app-update-header"><span>🔄 Mise à jour de l’application</span><small>Diagnostic PWA</small></div><div class="app-update-grid"><div class="app-update-item"><small>Version installée</small><strong id="installed-app-version">${window.PLANNING_APP_RELEASE?.version || document.querySelector('meta[name="application-version"]')?.content || 'Inconnue'}</strong></div><div class="app-update-item"><small>Service worker</small><strong id="service-worker-status">Vérification…</strong></div><div class="app-update-item"><small>Dernière vérification</small><strong id="last-update-check">Jamais</strong></div><div class="app-update-item"><small>Mode d’ouverture</small><strong id="app-display-mode">Navigateur web</strong></div></div><div class="app-update-actions"><button type="button" class="btn-outline" id="check-app-update">Vérifier les mises à jour</button><button type="button" class="btn-secondary" id="reload-app-now">Recharger l’application</button></div><p id="app-update-message">Le contrôle ne supprime aucune donnée Firebase.</p>`;
+    form.appendChild(panel);
+    panel.querySelector('#check-app-update').onclick = checkApplicationUpdate;
+    panel.querySelector('#reload-app-now').onclick = () => window.location.reload();
+    refreshUpdateDiagnostics();
+  }
+  function getUpdateEnvironment() {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const isLocalFile = protocol === 'file:' || window.location.origin === 'null';
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
+    const isSecureSite = protocol === 'https:' || isLocalhost;
+    return { protocol, hostname, isLocalFile, isLocalhost, isSecureSite };
+  }
+
+  function setUpdateButtonAvailability(enabled, explanation = '') {
+    const button = document.getElementById('check-app-update');
+    if (!button) return;
+    button.disabled = !enabled;
+    button.setAttribute('aria-disabled', String(!enabled));
+    button.title = enabled ? 'Rechercher une nouvelle version de l’application' : explanation;
+  }
+
+  async function refreshUpdateDiagnostics() {
+    const status = document.getElementById('service-worker-status');
+    const mode = document.getElementById('app-display-mode');
+    const message = document.getElementById('app-update-message');
+    const environment = getUpdateEnvironment();
+
+    if (mode) {
+      if (environment.isLocalFile) mode.textContent = 'Fichier local';
+      else mode.textContent = window.matchMedia('(display-mode: standalone)').matches
+        ? 'Application installée'
+        : environment.isLocalhost ? 'Serveur local' : 'Navigateur web';
+    }
+
+    if (environment.isLocalFile) {
+      if (status) status.textContent = 'Indisponible en local';
+      if (message) message.textContent = 'Le fichier est ouvert directement depuis le disque. Pour vérifier la PWA, ouvrez la version HTTPS publiée ou utilisez localhost.';
+      setUpdateButtonAvailability(false, 'La vérification PWA nécessite HTTPS ou localhost.');
+      return;
+    }
+
+    if (!environment.isSecureSite) {
+      if (status) status.textContent = 'Connexion non sécurisée';
+      if (message) message.textContent = 'La vérification PWA nécessite une page HTTPS ou localhost.';
+      setUpdateButtonAvailability(false, 'La vérification PWA nécessite HTTPS ou localhost.');
+      return;
+    }
+
+    if (!('serviceWorker' in navigator)) {
+      if (status) status.textContent = 'Non pris en charge';
+      if (message) message.textContent = 'Ce navigateur ne permet pas la vérification du service worker.';
+      setUpdateButtonAvailability(false, 'Service worker non pris en charge par ce navigateur.');
+      return;
+    }
+
+    setUpdateButtonAvailability(true);
+    try {
+      const registration = await navigator.serviceWorker.getRegistration(new URL('./', window.location.href).href);
+      if (status) {
+        status.textContent = registration
+          ? navigator.serviceWorker.controller ? 'Actif' : 'Installé, non contrôleur'
+          : 'Non installé';
+      }
+      if (message && !registration) {
+        message.textContent = 'Aucun service worker ne contrôle encore cette page. Utilisez « Vérifier les mises à jour » pour lancer le contrôle.';
+      }
+    } catch (error) {
+      if (status) status.textContent = 'Diagnostic indisponible';
+      if (message) message.textContent = `Diagnostic impossible : ${error.message}`;
+    }
+  }
+
+  async function checkApplicationUpdate() {
+    const message = document.getElementById('app-update-message');
+    const checked = document.getElementById('last-update-check');
+    const status = document.getElementById('service-worker-status');
+    const environment = getUpdateEnvironment();
+
+    if (environment.isLocalFile) {
+      if (message) message.textContent = 'Vérification non disponible depuis un fichier local. Testez depuis la version HTTPS publiée ou depuis localhost.';
+      if (status) status.textContent = 'Indisponible en local';
+      return;
+    }
+    if (!environment.isSecureSite || !('serviceWorker' in navigator)) {
+      if (message) message.textContent = 'La vérification nécessite HTTPS ou localhost avec un navigateur compatible service worker.';
+      return;
+    }
+
+    if (message) message.textContent = 'Recherche d’une mise à jour…';
+    try {
+      const scopeUrl = new URL('./', window.location.href).href;
+      let registration = await navigator.serviceWorker.getRegistration(scopeUrl);
+      if (!registration) {
+        registration = await navigator.serviceWorker.register('./service-worker.js', {
+          scope: './',
+          updateViaCache: 'none'
+        });
+        await navigator.serviceWorker.ready;
+      }
+
+      await registration.update();
+      const nowLabel = new Intl.DateTimeFormat('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }).format(new Date());
+      if (checked) checked.textContent = nowLabel;
+
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        if (status) status.textContent = 'Mise à jour prête';
+        if (message) message.textContent = 'Une nouvelle version est prête. L’application se rechargera après son activation.';
+      } else if (registration.installing) {
+        if (status) status.textContent = 'Installation en cours';
+        if (message) message.textContent = 'Une nouvelle version est en cours d’installation.';
+      } else {
+        if (status) status.textContent = navigator.serviceWorker.controller ? 'Actif' : 'Installé';
+        if (message) message.textContent = 'Vérification terminée. Aucune nouvelle version en attente.';
+      }
+      await refreshUpdateDiagnostics();
+    } catch (error) {
+      if (status) status.textContent = 'Erreur de vérification';
+      if (message) message.textContent = `Vérification impossible : ${error.message}`;
+    }
+  }
+
+  const originalSave = window.savePlanningAndSecondaryData;
+  window.savePlanningAndSecondaryData = function () {
+    const result = originalSave.apply(this, arguments);
+    setTimeout(updateConsistencyAlerts, 0);
+    return result;
+  };
+  const originalRenderViews = window.renderViews;
+  window.renderViews = function () {
+    const result = originalRenderViews.apply(this, arguments);
+    setTimeout(updateConsistencyAlerts, 0);
+    return result;
+  };
+  const originalRenderSettings = window.renderSettingsView;
+  window.renderSettingsView = function () {
+    const result = originalRenderSettings.apply(this, arguments);
+    setTimeout(ensureUpdatePanel, 0);
+    return result;
+  };
+  window.addEventListener('load', () => {
+    ensureConsistencyAlerts();
+    updateConsistencyAlerts();
+    if (document.getElementById('view-settings')?.classList.contains('active')) ensureUpdatePanel();
+  });
+})();
+</script>
+
+
+<style id="update-diagnostic-environment-fix">
+  #check-app-update:disabled {
+    cursor: not-allowed !important;
+    opacity: .52 !important;
+    filter: grayscale(.3);
+  }
+  #app-update-message {
+    min-height: 2.8em;
   }
 </style>
 
