@@ -1101,6 +1101,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         <button class="btn-primary" onclick="handleLogin()">Se connecter</button>
         <button class="btn-outline" onclick="showCreateProfile()">➕ Créer un profil</button>
         <button class="btn-secondary" onclick="accessPublicTeamView()">👀 Voir la Vue Équipe (Public)</button>
+        <footer class="login-copyright" aria-label="Copyright de l’application">
+          <span>© 2026 MS B2B PIT Archi</span>
+          <span class="login-copyright-separator" aria-hidden="true">·</span>
+          <span>François Barris &amp; Adrien Ribiere</span>
+        </footer>
       </div>
     </div>
 
@@ -7523,6 +7528,43 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-size: .48rem !important;
     font-weight: 850 !important;
     line-height: 1 !important;
+  }
+</style>
+
+
+<style id="login-copyright-styles">
+  #view-login .login-copyright {
+    width: 100%;
+    margin: 14px 0 0;
+    padding: 10px 4px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-top: 1px solid color-mix(in srgb, var(--border) 62%, transparent);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: .55rem;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: .01em;
+    text-align: center;
+    opacity: .72;
+    box-sizing: border-box;
+  }
+
+  #view-login .login-copyright-separator {
+    opacity: .7;
+  }
+
+  @media (max-width: 700px) and (orientation: portrait) {
+    #view-login .login-copyright {
+      margin-top: 11px;
+      padding-top: 8px;
+      gap: 3px;
+      font-size: .5rem;
+    }
   }
 </style>
 
