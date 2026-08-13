@@ -9,7 +9,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Planning Équipe — TT, Congés & KPI</title>
 
-  <!-- Application immédiate du thème mémorisé (évite le flash visuel au chargement) -->
+  
   <script>
     (function () {
       try {
@@ -22,16 +22,16 @@
     })();
   </script>
 
-  <!-- Police -->
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Firebase Web SDK (v8 Compat) -->
+  
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-  <!-- Chart.js pour les graphiques KPI -->
+  
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
@@ -61,7 +61,7 @@
       --badge-neutral-text: #e2e8f0;
       --status-text-color: #ffffff;
 
-      /* Couleurs des statuts (Mode Sombre) */
+      
       --color-CA: #eb7405;
       --color-JDR: #A26000;
       --color-Formation: #F48FB1;
@@ -89,7 +89,7 @@
       --pit-prep: #C78FFF;
       --ult-ara: #FFEA00;
     }
-    /* MODE CLAIR */
+    
     [data-theme="light"] {
       --bg: #f4f6fb;
       --card: #ffffff;
@@ -331,7 +331,7 @@
     .tool-btn:hover { filter: brightness(1.12); color: var(--status-text-color); }
     .tool-btn.active { border-color: rgba(120,120,120,0.5); transform: scale(1.05); box-shadow: 0 0 0 2px var(--accent-soft); }
 
-    /* Couleurs Boutons & Badges */
+    
     .tool-CA, .bg-CA, .day-half.bg-CA { background: var(--color-CA) !important; color: var(--status-text-color); }
     .tool-JDR, .bg-JDR, .day-half.bg-JDR { background: var(--color-JDR) !important; color: var(--status-text-color); }
     .tool-Formation, .bg-Formation, .day-half.bg-Formation { background: var(--color-Formation) !important; color: var(--status-text-color); }
@@ -354,7 +354,7 @@
     .tool-Autres, .bg-Autres, .day-half.bg-Autres { background: var(--color-Autres) !important; color: var(--status-text-color); }
     .tool-PRESENT { background: var(--badge-neutral-bg); color: var(--badge-neutral-text) !important; border: 1px solid var(--border); }
 
-    /* GRILLES DE CALENDRIER STANDARD (1 MOIS) */
+    
     .calendar-grid {
       display: grid; grid-template-columns: 26px repeat(7, 1fr); gap: 3px; align-items: stretch;
     }
@@ -417,9 +417,7 @@
     }
     .day-half:hover { border-color: var(--accent); background: var(--accent-soft); }
 
-    /* ========================================================
-       VUES COMPACTES : 3 MOIS ET ANNUEL (SANS SCROLL VERTICAL)
-       ======================================================== */
+    
     .personal-multi-container {
       display: grid;
       gap: 6px;
@@ -485,7 +483,7 @@
       padding: 1px 2px;
     }
 
-    /* Taille et centrage uniformes des statuts dans les trois vues concernees */
+    
     #view-presence [class*="bg-"],
     #view-presence .status-badge,
     #view-personal [class*="bg-"],
@@ -562,7 +560,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     #team-table-container table { border-collapse: separate; border-spacing: 2px; }
     #team-table-container th, #team-table-container td { border-radius: 4px; }
 
-    /* Cadre global superpose, sans modifier le graphisme des cellules */
+    
     #team-table-container .team-table-wrapper { position: relative; }
     .team-column-outline {
       position: absolute;
@@ -583,7 +581,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.18);
     }
 
-    /* Retire uniquement les encadrements colores cellule par cellule */
+    
     #team-table-container th.today-header,
     #team-table-container td.today-cell,
     #team-table-container th.holiday-header,
@@ -672,7 +670,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       to { opacity: 1; transform: translateY(0); }
     }
   
-    /* Fenetre integree pour les alertes de deplacement commun */
+    
     .app-modal-overlay {
       position: fixed;
       inset: 0;
@@ -729,7 +727,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
   
-    /* Blocs de taille uniforme dans Presence Equipe */
+    
     #view-presence .presence-days-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -921,7 +919,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     .login-name-option.selected { background: var(--accent-soft); }
     .login-name-option .login-option-pit { margin-left: auto; color: var(--text-muted); font-size: 0.72rem; }
   
-    /* Bilan annuel compact pour limiter le défilement vertical */
+    
     #view-annual .form-box {
       max-width: 940px !important;
       margin: 2px auto !important;
@@ -946,7 +944,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     #view-annual #annual-destination-chart { height: 112px !important; }
     #view-annual .sticky-header-section { margin-bottom: 2px !important; padding-bottom: 1px !important; }
   
-    /* Bilan annuel : tableau à gauche, graphique à droite */
+    
     #view-annual .form-box {
       display: grid;
       grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
@@ -980,7 +978,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
   </style>
 
-  <!-- Web App iOS / PWA -->
+  
   <meta name="theme-color" content="#0a0e1a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -989,10 +987,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   <meta name="format-detection" content="telephone=no">
   <link rel="manifest" href="manifest.webmanifest">
 
-  <!-- Icône dédiée à l’application installée sur iPhone. -->
+  
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 
-  <!-- Favicons sans contour noir pour les onglets et raccourcis des navigateurs PC. -->
+  
   <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
@@ -1053,7 +1051,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       </button>
     </div>
 
-    <!-- HEADER COMMUN -->
+    
     <header id="main-header" style="display: none;">
       <div class="user-greeting" id="header-greeting"></div>
       <div class="bibendum-head-medallion" aria-hidden="true" title="MS B2B PIT Archi">
@@ -1067,7 +1065,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       </div>
     </header>
 
-    <!-- ONGLETS DE NAVIGATION -->
+    
     <div class="tabs" id="main-tabs" style="display: none;">
       <button class="tab-btn" id="tab-presence" onclick="switchTab('view-presence')" style="display: none;">👥 Présence Équipe</button>
       <button class="tab-btn" id="tab-personal" onclick="switchTab('view-personal')">Mon Calendrier</button>
@@ -1078,7 +1076,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       <button class="tab-btn danger" onclick="logout()">Déconnexion</button>
     </div>
 
-    <!-- VUE : CONNEXION -->
+    
     <div id="view-login" class="view active">
       <div class="form-box">
         <h2>🔒 Connexion</h2>
@@ -1121,7 +1119,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       </div>
     </div>
 
-    <!-- VUE : CRÉER UN PROFIL -->
+    
     <div id="view-create-profile" class="view">
       <div class="form-box">
         <h2>👤 Nouveau Profil</h2>
@@ -1152,7 +1150,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       </div>
     </div>
 
-    <!-- VUE : PARAMÈTRES -->
+    
     <div id="view-settings" class="view">
       <div class="form-box" style="max-width: 480px;">
         <h2>⚙️ Paramètres</h2>
@@ -1188,7 +1186,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       </div>
     </div>
 
-    <!-- VUE : PRÉSENCE DU JOUR -->
+    
     <div id="view-presence" class="view">
       <div class="form-box" style="max-width: 1100px; text-align: left;">
         <h2>👥 Présence aujourd'hui et demain - Équipe</h2>
@@ -1197,7 +1195,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       </div>
     </div>
 
-    <!-- VUE : MON CALENDRIER -->
+    
     <div id="view-personal" class="view">
       <div class="sticky-header-section">
         <div class="team-subnav" style="margin-bottom: 6px;">
@@ -1236,7 +1234,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       <div id="personal-grids-container"></div>
     </div>
 
-    <!-- VUE : VUE ÉQUIPE -->
+    
     <div id="view-team" class="view">
       <div class="sticky-header-section">
         <button class="btn-secondary" id="btn-back-login" style="margin-bottom: 6px; width: auto; display: none;" onclick="logout()">◄ Retour à la connexion</button>
@@ -1259,7 +1257,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       <div id="team-table-container"></div>
     </div>
 
-    <!-- VUE : BILAN ANNUEL (COMPACT) -->
+    
     <div id="view-annual" class="view">
       <div class="sticky-header-section" style="padding-bottom: 2px;">
         <div class="team-subnav" style="padding: 4px 8px; gap: 6px;">
@@ -1317,7 +1315,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       </div>
     </div>
 
-    <!-- VUE : KPI -->
+    
     <div id="view-kpi" class="view">
       <div class="sticky-header-section">
         <button class="btn-secondary" id="btn-back-login-kpi" style="margin-bottom: 6px; width: auto; display: none;" onclick="logout()">◄ Retour à la connexion</button>
@@ -3461,7 +3459,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 </script>
 <style>
-  /* Le panneau graphique occupe entièrement la zone qui lui est allouée */
+  
   #view-annual .annual-chart-pane,
   #view-annual #annual-destination-chart-box {
     min-width: 0 !important;
@@ -3547,7 +3545,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="page-zoom-connexion-bilan">
-  /* Zoom léger limité à la page de connexion et au Bilan Annuel */
+  
   #view-login > .form-box {
     zoom: 1.10;
   }
@@ -3557,7 +3555,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     transform-origin: top center;
   }
 
-  /* Conserve la largeur disponible malgré le zoom du Bilan Annuel */
+  
   #view-annual > .form-box {
     width: calc(100% / 1.10) !important;
     max-width: calc(100% / 1.10) !important;
@@ -3566,7 +3564,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="bilan-table-team-3m-enhancements">
-  /* Chiffres plus lisibles dans le tableau du Bilan Annuel */
+  
   #view-annual #annual-detail-tbody td:not(:first-child) {
     font-size: 0.78rem !important;
     font-weight: 800 !important;
@@ -3577,7 +3575,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-size: 0.70rem !important;
   }
 
-  /* Séparation renforcée uniquement dans Vue Équipe en mode 3 mois */
+  
   #team-table-container.team-three-months {
     display: flex;
     flex-direction: column;
@@ -3607,7 +3605,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="calendar-blue-outline-all-views">
-  /* Liseré bleu complet dans Vue Équipe, en 1 mois comme en 3 mois */
+  
   #team-table-container > .month-section {
     padding: 10px;
     border: 2px solid #3b82f6 !important;
@@ -3625,7 +3623,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-weight: 800;
   }
 
-  /* Même liseré dans Mon Calendrier : vues 1 mois, 3 mois et Annuel */
+  
   #personal-grids-container > .month-section {
     padding: 8px !important;
     border: 2px solid #3b82f6 !important;
@@ -3643,7 +3641,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-weight: 800;
   }
 
-  /* Conserve un format compact pour les vues multi-mois */
+  
   #personal-grids-container.personal-multi-container > .month-section {
     padding: 6px !important;
     border-radius: 9px !important;
@@ -4812,7 +4810,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 </script>
 
 
-<!-- Interface mobile portrait -->
+
 <nav id="mobile-bottom-nav" aria-label="Navigation mobile">
   <button type="button" data-mobile-view="view-presence" onclick="mobileNavigate('view-presence')" aria-label="Présence Équipe">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -4971,7 +4969,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 </script>
 
 
-<!-- Interface mobile portrait épurée -->
+
 <div id="mobile-day-toolbar" aria-label="Navigation de la semaine">
   <div class="mobile-week-controls">
     <button type="button" id="mobile-prev-week" aria-label="Semaine précédente">‹</button>
@@ -5276,7 +5274,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 <style id="mobile-v5-presence-calendar-team-fixes">
 @media (max-width:700px) and (orientation:portrait) {
-  /* Présence : identité toujours visible au-dessus du statut */
+  
   #view-presence .form-box { padding:12px !important; }
   #view-presence .presence-day-panel { padding:10px !important; }
   #view-presence .presence-member-card {
@@ -5332,7 +5330,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   #view-presence .presence-status-block > .status-badge { width:100% !important; }
   #view-presence .presence-half-status { width:100% !important; height:auto !important; }
 
-  /* Calendrier : tuiles Matin et Après-midi plus compactes */
+  
   .mobile-focus-slots { gap:8px !important; padding:10px 12px 12px !important; }
   .mobile-focus-slot {
     min-height:78px !important;
@@ -5354,7 +5352,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
   .mobile-focus-slot .secondary-code-initial[data-two-letters="true"] { width:28px !important; }
 
-  /* Vue Équipe : seul le calendrier défile, colonne Membre figée */
+  
   #team-table-container { overflow-x:visible !important; }
   #view-team .team-table-wrapper {
     position:relative !important;
@@ -5399,7 +5397,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="ios-input-no-auto-zoom">
-  /* Safari iOS zoome automatiquement sur les champs dont le texte est inférieur à 16 px. */
+  
   @media (max-width: 700px) {
     input[type="password"],
     input[type="text"],
@@ -5681,7 +5679,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="v46-admin-select-and-future-calendar-styles">
-  /* Administration des rôles : même typographie que les autres contrôles de la page. */
+  
   #view-settings #security-role-person,
   #view-settings #security-role-value {
     font-family: inherit !important;
@@ -5695,7 +5693,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font: inherit !important;
   }
   @media (max-width:700px) {
-    /* 16 px sur iPhone évite le zoom automatique tout en restant cohérent avec les autres champs mobiles. */
+    
     #view-settings #security-role-person,
     #view-settings #security-role-value {
       font-size:16px !important;
@@ -5706,7 +5704,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="v47-future-weeks-and-weekday-names">
-  /* Vue Équipe : numéro du jour et nom du jour sur deux lignes. */
+  
   #team-table-container th:not(.member-col) {
     min-width: 52px;
     padding: 4px 3px;
@@ -5775,7 +5773,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="iphone-16-pro-rounded-screen-design">
-  /* Optimisation PWA iPhone 16 Pro : viewport 402 × 874 CSS px et respect des zones sûres. */
+  
   @media (display-mode: standalone) and (max-width: 430px) {
     :root {
       --iphone-side-inset: max(12px, env(safe-area-inset-left), env(safe-area-inset-right));
@@ -5916,7 +5914,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 <style id="iphone-mobile-calendar-presence-fixes">
   @media (display-mode: standalone) and (max-width:430px) and (orientation:portrait) {
-    /* Calendrier : ne pas découper la vue ni les panneaux flottants. */
+    
     #view-personal.view.active {
       overflow:visible !important;
       border-radius:0 !important;
@@ -6011,7 +6009,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       max-width:calc(100vw - (2 * var(--iphone-side-inset)) - 8px) !important;
     }
 
-    /* Présence : cartes plus denses, identité et statuts sur une grille compacte. */
+    
     #view-presence.view.active {
       overflow:visible !important;
       border-radius:0 !important;
@@ -6114,7 +6112,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 <style id="iphone-calendar-final-repair">
   @media (display-mode: standalone) and (max-width:430px) and (orientation:portrait) {
-    /* The active calendar view must never inherit clipping from the rounded iPhone shell. */
+    
     body:has(#view-personal.active) {
       overflow-x:hidden !important;
       overflow-y:auto !important;
@@ -6308,10 +6306,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="final-badge-centering-and-mobile-dark-calendar">
-  /*
-   * Badges de rôle et de statut : centrage horizontal et vertical uniforme
-   * sur les versions web, mobile et PWA.
-   */
+  
   .manager-badge,
   .status-badge,
   .mobile-focus-date-badge,
@@ -6336,7 +6331,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     line-height: 1.1 !important;
   }
 
-  /* Évite qu'un alignement hérité décale Admin ou Manager dans leur bulle. */
+  
   .user-greeting .manager-badge,
   .presence-member-name-line .manager-badge,
   #view-team .manager-badge,
@@ -6346,10 +6341,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: 0 !important;
   }
 
-  /*
-   * Application mobile uniquement, en mode sombre : texte gris foncé et
-   * légèrement plus grand dans les cases colorées du Calendrier.
-   */
+  
   @media (display-mode: standalone) and (max-width: 430px) and (orientation: portrait) {
     [data-theme="dark"] #view-personal .mobile-focus-slot[class*="bg-"] {
       color: #ffffff !important;
@@ -6385,7 +6377,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       font-weight: 850 !important;
     }
 
-    /* Les pastilles secondaires restent contrastées au-dessus du texte foncé. */
+    
     [data-theme="dark"] #view-personal .mobile-focus-slot[class*="bg-"] .secondary-code-initial,
     [data-theme="dark"] #view-personal .mobile-status-line[class*="bg-"] .secondary-code-initial {
       color: #f8fafc !important;
@@ -6402,7 +6394,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     --ui-radius-lg: 18px;
   }
 
-  /* Arrondis harmonisés sans changer les dimensions des composants. */
+  
   .form-box,
   .month-section,
   .presence-day-panel,
@@ -6422,7 +6414,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   .app-modal-card,
   .mobile-focus-card { border-radius: var(--ui-radius-lg) !important; }
 
-  /* Compteur intégré à l’onglet Présence. */
+  
   .presence-tab-count {
     display: inline-flex;
     align-items: center;
@@ -6443,7 +6435,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     color: inherit;
   }
 
-  /* Bouton Aujourd’hui visible seulement lorsqu’on navigue ailleurs. */
+  
   #visual-go-today {
     display: none;
     width: auto;
@@ -6455,7 +6447,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
   #visual-go-today.visible { display: inline-flex; align-items: center; justify-content: center; }
 
-  /* Retour visuel discret après sauvegarde. */
+  
   #visual-save-toast {
     position: fixed;
     right: max(14px, env(safe-area-inset-right));
@@ -6591,10 +6583,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="login-pit-person-visual-parity">
-  /*
-   * Connexion : le sélecteur PIT reprend exactement les dimensions,
-   * la typographie, le fond et les états du sélecteur visuel Personne.
-   */
+  
   #view-login #login-pit-filter {
     width: 100% !important;
     min-height: 38px !important;
@@ -6643,7 +6632,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-weight: 400;
   }
 
-  /* Même rayon exact pour le déclencheur Personne. */
+  
   #view-login .login-name-trigger {
     border-radius: var(--ui-radius-sm, 8px) !important;
   }
@@ -7550,7 +7539,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="release-notes-uniform-spacing-fix">
-  /* Espacement extérieur constant autour de la fenêtre Nouveautés. */
+  
   #release-notes-modal.app-modal-overlay {
     padding: 24px !important;
     box-sizing: border-box !important;
@@ -7598,7 +7587,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="desktop-favourites-classic-button-style">
-  /* Favoris de Mon Calendrier : même rendu que les boutons d'activité classiques. */
+  
   #desktop-activity-favourites {
     padding: 7px 8px !important;
   }
@@ -7636,7 +7625,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     outline: none !important;
   }
 
-  /* Suppression de l'étoile intégrée pour retrouver le format des boutons standards. */
+  
   #desktop-activity-favourites .activity-favourite-chip::after {
     content: none !important;
     display: none !important;
@@ -8006,7 +7995,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="login-arrows-and-team-row-height-v222">
-  /* Même flèche, même taille et même position pour PIT et Personne. */
+  
   #view-login #login-pit-filter {
     background-image: none !important;
     padding-right: 38px !important;
@@ -8051,7 +8040,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     line-height: 1;
   }
 
-  /* Vue Équipe : hauteur stable, quel que soit le nom. */
+  
   #team-table-container tbody tr {
     height: 46px !important;
     min-height: 46px !important;
@@ -8089,7 +8078,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="team-member-wide-and-release-notes-clean-v223">
-  /* Vue Équipe : colonne Membre élargie, sans troncature. */
+  
   #team-table-container thead .member-col,
   #team-table-container tbody .member-col {
     width: 240px !important;
@@ -8105,7 +8094,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     white-space: nowrap !important;
   }
 
-  /* Notes de version : suppression de la colonne réservée aux icônes. */
+  
   #release-notes-modal .release-notes-list-no-icons li {
     display: block !important;
     grid-template-columns: none !important;
@@ -8348,7 +8337,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="global-selects-unified-v2215">
-  /* Base commune pour toutes les listes déroulantes de l’application. */
+  
   select,
   #view-team select,
   #view-annual select,
@@ -8384,7 +8373,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-size: .72rem;
   }
 
-  /* Vue Équipe : mêmes police, taille et hauteur que les autres filtres. */
+  
   #view-team .team-subnav select,
   #view-team .sticky-header-section select {
     min-height: 34px !important;
@@ -8392,7 +8381,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-family: inherit !important;
   }
 
-  /* Bilan Annuel : zone de filtres sans cadre ni contour additionnel. */
+  
   #view-annual .sticky-header-section {
     border: 0 !important;
     box-shadow: none !important;
@@ -8412,7 +8401,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-weight: 700 !important;
   }
 
-  /* La largeur du filtre Personne suit le libellé sélectionné. */
+  
   #view-annual #annual-person {
     width: auto !important;
     min-width: 13ch !important;
@@ -8473,7 +8462,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="annual-filters-frame-v2216">
-  /* Cadre unique autour de la ligne de filtres du Bilan Annuel. */
+  
   #view-annual .sticky-header-section {
     padding: 10px 12px !important;
     border: 0 !important;
@@ -8512,7 +8501,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     --app-section-gap: 16px;
   }
 
-  /* Espacement cohérent entre les grands blocs de chaque vue. */
+  
   .view.active {
     padding-bottom: var(--app-section-gap);
   }
@@ -8528,12 +8517,12 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: var(--app-block-gap) !important;
   }
 
-  /* Les derniers blocs ne créent pas d’espace inutile en bas. */
+  
   .view > :last-child {
     margin-bottom: 0 !important;
   }
 
-  /* Espacement interne commun entre cartes, panneaux et sous-sections. */
+  
   .form-box > .settings-submenu-tile,
   .form-box > .security-panel,
   .form-box > .app-update-panel,
@@ -8550,7 +8539,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: 0 !important;
   }
 
-  /* KPI : grille et cartes avec le même rythme visuel. */
+  
   #view-kpi .kpi-grid,
   #view-kpi [class*="kpi-grid"],
   #view-kpi [style*="display: grid"] {
@@ -8564,7 +8553,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: var(--app-block-gap) !important;
   }
 
-  /* Bilan Annuel : même écart entre filtre, titre, KPI, tableau et graphiques. */
+  
   #view-annual > .form-box {
     gap: var(--app-block-gap) !important;
   }
@@ -8577,7 +8566,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: 0 !important;
   }
 
-  /* Paramètres : un seul espacement de référence entre toutes les tuiles. */
+  
   #view-settings .settings-submenu-tile,
   #view-settings .security-panel,
   #view-settings .app-update-panel,
@@ -8592,7 +8581,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: 0 !important;
   }
 
-  /* Vues calendrier et présence : séparation constante des commandes et contenus. */
+  
   #view-team .sticky-header-section,
   #view-personal .sticky-header-section,
   #view-presence .sticky-header-section {
@@ -8613,17 +8602,17 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     --page-block-space: 14px;
   }
 
-  /* Même distance entre la navigation principale et le premier bloc de chaque page. */
+  
   #main-tabs {
     margin-bottom: var(--page-block-space) !important;
   }
 
-  /* Le conteneur de vue n'ajoute aucun espace invisible supplémentaire. */
+  
   .view.active {
     padding-top: 0 !important;
   }
 
-  /* Barre de filtres vers contenu : un seul espace mesuré, sans cumul de marges. */
+  
   .view.active > .sticky-header-section {
     margin-top: 0 !important;
     margin-bottom: var(--page-block-space) !important;
@@ -8637,7 +8626,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-top: 0 !important;
   }
 
-  /* Les grands blocs directs ont tous la même séparation verticale. */
+  
   .view.active > .form-box,
   .view.active > .team-table-wrapper,
   .view.active > .kpi-budget-summary,
@@ -8649,7 +8638,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: var(--page-block-space) !important;
   }
 
-  /* Bilan Annuel : les trois espaces indiqués sur la capture sont identiques. */
+  
   #view-annual .sticky-header-section {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
@@ -8666,7 +8655,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin: 0 !important;
   }
 
-  /* Évite qu'une ancienne marge inline ou historique s'ajoute à l'écart commun. */
+  
   #view-annual > .form-box > h2 + div[style*="grid-template-columns: repeat(4"] {
     margin-top: 0 !important;
   }
@@ -8684,7 +8673,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     --annual-visible-gap: 14px;
   }
 
-  /* 1. Navigation principale vers cadre des filtres. */
+  
   #main-tabs {
     margin-bottom: var(--annual-visible-gap) !important;
   }
@@ -8698,21 +8687,20 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     padding: 0 !important;
   }
 
-  /* 2. Cadre des filtres vers titre du bilan.
-     Le padding transparent de 18 px était la vraie source du grand écart. */
+  
   #view-annual > .form-box {
     margin: 0 auto !important;
     padding: 0 !important;
     gap: var(--annual-visible-gap) !important;
   }
 
-  /* 3. Titre vers cartes KPI. Le gap de la grille est la seule séparation. */
+  
   #view-annual > .form-box > h2,
   #view-annual > .form-box > div[style*="grid-template-columns: repeat(4"] {
     margin: 0 !important;
   }
 
-  /* Neutralise toute marge historique susceptible de s'ajouter entre ces blocs. */
+  
   #view-annual > .sticky-header-section + .form-box,
   #view-annual > .form-box > h2 + div[style*="grid-template-columns: repeat(4"] {
     margin-top: 0 !important;
@@ -8742,7 +8730,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     overflow: visible !important;
   }
 
-  /* Les bandeaux commencent après le bord droit du médaillon. */
+  
   .storage-banner,
   #main-header {
     position: relative;
@@ -8755,7 +8743,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     border-radius: var(--bib-band-curve) 10px 10px var(--bib-band-curve) !important;
   }
 
-  /* Hauteurs fixes, identiques quelle que soit la vue active. */
+  
   .storage-banner {
     height: var(--bib-storage-height) !important;
     min-height: var(--bib-storage-height) !important;
@@ -8777,7 +8765,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     overflow: visible !important;
   }
 
-  /* Le médaillon reste indépendant, à gauche des deux bandeaux. */
+  
   .bibendum-head-medallion {
     position: absolute;
     left: calc(var(--bib-medallion-x) - var(--bib-band-left)) !important;
@@ -8802,7 +8790,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     transform: translateZ(0);
   }
 
-  /* Fond blanc permanent, y compris en mode sombre. */
+  
   .bibendum-head-medallion::before {
     content: '';
     position: absolute;
@@ -8892,7 +8880,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
 
 <style id="mobile-month-navigation-alignment-v2228">
-  /* Les contrôles de mois restent sur une ligne, centrés et sans chevauchement sur mobile. */
+  
   @media (max-width: 700px) {
     #main-header {
       display: grid !important;
