@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.27">
+  <meta name="application-version" content="2.2.28">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -7428,14 +7428,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.27</button>
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.28</button>
 <div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.2.27 · Nouveautés</strong>
+  <strong>Version 2.2.28 · Nouveautés</strong>
   <ul>
-    <li>Présence limitée au PIT connecté</li>
-    <li>Bandeaux rééquilibrés</li>
-    <li>Bonjour ou Bonsoir automatique</li>
-    <li>Connexion inchangée</li>
+    <li>Bloc de mise à jour supprimé</li>
+    <li>Navigation mensuelle mobile réalignée</li>
+    <li>Contrôles plus compacts</li>
+    <li>Fonctions existantes conservées</li>
   </ul>
 </div>
 <div id="release-notes-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="release-notes-title">
@@ -7443,13 +7443,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
     <div class="release-notes-hero">
       <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.2.27</strong><small>Publiée le 13 août 2026</small></span>
+      <span><strong>Version 2.2.28</strong><small>Publiée le 13 août 2026</small></span>
     </div>
     <ul class="release-notes-list release-notes-list-no-icons">
-      <li><div><strong>Présence Équipe filtrée</strong><span>La vue affiche exclusivement les membres du même PIT que l’utilisateur connecté, y compris pour un profil Admin.</span></div></li>
-      <li><div><strong>Bandeaux rééquilibrés</strong><span>Le bandeau Synchronisation est plus compact et le bandeau d’accueil dispose de davantage de hauteur.</span></div></li>
-      <li><div><strong>Salutation selon l’heure</strong><span>Le bandeau affiche Bonjour de 5 h à 17 h 59, puis Bonsoir de 18 h à 4 h 59.</span></div></li>
-      <li><div><strong>Logique sensible conservée</strong><span>Le cycle de connexion, les rôles, Firebase et les sessions restent inchangés.</span></div></li>
+      <li><div><strong>Paramètres allégés</strong><span>La section Mise à jour de l’application a été retirée de l’interface Paramètres.</span></div></li>
+      <li><div><strong>Navigation mensuelle mobile réalignée</strong><span>Les flèches, le mois et le bouton Aujourd’hui sont désormais disposés sur une ligne stable.</span></div></li>
+      <li><div><strong>Calendrier et Vue Équipe corrigés</strong><span>Les contrôles utilisent le même placement compact sur les deux pages mobiles.</span></div></li>
+      <li><div><strong>Fonctions conservées</strong><span>Le filtrage Présence par PIT, la salutation horaire, Firebase et la connexion restent inchangés.</span></div></li>
     </ul>
     <div class="release-notes-actions"><button type="button" class="btn-primary" onclick="closeReleaseNotes()">J’ai compris</button></div>
   </div>
@@ -7466,13 +7466,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
    * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
    * Le changement de version déclenche automatiquement la popup une fois par profil.
    */
-  const APP_VERSION = '2.2.27';
+  const APP_VERSION = '2.2.28';
   const APP_RELEASE_DATE = '13 août 2026';
   const APP_RELEASE_ITEMS = [
-    'Présence Équipe limitée au PIT de l’utilisateur connecté',
-    'Bandeau Synchronisation réduit et accueil agrandi',
-    'Salutation adaptée automatiquement à l’heure',
-    'Connexion, sécurité et Firebase inchangés'
+    'Bloc Mise à jour de l’application retiré des Paramètres',
+    'Navigation des mois réalignée sur mobile',
+    'Contrôles Calendrier et Vue Équipe rendus plus compacts',
+    'Présence par PIT et salutation horaire conservées'
   ];
 
   window.PLANNING_APP_RELEASE = Object.freeze({
@@ -7823,17 +7823,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 
   function ensureUpdatePanel() {
-    const form = document.querySelector('#view-settings .form-box');
-    if (!form || document.getElementById('app-update-panel')) return;
-    const panel = document.createElement('section');
-    panel.id = 'app-update-panel';
-    panel.className = 'app-update-panel';
-    panel.innerHTML = `<div class="app-update-header"><span>🔄 Mise à jour de l’application</span><small>Diagnostic PWA</small></div><div class="app-update-grid"><div class="app-update-item"><small>Version installée</small><strong id="installed-app-version">${window.PLANNING_APP_RELEASE?.version || document.querySelector('meta[name="application-version"]')?.content || 'Inconnue'}</strong></div><div class="app-update-item"><small>Service worker</small><strong id="service-worker-status">Vérification…</strong></div><div class="app-update-item"><small>Dernière vérification</small><strong id="last-update-check">Jamais</strong></div><div class="app-update-item"><small>Mode d’ouverture</small><strong id="app-display-mode">Navigateur web</strong></div></div><div class="app-update-actions"><button type="button" class="btn-outline" id="check-app-update">Vérifier les mises à jour</button><button type="button" class="btn-secondary" id="reload-app-now">Recharger l’application</button></div><p id="app-update-message">Le contrôle ne supprime aucune donnée Firebase.</p>`;
-    form.appendChild(panel);
-    panel.querySelector('#check-app-update').onclick = checkApplicationUpdate;
-    panel.querySelector('#reload-app-now').onclick = () => window.location.reload();
-    refreshUpdateDiagnostics();
+    document.getElementById('app-update-panel')?.remove();
   }
+
   function getUpdateEnvironment() {
     const protocol = window.location.protocol;
     const hostname = window.location.hostname;
@@ -8884,6 +8876,105 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       --bib-storage-height: 38px;
       --bib-header-height: 54px;
       --bib-band-gap: 7px;
+    }
+  }
+</style>
+
+
+<style id="mobile-month-navigation-alignment-v2228">
+  /* Les contrôles de mois restent sur une ligne, centrés et sans chevauchement sur mobile. */
+  @media (max-width: 700px) {
+    #main-header {
+      display: grid !important;
+      grid-template-columns: minmax(86px, .42fr) minmax(178px, .58fr) !important;
+      align-items: center !important;
+      column-gap: 7px !important;
+    }
+
+    #main-header .user-greeting {
+      min-width: 0 !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      font-size: .72rem !important;
+    }
+
+    #month-nav {
+      width: 100% !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      display: grid !important;
+      grid-template-columns: 30px minmax(82px, 1fr) auto 30px !important;
+      align-items: center !important;
+      justify-content: stretch !important;
+      gap: 4px !important;
+    }
+
+    #month-nav[style*="display: none"] {
+      display: none !important;
+    }
+
+    #month-nav #prev-month,
+    #month-nav #next-month {
+      width: 30px !important;
+      min-width: 30px !important;
+      height: 30px !important;
+      min-height: 30px !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    #month-nav .month-title {
+      min-width: 0 !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 2px !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      text-align: center !important;
+      font-size: .68rem !important;
+      line-height: 1.1 !important;
+    }
+
+    #month-nav #visual-go-today {
+      min-height: 28px !important;
+      margin: 0 !important;
+      padding: 4px 6px !important;
+      font-size: .56rem !important;
+      white-space: nowrap !important;
+    }
+  }
+
+  @media (max-width: 390px) {
+    #main-header {
+      grid-template-columns: minmax(72px, .36fr) minmax(172px, .64fr) !important;
+      column-gap: 5px !important;
+    }
+
+    #main-header .user-greeting {
+      font-size: .66rem !important;
+    }
+
+    #month-nav {
+      grid-template-columns: 28px minmax(70px, 1fr) auto 28px !important;
+      gap: 3px !important;
+    }
+
+    #month-nav #prev-month,
+    #month-nav #next-month {
+      width: 28px !important;
+      min-width: 28px !important;
+      height: 28px !important;
+      min-height: 28px !important;
+    }
+
+    #month-nav .month-title {
+      font-size: .62rem !important;
     }
   }
 </style>
