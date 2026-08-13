@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.1">
+  <meta name="application-version" content="2.2.3">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Planning Équipe — TT, Congés & KPI</title>
 
@@ -7300,14 +7300,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.1</button>
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.3</button>
 <div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.2.1 · Nouveautés</strong>
+  <strong>Version 2.2.3 · Nouveautés</strong>
   <ul>
-    <li>Alertes de cohérence non bloquantes</li>
-    <li>Contrôle manuel des mises à jour</li>
-    <li>Favoris personnels et Copier S-1 conservés</li>
-    <li>Interface et navigation stabilisées</li>
+    <li>Colonne Membre élargie</li>
+    <li>Noms affichés intégralement</li>
+    <li>Hauteur fixe des lignes conservée</li>
+    <li>Notes de version sans icônes</li>
   </ul>
 </div>
 <div id="release-notes-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="release-notes-title">
@@ -7315,13 +7315,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
     <div class="release-notes-hero">
       <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.2.1</strong><small>Publiée le 13 août 2026</small></span>
+      <span><strong>Version 2.2.3</strong><small>Publiée le 13 août 2026</small></span>
     </div>
-    <ul class="release-notes-list">
-      <li><span class="release-note-symbol">⭐</span><div><strong>Favoris personnels</strong><span>Ajoutez jusqu’à 6 favoris, y compris les combinaisons destination et code secondaire. Les favoris suivent votre profil via Firebase.</span></div></li>
-      <li><span class="release-note-symbol">📋</span><div><strong>Copier S-1</strong><span>Prévisualisez et copiez la semaine précédente, en conservant les cases remplies ou en choisissant de les remplacer.</span></div></li>
-      <li><span class="release-note-symbol">🏭</span><div><strong>Compteur LAD en temps réel</strong><span>Le compteur de l’onglet Présence se met à jour immédiatement et à chaque synchronisation Firebase.</span></div></li>
-      <li><span class="release-note-symbol">✨</span><div><strong>Interface harmonisée</strong><span>Listes PIT et Personne alignées, bouton Aujourd’hui, arrondis cohérents et retour visuel après enregistrement.</span></div></li>
+    <ul class="release-notes-list release-notes-list-no-icons">
+      <li><div><strong>Colonne Membre élargie</strong><span>La colonne Membre de Vue Équipe dispose désormais de plus d’espace pour afficher les noms complets.</span></div></li>
+      <li><div><strong>Noms affichés intégralement</strong><span>Les points de suspension ont été supprimés afin de ne plus masquer les noms des personnes.</span></div></li>
+      <li><div><strong>Hauteur fixe conservée</strong><span>Les lignes gardent une hauteur constante, indépendamment du contenu affiché.</span></div></li>
+      <li><div><strong>Notes de version simplifiées</strong><span>Les icônes devant les lignes de changement ont été retirées pour une présentation plus sobre.</span></div></li>
     </ul>
     <div class="release-notes-actions"><button type="button" class="btn-primary" onclick="closeReleaseNotes()">J’ai compris</button></div>
   </div>
@@ -7338,13 +7338,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
    * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
    * Le changement de version déclenche automatiquement la popup une fois par profil.
    */
-  const APP_VERSION = '2.2.1';
+  const APP_VERSION = '2.2.3';
   const APP_RELEASE_DATE = '13 août 2026';
   const APP_RELEASE_ITEMS = [
-    'Alertes de cohérence non bloquantes',
-    'Contrôle manuel des mises à jour dans Paramètres',
-    'Favoris personnels et copie de semaine conservés',
-    'Interface et navigation stabilisées'
+    'Colonne Membre élargie dans Vue Équipe',
+    'Noms des personnes affichés intégralement',
+    'Hauteur fixe des lignes conservée',
+    'Notes de version simplifiées sans icônes'
   ];
 
   window.PLANNING_APP_RELEASE = Object.freeze({
@@ -7873,6 +7873,120 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   if (yearElement) yearElement.textContent = String(new Date().getFullYear());
 })();
 </script>
+
+
+<style id="login-arrows-and-team-row-height-v222">
+  /* Même flèche, même taille et même position pour PIT et Personne. */
+  #view-login #login-pit-filter {
+    background-image: none !important;
+    padding-right: 38px !important;
+  }
+  #view-login .form-group:has(#login-pit-filter) {
+    position: relative;
+  }
+  #view-login .form-group:has(#login-pit-filter)::after {
+    content: "⌄";
+    position: absolute;
+    right: 12px;
+    bottom: 9px;
+    width: 16px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+  }
+  #view-login .login-name-chevron {
+    width: 16px !important;
+    height: 20px !important;
+    flex: 0 0 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: transparent !important;
+    font-size: 0 !important;
+    line-height: 1 !important;
+  }
+  #view-login .login-name-chevron::after {
+    content: "⌄";
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  /* Vue Équipe : hauteur stable, quel que soit le nom. */
+  #team-table-container tbody tr {
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+  }
+  #team-table-container tbody td {
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    padding-top: 3px !important;
+    padding-bottom: 3px !important;
+    overflow: hidden !important;
+    vertical-align: middle !important;
+    box-sizing: border-box !important;
+  }
+  #team-table-container tbody .member-col {
+    width: 160px !important;
+    min-width: 160px !important;
+    max-width: 160px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  #team-table-container tbody .member-col > * {
+    max-width: 100% !important;
+  }
+  #team-table-container tbody .member-col .member-pit {
+    display: block !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+  }
+</style>
+
+
+
+<style id="team-member-wide-and-release-notes-clean-v223">
+  /* Vue Équipe : colonne Membre élargie, sans troncature. */
+  #team-table-container thead .member-col,
+  #team-table-container tbody .member-col {
+    width: 240px !important;
+    min-width: 240px !important;
+    max-width: 240px !important;
+  }
+
+  #team-table-container tbody .member-col,
+  #team-table-container tbody .member-col > *,
+  #team-table-container tbody .member-col .member-pit {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+  }
+
+  /* Notes de version : suppression de la colonne réservée aux icônes. */
+  #release-notes-modal .release-notes-list-no-icons li {
+    display: block !important;
+    grid-template-columns: none !important;
+    padding: 9px 10px !important;
+  }
+
+  #release-notes-modal .release-notes-list-no-icons li > div {
+    width: 100%;
+    min-width: 0;
+  }
+</style>
 
 </body>
 </html>
