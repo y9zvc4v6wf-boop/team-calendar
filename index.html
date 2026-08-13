@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.31">
+  <meta name="application-version" content="2.2.32">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -2327,6 +2327,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     if (viewId === 'view-presence') renderTeamPresence();
     if (viewId === 'view-settings') renderSettingsView();
     if (viewId === 'view-annual') renderAnnualReport();
+
+    if (document.documentElement.classList.contains('ios-standalone')) {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        document.scrollingElement?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      });
+    }
   }
 
   document.getElementById('prev-month').onclick = () => {
@@ -7427,9 +7434,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.31</button>
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.32</button>
 <div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.2.31 · Nouveautés</strong>
+  <strong>Version 2.2.32 · Nouveautés</strong>
   <ul>
     <li>Bloc de mise à jour supprimé</li>
     <li>Navigation mensuelle mobile réalignée</li>
@@ -7442,7 +7449,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
     <div class="release-notes-hero">
       <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.2.31</strong><small>Publiée le 13 août 2026</small></span>
+      <span><strong>Version 2.2.32</strong><small>Publiée le 13 août 2026</small></span>
     </div>
     <ul class="release-notes-list release-notes-list-no-icons">
       <li><div><strong>Paramètres allégés</strong><span>La section Mise à jour de l’application a été retirée de l’interface Paramètres.</span></div></li>
@@ -7465,13 +7472,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
    * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
    * Le changement de version déclenche automatiquement la popup une fois par profil.
    */
-  const APP_VERSION = '2.2.31';
+  const APP_VERSION = '2.2.32';
   const APP_RELEASE_DATE = '13 août 2026';
   const APP_RELEASE_ITEMS = [
-    'Affichage iOS en mode application stabilisé',
-    'Zones sûres appliquées une seule fois',
-    'Hauteur d’écran autonome corrigée au démarrage',
-    'Safari et fonctionnement métier inchangés'
+    'Pages iOS totalement isolées les unes des autres',
+    'Calendrier retiré de Présence et Équipe',
+    'Espaces verticaux excessifs supprimés',
+    'Retour automatique en haut à chaque changement de page'
   ];
 
   window.PLANNING_APP_RELEASE = Object.freeze({
@@ -9112,6 +9119,92 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }, { passive: true });
 })();
 </script>
+
+
+<style id="ios-standalone-view-isolation-v2232">
+  /* Une seule page peut participer au flux vertical de l'application iOS. */
+  html.ios-standalone #view-presence.view:not(.active),
+  html.ios-standalone #view-personal.view:not(.active),
+  html.ios-standalone #view-team.view:not(.active),
+  html.ios-standalone #view-annual.view:not(.active),
+  html.ios-standalone #view-kpi.view:not(.active),
+  html.ios-standalone #view-settings.view:not(.active),
+  html.ios-standalone .view:not(.active) {
+    display: none !important;
+    position: static !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  html.ios-standalone #view-presence.view.active,
+  html.ios-standalone #view-personal.view.active,
+  html.ios-standalone #view-team.view.active,
+  html.ios-standalone #view-annual.view.active,
+  html.ios-standalone #view-kpi.view.active,
+  html.ios-standalone #view-settings.view.active {
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Le conteneur n'empile plus les pages masquées et ne crée plus de hauteur artificielle. */
+  html.ios-standalone body > .container {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  html.ios-standalone body:has(#view-personal.active) > .container,
+  html.ios-standalone body:has(#view-presence.active) > .container,
+  html.ios-standalone body:has(#view-team.active) > .container {
+    overflow: visible !important;
+  }
+
+  /* Calendrier : suppression des réserves verticales cumulées qui créaient le grand vide. */
+  html.ios-standalone #view-personal.view.active {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  html.ios-standalone #view-personal #personal-grids-container {
+    min-height: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  html.ios-standalone #view-personal #mobile-day-toolbar {
+    margin-bottom: 8px !important;
+  }
+
+  /* Le haut de la vue active reste visible sous la zone sûre de l'iPhone. */
+  html.ios-standalone .view.active {
+    scroll-margin-top: 0 !important;
+  }
+
+  @media (max-width: 430px) and (orientation: portrait) {
+    html.ios-standalone body {
+      scroll-padding-top: 0 !important;
+    }
+
+    html.ios-standalone #view-presence.view.active,
+    html.ios-standalone #view-team.view.active,
+    html.ios-standalone #view-personal.view.active {
+      padding-top: 0 !important;
+    }
+  }
+</style>
 
 </body>
 </html>
