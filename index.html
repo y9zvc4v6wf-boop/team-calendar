@@ -2,7 +2,10 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.7">
+  <meta name="application-version" content="2.2.9">
+  <script id="early-role-overrides-store">
+    window.planningRoleOverrides = window.planningRoleOverrides || {};
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Planning Équipe — TT, Congés & KPI</title>
 
@@ -1023,6 +1026,12 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     const session = JSON.parse(raw);
     if (session && session.user && Number.isFinite(session.expiresAt) && session.expiresAt > Date.now()) {
       document.documentElement.classList.add('remember-session-booting');
+      window.setTimeout(function () {
+        if (!document.documentElement.classList.contains('remember-session-booting')) return;
+        console.error('[Session locale] Fin de l’écran de reconnexion déclenchée par le garde-fou.');
+        document.documentElement.classList.remove('remember-session-booting');
+        try { localStorage.removeItem('planning_remembered_session'); } catch (error) {}
+      }, 8000);
     }
   } catch (error) {
     console.error('[Session locale] Préchargement impossible', error);
@@ -1473,6 +1482,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     return PIT_COLORS[pitName] || "#64748b";
   }
 
+  function hasManagerAccess(member) {
+    return Boolean(member && (member.isManager || member.isAdmin));
+  }
+
+  function hasAdminAccess(member) {
+    return Boolean(member && member.isAdmin);
+  }
+
   function getWeekNumber(date) {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
     const dayNum = d.getUTCDay() || 7;
@@ -1675,11 +1692,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 
   function updateAllMembersList() {
-    if (!securityData.roleOverrides) securityData.roleOverrides = {};
+    const roleOverrides = window.planningRoleOverrides || {};
     let profilesChangedByOverride = false;
 
     customMembers = customMembers.map(member => {
-      const override = securityData.roleOverrides[member.firstName];
+      const override = roleOverrides[member.firstName];
       const nextManager = override && typeof override.isManager === 'boolean'
         ? override.isManager
         : Boolean(member.isManager);
@@ -1908,7 +1925,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     visualOptions.innerHTML = '';
     let membersToDisplay = (selectedPitVal === 'ALL') ? ALL_MEMBERS : ALL_MEMBERS.filter(m => m.pit === selectedPitVal);
     membersToDisplay = [...membersToDisplay].sort((a, b) => {
-      const managerOrder = Number(b.isManager) - Number(a.isManager);
+      const managerOrder = Number(b.isManager || b.isAdmin) - Number(a.isManager || a.isAdmin);
       if (managerOrder !== 0) return managerOrder;
       return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`, 'fr', { sensitivity: 'base' });
     });
@@ -2002,7 +2019,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       annualPerson.innerHTML = '';
       let allowedMembers = ALL_MEMBERS;
       const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
-      if (userObj && userObj.isManager) {
+      if (hasAdminAccess(userObj)) {
+        allowedMembers = ALL_MEMBERS;
+      } else if (userObj && userObj.isManager) {
         allowedMembers = ALL_MEMBERS.filter(m => m.pit === userObj.pit);
       } else if (currentUser) {
         allowedMembers = ALL_MEMBERS.filter(m => m.firstName === currentUser);
@@ -2068,7 +2087,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     populateDropdowns();
 
     document.getElementById('tab-presence').style.display = 'block';
-    if (userObj && userObj.isManager) {
+    if (hasManagerAccess(userObj)) {
       document.getElementById('tab-kpi').style.display = 'block';
     } else {
       document.getElementById('tab-kpi').style.display = 'none';
@@ -2228,7 +2247,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   async function deleteTeamMemberAccount(memberName) {
     const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
-    if (!userObj || !userObj.isManager) return;
+    if (!hasManagerAccess(userObj)) return;
 
     if (await appConfirm(`Voulez-vous vraiment supprimer le compte de ${memberName} ?`, { danger: true })) {
       customMembers = customMembers.filter(m => m.firstName !== memberName);
@@ -2253,8 +2272,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   function switchTab(viewId) {
     if (viewId === 'view-kpi') {
       const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
-      if (!userObj || !userObj.isManager) {
-        alert("Accès refusé : Cette page est réservée aux profils Manager.");
+      if (!hasManagerAccess(userObj)) {
+        alert("Accès refusé : cette page est réservée aux profils Manager ou Administrateur.");
         return;
       }
     }
@@ -2453,8 +2472,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   function exportPlanningToExcel() {
     const userObj = ALL_MEMBERS.find(member => member.firstName === currentUser);
-    if (!userObj || !userObj.isManager) {
-      alert("Accès refusé : l'export Excel est réservé aux Managers.");
+    if (!hasManagerAccess(userObj)) {
+      alert("Accès refusé : l'export Excel est réservé aux Managers ou Administrateurs.");
       return;
     }
     if (typeof XLSX === 'undefined') {
@@ -2502,7 +2521,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   function renderSettingsView() {
     const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
     const managerSection = document.getElementById('manager-team-deletion-section');
-    if (userObj && userObj.isManager) {
+    if (hasManagerAccess(userObj)) {
       managerSection.style.display = 'block';
       document.getElementById('manager-pit-name').textContent = userObj.pit;
       const teamListContainer = document.getElementById('team-members-list-for-deletion');
@@ -2536,9 +2555,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     if (!userObj) return;
     const container = document.getElementById('presence-list-container');
     container.innerHTML = '';
-    const teamMembers = ALL_MEMBERS
-      .filter(m => m.pit === userObj.pit)
-      .sort((a, b) => Number(b.isManager) - Number(a.isManager));
+    const teamMembers = (hasAdminAccess(userObj)
+      ? [...ALL_MEMBERS]
+      : ALL_MEMBERS.filter(m => m.pit === userObj.pit))
+      .sort((a, b) => Number(b.isManager || b.isAdmin) - Number(a.isManager || a.isAdmin));
     if (teamMembers.length === 0) {
       container.innerHTML = '<p style="color: var(--text-dim);">Aucun membre dans votre équipe.</p>';
       return;
@@ -3245,7 +3265,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     if (selectedPit !== 'ALL') {
       membersToDisplay = ALL_MEMBERS.filter(m => m.pit === selectedPit);
     }
-    membersToDisplay = [...membersToDisplay].sort((a, b) => Number(b.isManager) - Number(a.isManager));
+    membersToDisplay = [...membersToDisplay].sort((a, b) => Number(b.isManager || b.isAdmin) - Number(a.isManager || a.isAdmin));
 
     if (membersToDisplay.length === 0) {
       container.innerHTML = '<p style="color: var(--text-dim); text-align: center; padding: 20px;">Aucun membre à afficher.</p>';
@@ -4276,7 +4296,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
   async function verifyCurrentManagerPin(pin) {
     const member = currentMember();
-    return Boolean(member?.isManager && await verifyProtectedSecret(usersPins[currentUser], pin));
+    return Boolean(hasManagerAccess(member) && await verifyProtectedSecret(usersPins[currentUser], pin));
   }
 
   // Synchronisation légère des informations de sécurité.
@@ -4289,6 +4309,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           loginAttempts: value.loginAttempts || {},
           roleOverrides: value.roleOverrides || {}
         };
+        window.planningRoleOverrides = securityData.roleOverrides;
         updateAllMembersList();
         if (document.getElementById('view-settings')?.classList.contains('active')) renderSettingsView();
       }, error => { console.error('[Sécurité] Synchronisation indisponible', error); });
@@ -4297,6 +4318,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         const local = localStorage.getItem('team_security_data');
         if (local) securityData = JSON.parse(local);
         if (!securityData.roleOverrides) securityData.roleOverrides = {};
+        window.planningRoleOverrides = securityData.roleOverrides;
       } catch (error) { console.error('[Sécurité] Données locales illisibles', error); }
     }
   }
@@ -4362,7 +4384,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   async function initialiseOrVerifyAdminCode(inputCode) {
     if (!/^\d{6,12}$/.test(inputCode)) { alert('Le code administrateur doit contenir entre 6 et 12 chiffres.'); return false; }
     if (!securityData.adminCode) {
-      if (!currentMember()?.isManager && !isCurrentAdmin()) { alert('Seul un Manager ou Administrateur existant peut initialiser le code administrateur.'); return false; }
+      if (!hasManagerAccess(currentMember())) { alert('Seul un Manager ou Administrateur existant peut initialiser le code administrateur.'); return false; }
       if (!await appConfirm('Aucun code administrateur n’existe. Voulez-vous définir ce code maintenant ?')) return false;
       securityData.adminCode = await createProtectedSecret(inputCode);
       await saveSecurityData();
@@ -4430,6 +4452,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         isManager: nextManager,
         isAdmin: nextAdmin
       };
+      window.planningRoleOverrides = securityData.roleOverrides;
       target.isManager = nextManager;
       target.isAdmin = nextAdmin;
       await saveSecurityData();
@@ -4477,7 +4500,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     const form = document.querySelector('#view-settings .form-box');
     if (!form) return;
     form.querySelectorAll('.security-panel').forEach(panel => panel.remove());
-    if (!manager?.isManager) return;
+    if (!hasManagerAccess(manager)) return;
 
     if (manager.isAdmin) {
       const rolePanel = document.createElement('div');
@@ -5464,6 +5487,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   function finishRememberedSessionBoot() {
     document.documentElement.classList.remove('remember-session-booting');
   }
+
+  window.addEventListener('error', finishRememberedSessionBoot);
+  window.addEventListener('unhandledrejection', finishRememberedSessionBoot);
 
   function clearRememberedSession() {
     try { localStorage.removeItem(SESSION_KEY); } catch (error) { console.error('[Session locale] Suppression impossible', error); }
@@ -7377,14 +7403,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.7</button>
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.9</button>
 <div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.2.7 · Nouveautés</strong>
+  <strong>Version 2.2.9 · Nouveautés</strong>
   <ul>
-    <li>Source persistante dédiée aux rôles</li>
-    <li>Retrait Manager d’Adrien protégé</li>
-    <li>Synchronisation Firebase corrigée</li>
-    <li>Sécurité Administrateur conservée</li>
+    <li>Admin avec tous les menus</li>
+    <li>Fonctions Manager accessibles à l’Admin</li>
+    <li>KPI, export et gestion disponibles</li>
+    <li>Rôles toujours indépendants</li>
   </ul>
 </div>
 <div id="release-notes-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="release-notes-title">
@@ -7392,13 +7418,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
     <div class="release-notes-hero">
       <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.2.7</strong><small>Publiée le 13 août 2026</small></span>
+      <span><strong>Version 2.2.9</strong><small>Publiée le 13 août 2026</small></span>
     </div>
     <ul class="release-notes-list release-notes-list-no-icons">
-      <li><div><strong>Source persistante dédiée aux rôles</strong><span>Les choix Manager et Administrateur sont maintenant enregistrés séparément dans les données de sécurité.</span></div></li>
-      <li><div><strong>Retrait Manager d’Adrien protégé</strong><span>Une ancienne version ouverte sur un autre appareil ne peut plus imposer durablement le rôle Manager au profil Adrien.</span></div></li>
-      <li><div><strong>Synchronisation corrigée</strong><span>À chaque synchronisation, le choix enregistré par l’Administrateur est réappliqué au profil.</span></div></li>
-      <li><div><strong>Sécurité conservée</strong><span>Le rôle Administrateur principal et la validation par mot de passe restent protégés.</span></div></li>
+      <li><div><strong>Accès complet Administrateur</strong><span>Un profil Administrateur voit désormais tous les menus de l’application, même sans rôle Manager.</span></div></li>
+      <li><div><strong>Fonctions Manager incluses</strong><span>KPI, export Excel, gestion des comptes, présence équipe et fonctions de sécurité sont accessibles à l’Administrateur.</span></div></li>
+      <li><div><strong>Périmètre global</strong><span>L’Administrateur peut consulter tous les profils dans les vues de présence et de bilan annuel.</span></div></li>
+      <li><div><strong>Rôles indépendants</strong><span>L’accès complet de l’Administrateur ne réattribue pas le rôle Manager au profil.</span></div></li>
     </ul>
     <div class="release-notes-actions"><button type="button" class="btn-primary" onclick="closeReleaseNotes()">J’ai compris</button></div>
   </div>
@@ -7415,13 +7441,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
    * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
    * Le changement de version déclenche automatiquement la popup une fois par profil.
    */
-  const APP_VERSION = '2.2.7';
+  const APP_VERSION = '2.2.9';
   const APP_RELEASE_DATE = '13 août 2026';
   const APP_RELEASE_ITEMS = [
-    'Rôles enregistrés dans une source dédiée et persistante',
-    'Retrait du rôle Manager d’Adrien protégé contre les anciennes versions',
-    'Synchronisation Firebase réappliquant le choix Administrateur',
-    'Rôle Administrateur principal et sécurité conservés'
+    'Administrateur avec accès à tous les menus',
+    'Fonctions Manager également disponibles pour l’Admin',
+    'KPI, export, présence et gestion d’équipe accessibles',
+    'Rôles Admin et Manager toujours indépendants'
   ];
 
   window.PLANNING_APP_RELEASE = Object.freeze({
