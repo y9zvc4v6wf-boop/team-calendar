@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.33">
+  <meta name="application-version" content="2.2.46">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -1154,6 +1154,29 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <div id="view-settings" class="view">
       <div class="form-box" style="max-width: 480px;">
         <h2>⚙️ Paramètres</h2>
+        <div class="settings-submenu-tile settings-options-tile admin-config-panel" id="planning-options-panel" style="display:none;">
+          <h3>Options</h3>
+          <p>Options générales d’affichage de l’application.</p>
+          <div class="planning-options-list">
+            <label class="planning-option-row"><input type="checkbox" id="option-disable-presence"><span><strong>Désactiver la page « Présence Équipe »</strong><small>Masque ou réaffiche la page dans les navigations ordinateur et mobile.</small></span></label>
+            <label class="planning-option-row"><input type="checkbox" id="option-disable-clermont-sites"><span><strong>Désactiver les sites Clermontois</strong><small>Masque CAR, LAD, COM et CTX dans Mon Calendrier.</small></span></label>
+            <label class="planning-option-row"><input type="checkbox" id="option-disable-absence-types"><span><strong>Désactiver CA/JDR/TT</strong><small>Masque CA, JDR et TT dans Mon Calendrier.</small></span></label>
+          </div>
+        </div>
+        <div class="settings-submenu-tile admin-config-panel" id="planning-lists-panel" style="display:none;">
+          <h3>Codes secondaires et centres de coût</h3>
+          <p>Ces listes sont partagées avec les utilisateurs. Au moins un code secondaire et un centre de coût doivent rester disponibles.</p>
+          <div class="admin-list-editor">
+            <h4>Codes secondaires</h4>
+            <div id="admin-secondary-code-list" class="admin-editable-list"></div>
+            <div class="admin-add-row"><input type="text" id="admin-new-secondary-code" maxlength="6" placeholder="Code, ex. VSM"><input type="text" id="admin-new-secondary-label" maxlength="40" placeholder="Libellé"><button type="button" onclick="addAdminSecondaryCode()">Ajouter</button></div>
+          </div>
+          <div class="admin-list-editor">
+            <h4>Centres de coût</h4>
+            <div id="admin-cost-centre-list" class="admin-editable-list"></div>
+            <div class="admin-add-row admin-add-row-cost"><input type="text" id="admin-new-cost-centre" maxlength="50" placeholder="Nouveau centre de coût"><button type="button" onclick="addAdminCostCentre()">Ajouter</button></div>
+          </div>
+        </div>
         <div class="settings-submenu-tile settings-pin-tile">
           <h3>Modifier mon Code PIN</h3>
           <div class="form-group">
@@ -1365,6 +1388,19 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         <p class="kpi-budget-note">Année en cours, selon les déplacements renseignés et les filtres PIT / Personne actifs.</p>
       </div>
 
+      <section id="kpi-forecast-section" class="kpi-forecast-section" aria-labelledby="kpi-forecast-title">
+        <div class="kpi-forecast-heading">
+          <div><h3 id="kpi-forecast-title">Prévisionnel de dépense par mois</h3><p>Ventilation selon les codes secondaires et centres de coût enregistrés.</p></div>
+          <strong id="kpi-forecast-total">0 €</strong>
+        </div>
+        <div class="kpi-forecast-table-wrap">
+          <table class="kpi-forecast-table">
+            <thead><tr><th>Mois</th><th>Code secondaire</th><th>Centre de coût</th><th>Jours prévus</th><th>Prévisionnel</th></tr></thead>
+            <tbody id="kpi-forecast-tbody"><tr><td colspan="5">Aucune dépense prévisionnelle.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
       <div class="kpi-charts-container">
         <div class="chart-box">
           <h3>Déplacements par Personne (Jours)</h3>
@@ -1424,6 +1460,16 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     </div>
   </div>
 
+  <div id="cost-centre-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cost-centre-modal-title" onclick="handleCostCentreOverlay(event)">
+    <div class="app-modal-card secondary-code-modal-card">
+      <div class="app-modal-accent"></div>
+      <div class="app-modal-content">
+        <div class="app-modal-heading"><div class="app-modal-icon">💶</div><div><h2 id="cost-centre-modal-title" class="app-modal-title">Centre de coût</h2><p class="app-modal-subtitle">Choix obligatoire, non affiché dans les calendriers</p></div></div>
+        <div id="cost-centre-options" class="secondary-code-options"></div>
+        <div class="app-modal-actions"><button type="button" class="btn-secondary app-modal-ok" onclick="cancelCostCentreSelection()">Annuler</button></div>
+      </div>
+    </div>
+  </div>
   <div id="travel-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="travel-modal-title" onclick="handleTravelModalOverlay(event)">
     <div class="app-modal-card">
       <div class="app-modal-accent"></div>
@@ -1460,6 +1506,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   let calendarData = {};
   let secondaryCodesData = {};
   let selectedSecondaryCode = null;
+  let selectedCostCentre = null;
+  let costCentreData = {};
   let secondaryCodeSelectionCallback = null;
   let usersPins = {};
   let customMembers = [];
@@ -1474,6 +1522,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   const brushTouchedCells = new Set();
   let teamViewMonths = 1;
   let personalViewMonths = 1;
+  let personalAnnualSelectedYear = new Date().getFullYear();
   let selectedPit = 'ALL';
 
   let db = null;
@@ -1993,21 +2042,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   });
 
   function populateKPIPits() {
-    const kpiPitFilter = document.getElementById('kpi-pit-filter');
-    if (!kpiPitFilter) return;
-    const currentVal = kpiPitFilter.value;
-    kpiPitFilter.innerHTML = '<option value="ALL">Tous les PITs</option>';
-    const pits = [...new Set([...ALL_MEMBERS.map(m => m.pit).filter(Boolean), 'ULT ARA'])];
-    pits.forEach(pit => {
-      const opt = document.createElement('option');
-      opt.value = pit;
-      opt.textContent = pit;
-      kpiPitFilter.appendChild(opt);
-    });
-    if (pits.includes(currentVal) || currentVal === 'ALL') kpiPitFilter.value = currentVal;
-    updateKPIPersonFilter();
+    const kpiPitFilter=document.getElementById('kpi-pit-filter'); if(!kpiPitFilter)return;
+    const currentVal=kpiPitFilter.value;
+    kpiPitFilter.innerHTML='<option value="ALL">Tous les PITs</option>';
+    const pits=[...new Set([...ALL_MEMBERS.map(m=>m.pit).filter(Boolean),'ULT ARA'])];
+    pits.forEach(pit=>{const opt=document.createElement('option');opt.value=pit;opt.textContent=pit;kpiPitFilter.appendChild(opt)});
+    kpiPitFilter.value=(pits.includes(currentVal)||currentVal==='ALL')?currentVal:'ALL';
+    kpiPitFilter.disabled=false; updateKPIPersonFilter();
   }
-
   function updateKPIPersonFilter() {
     const kpiPitVal = document.getElementById('kpi-pit-filter').value;
     const kpiPersonFilter = document.getElementById('kpi-person-filter');
@@ -2049,10 +2091,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       annualPerson.innerHTML = '';
       let allowedMembers = ALL_MEMBERS;
       const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
-      if (hasAdminAccess(userObj)) {
+      if (hasAdminAccess(userObj) || (userObj && userObj.isManager)) {
         allowedMembers = ALL_MEMBERS;
-      } else if (userObj && userObj.isManager) {
-        allowedMembers = ALL_MEMBERS.filter(m => m.pit === userObj.pit);
       } else if (currentUser) {
         allowedMembers = ALL_MEMBERS.filter(m => m.firstName === currentUser);
       }
@@ -2345,13 +2385,34 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 
   document.getElementById('prev-month').onclick = () => {
+    if (personalViewMonths === 'ANNUAL' && document.getElementById('view-personal').classList.contains('active')) {
+      const currentYear = new Date().getFullYear();
+      if (personalAnnualSelectedYear <= currentYear) return;
+      personalAnnualSelectedYear -= 1;
+      currentDate = new Date(personalAnnualSelectedYear, 0, 1);
+      document.getElementById('month-display').textContent = String(personalAnnualSelectedYear);
+      renderPersonalCalendar(personalAnnualSelectedYear, 0);
+      updateTodayShortcut();
+      return;
+    }
     const candidate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
     const currentMonthStart = new Date(todayYear, todayMonth, 1);
     if (candidate < currentMonthStart) return;
     currentDate = candidate;
     renderViews();
   };
-  document.getElementById('next-month').onclick = () => { currentDate.setMonth(currentDate.getMonth() + 1); renderViews(); };
+  document.getElementById('next-month').onclick = () => {
+    if (personalViewMonths === 'ANNUAL' && document.getElementById('view-personal').classList.contains('active')) {
+      personalAnnualSelectedYear += 1;
+      currentDate = new Date(personalAnnualSelectedYear, 0, 1);
+      document.getElementById('month-display').textContent = String(personalAnnualSelectedYear);
+      renderPersonalCalendar(personalAnnualSelectedYear, 0);
+      updateTodayShortcut();
+      return;
+    }
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderViews();
+  };
 
   document.getElementById('btn-team-1m').onclick = (e) => {
     teamViewMonths = 1;
@@ -2369,6 +2430,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     personalViewMonths = 1;
     document.querySelectorAll('#view-personal .team-subnav button').forEach(b => b.classList.remove('active'));
     e.target.classList.add('active');
+    document.getElementById('mobile-day-toolbar')?.removeAttribute('data-annual-hidden');
     renderPersonalCalendar(currentDate.getFullYear(), currentDate.getMonth());
   };
 
@@ -2376,6 +2438,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     personalViewMonths = 3;
     document.querySelectorAll('#view-personal .team-subnav button').forEach(b => b.classList.remove('active'));
     e.target.classList.add('active');
+    document.getElementById('mobile-day-toolbar')?.removeAttribute('data-annual-hidden');
     renderPersonalCalendar(currentDate.getFullYear(), currentDate.getMonth());
   };
 
@@ -2383,7 +2446,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     personalViewMonths = 'ANNUAL';
     document.querySelectorAll('#view-personal .team-subnav button').forEach(b => b.classList.remove('active'));
     e.target.classList.add('active');
-    renderPersonalCalendar(currentDate.getFullYear(), currentDate.getMonth());
+    personalAnnualSelectedYear = currentDate.getFullYear();
+    currentDate = new Date(personalAnnualSelectedYear, 0, 1);
+    document.getElementById('month-display').textContent = String(personalAnnualSelectedYear);
+    document.getElementById('mobile-day-toolbar')?.setAttribute('data-annual-hidden', 'true');
+    renderPersonalCalendar(personalAnnualSelectedYear, 0);
   };
 
   document.getElementById('pit-select-filter').addEventListener('change', (e) => {
@@ -3041,7 +3108,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     if (!activeView) return;
 
     const formattedMonth = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(currentDate);
-    document.getElementById('month-display').textContent = formattedMonth;
+    document.getElementById('month-display').textContent = activeView.id === 'view-personal' && personalViewMonths === 'ANNUAL'
+      ? String(personalAnnualSelectedYear)
+      : formattedMonth;
     const teamMobileMonthLabel = document.getElementById('team-mobile-month-label');
     if (teamMobileMonthLabel) teamMobileMonthLabel.textContent = formattedMonth;
 
@@ -3121,9 +3190,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       monthsToRender = 3;
       containerClass = 'personal-multi-container months-3';
     } else if (personalViewMonths === 'ANNUAL') {
-      year = nowRef.getFullYear();
-      month = nowRef.getMonth();
-      monthsToRender = 24 - month;
+      year = personalAnnualSelectedYear;
+      const today = new Date();
+      month = year === today.getFullYear() ? today.getMonth() : 0;
+      monthsToRender = 12 - month;
+      document.getElementById('month-display').textContent = String(personalAnnualSelectedYear);
       containerClass = 'personal-multi-container months-12';
     }
 
@@ -3309,9 +3380,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     container.classList.toggle('team-three-months', teamViewMonths === 3);
 
     let membersToDisplay = ALL_MEMBERS;
-    if (selectedPit !== 'ALL') {
-      membersToDisplay = ALL_MEMBERS.filter(m => m.pit === selectedPit);
-    }
+    if (selectedPit !== 'ALL') membersToDisplay = ALL_MEMBERS.filter(m => m.pit === selectedPit);
     membersToDisplay = [...membersToDisplay].sort((a, b) => Number(b.isManager) - Number(a.isManager));
 
     if (membersToDisplay.length === 0) {
@@ -4969,7 +5038,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
     updateMobileSelectionLabel();
   }
-  window.renderPersonalCalendar=function(year,month){ return isMobilePortrait()?renderMobileWeek():originalRenderPersonalCalendar(year,month); };
+  window.renderPersonalCalendar=function(year,month){
+    return isMobilePortrait() && personalViewMonths !== 'ANNUAL'
+      ? renderMobileWeek()
+      : originalRenderPersonalCalendar(year,month);
+  };
   window.mobileNavigate=function(view){ closeMobileMore(); closeMobileToolSheet(); switchTab(view); document.querySelectorAll('#mobile-bottom-nav [data-mobile-view]').forEach(button=>button.classList.toggle('active',button.dataset.mobileView===view)); };
   window.toggleMobileMore=function(){document.getElementById('mobile-more-sheet').classList.toggle('visible');document.getElementById('mobile-more-backdrop').classList.toggle('visible');};
   window.closeMobileMore=function(){document.getElementById('mobile-more-sheet').classList.remove('visible');document.getElementById('mobile-more-backdrop').classList.remove('visible');};
@@ -5129,7 +5202,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     else {const status=typeof value==='string'?value:'PRESENT';slots.appendChild(makeSlot(key,status,'am','Matin'));slots.appendChild(makeSlot(key,status,'pm','Après-midi'));}
     container.appendChild(card);updateActivityLabels();
   }
-  window.renderPersonalCalendar=function(y,m){return active()?renderFocus():previousRender(y,m);};
+  window.renderPersonalCalendar=function(y,m){
+    return active() && personalViewMonths !== 'ANNUAL'
+      ? renderFocus()
+      : previousRender(y,m);
+  };
   document.getElementById('mobile-prev-week').onclick=()=>{
     const candidate=new Date(selectedMobileDate);candidate.setDate(candidate.getDate()-7);
     const today=new Date();today.setHours(0,0,0,0);
@@ -6571,11 +6648,21 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     const button = document.getElementById('visual-go-today');
     if (!button || typeof currentDate === 'undefined') return;
     const now = new Date();
-    const outsideCurrentMonth = currentDate.getFullYear() !== now.getFullYear() || currentDate.getMonth() !== now.getMonth();
+    const outsideCurrentMonth = personalViewMonths === 'ANNUAL' && document.getElementById('view-personal').classList.contains('active')
+      ? personalAnnualSelectedYear !== now.getFullYear()
+      : currentDate.getFullYear() !== now.getFullYear() || currentDate.getMonth() !== now.getMonth();
     button.classList.toggle('visible', outsideCurrentMonth);
   }
 
   document.getElementById('visual-go-today')?.addEventListener('click', () => {
+    if (personalViewMonths === 'ANNUAL' && document.getElementById('view-personal').classList.contains('active')) {
+      personalAnnualSelectedYear = new Date().getFullYear();
+      currentDate = new Date(personalAnnualSelectedYear, 0, 1);
+      document.getElementById('month-display').textContent = String(personalAnnualSelectedYear);
+      renderPersonalCalendar(personalAnnualSelectedYear, 0);
+      updateTodayShortcut();
+      return;
+    }
     currentDate = new Date();
     renderViews();
     updateTodayShortcut();
@@ -7442,9 +7529,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.33</button>
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.46</button>
 <div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.2.33 · Nouveautés</strong>
+  <strong>Version 2.2.46 · Nouveautés</strong>
   <ul>
     <li>Bloc de mise à jour supprimé</li>
     <li>Navigation mensuelle mobile réalignée</li>
@@ -7457,7 +7544,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
     <div class="release-notes-hero">
       <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.2.33</strong><small>Publiée le 13 août 2026</small></span>
+      <span><strong>Version 2.2.46</strong><small>Publiée le 18 août 2026</small></span>
     </div>
     <ul class="release-notes-list release-notes-list-no-icons">
       <li><div><strong>Paramètres allégés</strong><span>La section Mise à jour de l’application a été retirée de l’interface Paramètres.</span></div></li>
@@ -7480,13 +7567,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
    * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
    * Le changement de version déclenche automatiquement la popup une fois par profil.
    */
-  const APP_VERSION = '2.2.33';
-  const APP_RELEASE_DATE = '13 août 2026';
+  const APP_VERSION = '2.2.46';
+  const APP_RELEASE_DATE = '18 août 2026';
   const APP_RELEASE_ITEMS = [
-    'Bandeau Synchronisation net en application iOS',
-    'Navigation hebdomadaire limitée au Calendrier',
-    'Bloc Calendrier retiré de Présence, Équipe, Bilan, KPI et Paramètres',
-    'Composants Calendrier fermés au changement de page'
+    'Graphiques KPI CA et JDR masqués sans couper Chart.js',
+    'Autres graphiques KPI restaurés',
+    'Tableau prévisionnel KPI conservé',
+    'Managers autorisés à voir toutes les personnes'
   ];
 
   window.PLANNING_APP_RELEASE = Object.freeze({
@@ -9283,5 +9370,187 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
+
+<style id="admin-lists-and-cost-centres-v2236">
+  #view-settings .admin-config-panel { display:none !important; }
+  #view-settings .admin-config-panel.admin-config-visible { display:block !important; }
+  .planning-options-list,.admin-editable-list{display:grid;gap:7px}
+  .planning-option-row,.admin-editable-row{display:grid;grid-template-columns:20px minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 9px;border:1px solid var(--border-soft);border-radius:8px;background:var(--input-bg)}
+  .planning-option-row{grid-template-columns:20px minmax(0,1fr);align-items:start;cursor:pointer}
+  .planning-option-row input{width:17px;height:17px;margin:1px 0 0;accent-color:var(--accent)}
+  .planning-option-row strong,.planning-option-row small{display:block}.planning-option-row strong{font-size:.7rem}.planning-option-row small{margin-top:2px;color:var(--text-muted);font-size:.58rem;line-height:1.35}
+  .admin-list-editor{margin-top:10px;padding:9px;border:1px solid var(--border-soft);border-radius:9px;background:var(--input-bg)}
+  .admin-list-editor h4{margin:0 0 7px;font-size:.75rem;color:var(--text)}
+  .admin-editable-row strong{font-size:.69rem}.admin-editable-row small{display:block;color:var(--text-muted);font-size:.56rem}
+  .admin-editable-row button{width:auto;margin:0;color:var(--danger);border-color:color-mix(in srgb,var(--danger) 50%,var(--border))}
+  .admin-add-row{display:grid;grid-template-columns:minmax(80px,.45fr) minmax(130px,1fr) auto;gap:6px;margin-top:7px}.admin-add-row-cost{grid-template-columns:minmax(0,1fr) auto}.admin-add-row button{width:auto;margin:0}
+  html.option-presence-disabled #tab-presence,html.option-presence-disabled #mobile-bottom-nav [data-mobile-view="view-presence"]{display:none!important}
+  html.option-clermont-sites-disabled .tool-CAR,html.option-clermont-sites-disabled .tool-LAD,html.option-clermont-sites-disabled .tool-COM,html.option-clermont-sites-disabled .tool-CTX{display:none!important}
+  html.option-absence-types-disabled .tool-CA,html.option-absence-types-disabled .tool-JDR,html.option-absence-types-disabled .tool-TT{display:none!important}
+  @media(max-width:700px) and (orientation:portrait){html.option-presence-disabled #mobile-bottom-nav{grid-template-columns:repeat(3,minmax(0,1fr))!important}.admin-add-row{grid-template-columns:1fr}.admin-add-row button{width:100%}.planning-option-row{min-height:52px}}
+</style>
+<script id="admin-lists-and-cost-centres-v2236-script">
+(function(){
+'use strict';
+const OPTIONS_KEY='planning_display_options_v1';
+const CONFIG_KEY='planning_admin_lists_v1';
+const DEFAULT_CODES=[{code:'VSM',label:'Value Stream Mapping'},{code:'WKS',label:'Workshop'},{code:'PRJ',label:'Projet'},{code:'SPU',label:'Support usine'},{code:'FOR',label:'Formation'},{code:'VFO',label:'Visite fournisseur'},{code:'VMA',label:'Visite managers'},{code:'RSX',label:'Réseaux'}];
+const DEFAULT_COSTS=['Marche courante','Projet'];
+let displayOptions=readLocal(OPTIONS_KEY,{disablePresence:false,disableClermontSites:false,disableAbsenceTypes:false});
+let adminConfig=normaliseConfig(readLocal(CONFIG_KEY,{secondaryCodes:DEFAULT_CODES,costCentres:DEFAULT_COSTS}));
+let pendingSecondaryCode=null,pendingDestination=null,pendingCostCallback=null;
+let configRef=null,costDataRef=null;window.COST_CENTRE_DATA=costCentreData;
+function readLocal(key,fallback){try{return JSON.parse(localStorage.getItem(key))||fallback}catch(_){return fallback}}
+function writeLocal(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(error){console.error('[Configuration] Sauvegarde locale impossible',error)}}
+function normaliseConfig(value){
+ const codes=(Array.isArray(value?.secondaryCodes)?value.secondaryCodes:DEFAULT_CODES).map(item=>typeof item==='string'?{code:item,label:item}:item).filter(item=>item&&/^[A-Z0-9]{2,6}$/.test(String(item.code||'').toUpperCase())).map(item=>({code:String(item.code).toUpperCase(),label:String(item.label||item.code).trim()}));
+ const costs=(Array.isArray(value?.costCentres)?value.costCentres:DEFAULT_COSTS).map(String).map(x=>x.trim()).filter(Boolean);
+ return {secondaryCodes:codes.length?codes:DEFAULT_CODES.slice(),costCentres:costs.length?costs:DEFAULT_COSTS.slice()};
+}
+function isAdmin(){return hasAdminAccess(ALL_MEMBERS.find(member=>member.firstName===currentUser))}
+function syncRuntimeCodes(){SECONDARY_CODES.splice(0,SECONDARY_CODES.length,...adminConfig.secondaryCodes.map(item=>item.code))}
+function syncAdminAccess(){document.querySelectorAll('#view-settings .admin-config-panel').forEach(panel=>{const allowed=isAdmin();panel.classList.toggle('admin-config-visible',allowed);panel.style.display=allowed?'block':'none';panel.setAttribute('aria-hidden',String(!allowed));panel.querySelectorAll('input,button,select').forEach(control=>{control.disabled=!allowed;control.tabIndex=allowed?0:-1})})}
+function saveConfig(){if(!isAdmin())return;writeLocal(CONFIG_KEY,adminConfig);if(configRef)configRef.set(adminConfig).catch(error=>console.error('[Configuration] Firebase',error));syncRuntimeCodes();renderAdminLists()}
+function renderAdminLists(){
+ const codes=document.getElementById('admin-secondary-code-list'),costs=document.getElementById('admin-cost-centre-list');if(!codes||!costs)return;
+ codes.innerHTML='';adminConfig.secondaryCodes.forEach(item=>{const row=document.createElement('div');row.className='admin-editable-row';row.innerHTML=`<span></span><div><strong>${escapeHtml(item.code)}</strong><small>${escapeHtml(item.label)}</small></div><button type="button">Supprimer</button>`;row.querySelector('button').onclick=()=>removeAdminSecondaryCode(item.code);codes.appendChild(row)});
+ costs.innerHTML='';adminConfig.costCentres.forEach(label=>{const row=document.createElement('div');row.className='admin-editable-row';row.innerHTML=`<span></span><div><strong>${escapeHtml(label)}</strong></div><button type="button">Supprimer</button>`;row.querySelector('button').onclick=()=>removeAdminCostCentre(label);costs.appendChild(row)});
+}
+function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+window.addAdminSecondaryCode=function(){if(!isAdmin())return;const code=document.getElementById('admin-new-secondary-code').value.trim().toUpperCase(),label=document.getElementById('admin-new-secondary-label').value.trim();if(!/^[A-Z0-9]{2,6}$/.test(code)){alert('Le code doit contenir entre 2 et 6 lettres ou chiffres.');return}if(adminConfig.secondaryCodes.some(item=>item.code===code)){alert('Ce code existe déjà.');return}adminConfig.secondaryCodes.push({code,label:label||code});document.getElementById('admin-new-secondary-code').value='';document.getElementById('admin-new-secondary-label').value='';saveConfig()};
+window.removeAdminSecondaryCode=async function(code){if(!isAdmin()||adminConfig.secondaryCodes.length<=1){alert('Au moins un code secondaire doit rester disponible.');return}if(!await appConfirm(`Supprimer le code secondaire ${code} ?`,{danger:true}))return;adminConfig.secondaryCodes=adminConfig.secondaryCodes.filter(item=>item.code!==code);saveConfig()};
+window.addAdminCostCentre=function(){if(!isAdmin())return;const input=document.getElementById('admin-new-cost-centre'),label=input.value.trim();if(!label){alert('Saisissez un centre de coût.');return}if(adminConfig.costCentres.some(item=>item.toLocaleLowerCase('fr-FR')===label.toLocaleLowerCase('fr-FR'))){alert('Ce centre de coût existe déjà.');return}adminConfig.costCentres.push(label);input.value='';saveConfig()};
+window.removeAdminCostCentre=async function(label){if(!isAdmin()||adminConfig.costCentres.length<=1){alert('Au moins un centre de coût doit rester disponible.');return}if(!await appConfirm(`Supprimer le centre de coût « ${label} » ?`,{danger:true}))return;adminConfig.costCentres=adminConfig.costCentres.filter(item=>item!==label);saveConfig()};
+function renderSecondaryChoices(){const root=document.querySelector('#secondary-code-modal .secondary-code-options');if(!root)return;root.innerHTML='';adminConfig.secondaryCodes.forEach(item=>{const button=document.createElement('button');button.type='button';button.innerHTML=`<strong>${escapeHtml(item.code)}</strong><span>${escapeHtml(item.label)}</span>`;button.onclick=()=>chooseSecondaryCode(item.code);root.appendChild(button)})}
+function openCostCentreModal(callback){pendingCostCallback=callback;const root=document.getElementById('cost-centre-options');root.innerHTML='';adminConfig.costCentres.forEach(label=>{const button=document.createElement('button');button.type='button';button.innerHTML=`<strong>${escapeHtml(label)}</strong>`;button.onclick=()=>chooseCostCentre(label);root.appendChild(button)});document.getElementById('cost-centre-modal').classList.add('visible');document.body.style.overflow='hidden'}
+window.chooseCostCentre=function(label){if(!adminConfig.costCentres.includes(label))return;selectedCostCentre=label;document.getElementById('cost-centre-modal').classList.remove('visible');document.body.style.overflow='';const callback=pendingCostCallback;pendingCostCallback=null;if(callback)callback(label)};
+window.cancelCostCentreSelection=function(){document.getElementById('cost-centre-modal').classList.remove('visible');document.body.style.overflow='';pendingCostCallback=null;pendingSecondaryCode=null;selectedCostCentre=null};
+window.handleCostCentreOverlay=function(event){if(event.target.id==='cost-centre-modal')cancelCostCentreSelection()};
+window.openSecondaryCodeModal=function(destination,callback){secondaryCodeSelectionCallback=callback;pendingDestination=destination;selectedCostCentre=null;document.getElementById('secondary-code-modal-subtitle').textContent=`Sélectionnez le code associé à ${destination}`;renderSecondaryChoices();document.getElementById('secondary-code-modal').classList.add('visible');document.body.style.overflow='hidden'};
+window.chooseSecondaryCode=function(code){if(!adminConfig.secondaryCodes.some(item=>item.code===code))return;pendingSecondaryCode=code;document.getElementById('secondary-code-modal').classList.remove('visible');openCostCentreModal(()=>{const callback=secondaryCodeSelectionCallback;secondaryCodeSelectionCallback=null;const selected=pendingSecondaryCode;pendingSecondaryCode=null;if(callback)callback(selected)})};
+const originalCancelSecondary=window.cancelSecondaryCodeSelection;window.cancelSecondaryCodeSelection=function(){pendingSecondaryCode=null;selectedCostCentre=null;return originalCancelSecondary.apply(this,arguments)};
+function getCostEntry(dateKey,user){return costCentreData[dateKey]?.[user]}
+function setCostCentreEntry(dateKey,user,status,slot){window.COST_CENTRE_DATA=costCentreData;if(!costCentreData[dateKey])costCentreData[dateKey]={};if(!requiresSecondaryCode(status)){const current=getCostEntry(dateKey,user);if(slot&&current&&typeof current==='object'){delete current[slot];if(!current.am&&!current.pm)delete costCentreData[dateKey][user]}else if(!slot)delete costCentreData[dateKey][user]}else if(slot){const current=getCostEntry(dateKey,user);const obj=current&&typeof current==='object'?{...current}:{};obj[slot]=selectedCostCentre;costCentreData[dateKey][user]=obj}else costCentreData[dateKey][user]=selectedCostCentre;if(costCentreData[dateKey]&&!Object.keys(costCentreData[dateKey]).length)delete costCentreData[dateKey]}
+const originalSetSecondary=window.setSecondaryCode;window.setSecondaryCode=function(dateKey,user,status,slot,code){const result=originalSetSecondary.apply(this,arguments);setCostCentreEntry(dateKey,user,status,slot);return result};
+const originalSavePlanning=window.savePlanningAndSecondaryData;window.savePlanningAndSecondaryData=function(){const result=originalSavePlanning.apply(this,arguments);writeLocal('team_cost_centres',costCentreData);if(costDataRef)costDataRef.set(costCentreData).catch(error=>console.error('[Centres de coût] Firebase',error));return result};
+function applyDisplayOptions(){const root=document.documentElement;root.classList.toggle('option-presence-disabled',!!displayOptions.disablePresence);root.classList.toggle('option-clermont-sites-disabled',!!displayOptions.disableClermontSites);root.classList.toggle('option-absence-types-disabled',!!displayOptions.disableAbsenceTypes);['option-disable-presence','option-disable-clermont-sites','option-disable-absence-types'].forEach((id,index)=>{const el=document.getElementById(id);if(el)el.checked=!!displayOptions[['disablePresence','disableClermontSites','disableAbsenceTypes'][index]]});syncAdminAccess();if(displayOptions.disablePresence&&document.getElementById('view-presence')?.classList.contains('active'))switchTab(currentUser?'view-personal':'view-team')}
+function bindOption(id,key){document.getElementById(id)?.addEventListener('change',event=>{if(!isAdmin()){applyDisplayOptions();return}displayOptions[key]=event.target.checked;writeLocal(OPTIONS_KEY,displayOptions);applyDisplayOptions()})}
+bindOption('option-disable-presence','disablePresence');bindOption('option-disable-clermont-sites','disableClermontSites');bindOption('option-disable-absence-types','disableAbsenceTypes');
+const priorSwitch=window.switchTab;window.switchTab=function(view){const target=displayOptions.disablePresence&&view==='view-presence'?(currentUser?'view-personal':'view-team'):view;const result=priorSwitch(target);applyDisplayOptions();return result};
+const priorSettings=window.renderSettingsView;window.renderSettingsView=function(){const result=priorSettings.apply(this,arguments);syncAdminAccess();renderAdminLists();return result};
+const priorLogin=window.loginSuccess;window.loginSuccess=function(){const result=priorLogin.apply(this,arguments);applyDisplayOptions();return result};
+function bindStorage(){costCentreData=readLocal('team_cost_centres',{});if(db){configRef=db.ref('app_config/secondary_and_cost_lists');configRef.on('value',snap=>{if(snap.val()){adminConfig=normaliseConfig(snap.val());writeLocal(CONFIG_KEY,adminConfig);syncRuntimeCodes();renderAdminLists()}});costDataRef=db.ref('cost_centres');costDataRef.on('value',snap=>{costCentreData=snap.val()||{};window.COST_CENTRE_DATA=costCentreData})}}
+// Favoris déplacement : le centre de coût reste obligatoire lors de la sélection.
+document.addEventListener('click',event=>{const chip=event.target.closest('.activity-favourite-chip');if(!chip)return;setTimeout(()=>{if(requiresSecondaryCode(selectedTool)){selectedCostCentre=null;openCostCentreModal(()=>{})}},0)},true);
+syncRuntimeCodes();bindStorage();applyDisplayOptions();renderAdminLists();window.addEventListener('load',()=>{applyDisplayOptions();renderAdminLists()});
+})();
+</script>
+
+
+
+
+<style id="personal-annual-mobile-fix-v2238">
+  #mobile-day-toolbar[data-annual-hidden="true"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+</style>
+
+
+<style id="annual-report-two-metrics-v2242">
+  /* Bilan Annuel : conserver uniquement Formation et Déplacements. */
+  #view-annual .form-box > div[style*="grid-template-columns: repeat(4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  #view-annual #stat-jdr-count,
+  #view-annual #stat-ca-count {
+    display: none !important;
+  }
+  #view-annual #stat-jdr-count.parent-placeholder,
+  #view-annual #stat-ca-count.parent-placeholder { display:none !important; }
+  #view-annual .form-box > div[style*="grid-template-columns: repeat(4"] > div:has(#stat-jdr-count),
+  #view-annual .form-box > div[style*="grid-template-columns: repeat(4"] > div:has(#stat-ca-count) {
+    display: none !important;
+  }
+  #view-annual #annual-detail-tbody tr > :nth-child(2),
+  #view-annual #annual-detail-tbody tr > :nth-child(3),
+  #view-annual table:has(#annual-detail-tbody) thead tr > :nth-child(2),
+  #view-annual table:has(#annual-detail-tbody) thead tr > :nth-child(3) {
+    display: none !important;
+  }
+  @media (max-width:700px) {
+    #view-annual .form-box > div[style*="grid-template-columns: repeat(4"] {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+  }
+</style>
+
+
+<style id="kpi-forecast-manager-v2243">
+  #view-kpi .kpi-budget-summary { display:none !important; }
+  .kpi-forecast-section{margin:10px auto 12px;max-width:1180px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--card);box-shadow:var(--shadow-sm)}
+  .kpi-forecast-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}.kpi-forecast-heading h3{margin:0;font-size:.9rem}.kpi-forecast-heading p{margin:3px 0 0;color:var(--text-muted);font-size:.65rem}.kpi-forecast-heading>strong{font-size:1.05rem;color:var(--accent);white-space:nowrap}
+  .kpi-forecast-table-wrap{overflow:auto;border:1px solid var(--border-soft);border-radius:9px}.kpi-forecast-table{width:100%;border-collapse:collapse;min-width:650px}.kpi-forecast-table th,.kpi-forecast-table td{padding:8px 10px;border-bottom:1px solid var(--border-soft);text-align:left;font-size:.67rem}.kpi-forecast-table th{position:sticky;top:0;background:var(--input-bg);color:var(--text-muted);font-weight:800}.kpi-forecast-table td:nth-child(4),.kpi-forecast-table td:nth-child(5),.kpi-forecast-table th:nth-child(4),.kpi-forecast-table th:nth-child(5){text-align:right}.kpi-forecast-table tbody tr:last-child td{border-bottom:0}.kpi-forecast-empty{text-align:center!important;color:var(--text-muted)!important;padding:18px!important}
+  @media(max-width:700px){.kpi-forecast-section{padding:9px;margin:8px 0}.kpi-forecast-heading{align-items:center}.kpi-forecast-heading p{display:none}}
+</style>
+<script id="kpi-forecast-manager-v2243-script">
+(function(){
+  const months=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const money=new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+  function valueForSlot(source,slot){if(!source)return null;return typeof source==='object'?source[slot]:source}
+  function safeText(value){return String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]))}
+  function allowedMembers(){
+    const pit=document.getElementById('kpi-pit-filter')?.value||'ALL';
+    const person=document.getElementById('kpi-person-filter')?.value||'ALL';
+    return ALL_MEMBERS.filter(member=>(pit==='ALL'||member.pit===pit)&&(person==='ALL'||member.firstName===person));
+  }
+  function renderForecast(){
+    const body=document.getElementById('kpi-forecast-tbody');if(!body)return;
+    const year=Number(document.getElementById('kpi-year')?.value)||new Date().getFullYear();
+    const selectedMonth=document.getElementById('kpi-month')?.value||'ALL';
+    const names=new Set(allowedMembers().map(member=>member.firstName));
+    const rows=new Map();
+    Object.entries(calendarData||{}).forEach(([dateKey,day])=>{
+      const [y,m]=dateKey.split('-').map(Number);if(y!==year||selectedMonth!=='ALL'&&m-1!==Number(selectedMonth))return;
+      Object.entries(day||{}).forEach(([user,status])=>{
+        if(!names.has(user))return;
+        ['am','pm'].forEach(slot=>{
+          const destination=typeof status==='object'?status?.[slot]:status;
+          if(!DISPLACEMENT_CODES.includes(destination))return;
+          const secondary=valueForSlot(secondaryCodesData?.[dateKey]?.[user],slot)||'Non renseigné';
+          const centre=valueForSlot(window.COST_CENTRE_DATA?.[dateKey]?.[user],slot)||'Non renseigné';
+          const key=[m,secondary,centre].join('|');
+          const current=rows.get(key)||{month:m,secondary,centre,days:0,amount:0};
+          current.days+=typeof status==='object'?0.5:0.5;
+          current.amount+=(DISPLACEMENT_COSTS[destination]||0)*0.5;
+          rows.set(key,current);
+        });
+      });
+    });
+    const data=[...rows.values()].sort((a,b)=>a.month-b.month||a.secondary.localeCompare(b.secondary,'fr')||a.centre.localeCompare(b.centre,'fr'));
+    body.innerHTML='';let total=0;
+    if(!data.length){body.innerHTML='<tr><td colspan="5" class="kpi-forecast-empty">Aucune dépense prévisionnelle pour les filtres sélectionnés.</td></tr>'}
+    else data.forEach(item=>{total+=item.amount;const tr=document.createElement('tr');tr.innerHTML=`<td>${months[item.month-1]}</td><td><strong>${safeText(item.secondary)}</strong></td><td>${safeText(item.centre)}</td><td>${item.days.toLocaleString('fr-FR')}</td><td><strong>${money.format(item.amount)}</strong></td>`;body.appendChild(tr)});
+    document.getElementById('kpi-forecast-total').textContent=money.format(total);
+  }
+  const previous=window.renderKPICharts;
+  window.renderKPICharts=function(){const result=previous.apply(this,arguments);renderForecast();return result};
+  window.renderKPIForecastTable=renderForecast;
+  window.addEventListener('load',renderForecast);
+})();
+</script>
+
+
+<style id="kpi-hide-ca-jdr-safe-v2246">
+  #view-kpi .chart-box:has(#kpi-jdr-chart),
+  #view-kpi .chart-box:has(#kpi-ca-chart) {
+    display: none !important;
+  }
+</style>
 </body>
 </html>
