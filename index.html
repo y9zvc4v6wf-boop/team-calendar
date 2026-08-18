@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.46">
+  <meta name="application-version" content="2.2.47">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -1467,6 +1467,19 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         <div class="app-modal-heading"><div class="app-modal-icon">💶</div><div><h2 id="cost-centre-modal-title" class="app-modal-title">Centre de coût</h2><p class="app-modal-subtitle">Choix obligatoire, non affiché dans les calendriers</p></div></div>
         <div id="cost-centre-options" class="secondary-code-options"></div>
         <div class="app-modal-actions"><button type="button" class="btn-secondary app-modal-ok" onclick="cancelCostCentreSelection()">Annuler</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="other-travel-cost-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="other-travel-cost-title">
+    <div class="app-modal-card">
+      <div class="app-modal-accent"></div>
+      <div class="app-modal-content">
+        <div class="app-modal-heading"><div class="app-modal-icon">💶</div><div><h2 id="other-travel-cost-title" class="app-modal-title">Coût journalier du déplacement</h2><p class="app-modal-subtitle">Type de jour : Autres</p></div></div>
+        <label class="other-cost-label" for="other-travel-cost-input">Coût journalier en euros</label>
+        <div class="other-cost-input-row"><input id="other-travel-cost-input" type="number" min="0" step="1" inputmode="decimal" placeholder="Ex. 250"><span>€ / jour</span></div>
+        <p id="other-travel-cost-error" class="other-cost-error" aria-live="polite"></p>
+        <div class="app-modal-actions other-cost-actions"><button type="button" class="btn-secondary" onclick="cancelOtherTravelCost()">Annuler</button><button type="button" class="btn-primary" onclick="confirmOtherTravelCost()">Valider</button></div>
       </div>
     </div>
   </div>
@@ -7529,9 +7542,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.46</button>
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.47</button>
 <div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.2.46 · Nouveautés</strong>
+  <strong>Version 2.2.47 · Nouveautés</strong>
   <ul>
     <li>Bloc de mise à jour supprimé</li>
     <li>Navigation mensuelle mobile réalignée</li>
@@ -7544,7 +7557,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
     <div class="release-notes-hero">
       <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.2.46</strong><small>Publiée le 18 août 2026</small></span>
+      <span><strong>Version 2.2.47</strong><small>Publiée le 18 août 2026</small></span>
     </div>
     <ul class="release-notes-list release-notes-list-no-icons">
       <li><div><strong>Paramètres allégés</strong><span>La section Mise à jour de l’application a été retirée de l’interface Paramètres.</span></div></li>
@@ -7567,13 +7580,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
    * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
    * Le changement de version déclenche automatiquement la popup une fois par profil.
    */
-  const APP_VERSION = '2.2.46';
+  const APP_VERSION = '2.2.47';
   const APP_RELEASE_DATE = '18 août 2026';
   const APP_RELEASE_ITEMS = [
-    'Graphiques KPI CA et JDR masqués sans couper Chart.js',
-    'Autres graphiques KPI restaurés',
-    'Tableau prévisionnel KPI conservé',
-    'Managers autorisés à voir toutes les personnes'
+    'Saisie du coût journalier lors du choix Autres',
+    'Coût mémorisé jusqu’au changement de type de jour',
+    'Coût Autres enregistré avec le planning',
+    'Prévisionnel KPI tenant compte du coût personnalisé'
   ];
 
   window.PLANNING_APP_RELEASE = Object.freeze({
@@ -9527,7 +9540,8 @@ syncRuntimeCodes();bindStorage();applyDisplayOptions();renderAdminLists();window
           const key=[m,secondary,centre].join('|');
           const current=rows.get(key)||{month:m,secondary,centre,days:0,amount:0};
           current.days+=typeof status==='object'?0.5:0.5;
-          current.amount+=(DISPLACEMENT_COSTS[destination]||0)*0.5;
+          const customCost=valueForSlot(window.CUSTOM_TRAVEL_COSTS?.[dateKey]?.[user],slot);
+          current.amount+=(destination==='Autres'&&Number.isFinite(Number(customCost))?Number(customCost):(DISPLACEMENT_COSTS[destination]||0))*0.5;
           rows.set(key,current);
         });
       });
@@ -9552,5 +9566,35 @@ syncRuntimeCodes();bindStorage();applyDisplayOptions();renderAdminLists();window
     display: none !important;
   }
 </style>
+
+<style id="other-travel-cost-v2247-style">
+.other-cost-label{display:block;margin:4px 0 6px;color:var(--text-muted);font-size:.75rem;font-weight:700}.other-cost-input-row{display:flex;align-items:center;gap:8px}.other-cost-input-row input{font-size:1rem!important;font-weight:750}.other-cost-input-row span{white-space:nowrap;color:var(--text-muted);font-size:.78rem}.other-cost-error{min-height:18px;margin:5px 0!important;color:var(--danger)!important;font-size:.68rem!important}.other-cost-actions{gap:8px}.other-cost-actions button{width:auto;margin:0;min-width:92px}
+</style>
+<script id="other-travel-cost-v2247-script">
+(function(){
+'use strict';
+let activeOtherDailyCost=null;
+let pendingOtherActivation=null;
+let allowOtherClick=false;
+let customTravelCosts={};
+let customCostRef=null;
+try{customTravelCosts=JSON.parse(localStorage.getItem('team_custom_travel_costs')||'{}')||{}}catch(_){customTravelCosts={}}
+window.CUSTOM_TRAVEL_COSTS=customTravelCosts;
+function showCostModal(callback){pendingOtherActivation=callback;const modal=document.getElementById('other-travel-cost-modal');const input=document.getElementById('other-travel-cost-input');document.getElementById('other-travel-cost-error').textContent='';input.value=activeOtherDailyCost??'';modal.classList.add('visible');document.body.style.overflow='hidden';setTimeout(()=>input.focus(),30)}
+function hideCostModal(){document.getElementById('other-travel-cost-modal').classList.remove('visible');document.body.style.overflow=''}
+window.confirmOtherTravelCost=function(){const input=document.getElementById('other-travel-cost-input');const value=Number(String(input.value).replace(',','.'));if(!Number.isFinite(value)||value<0){document.getElementById('other-travel-cost-error').textContent='Saisissez un coût valide supérieur ou égal à 0 €.';input.focus();return}activeOtherDailyCost=value;DISPLACEMENT_COSTS.Autres=value;hideCostModal();const callback=pendingOtherActivation;pendingOtherActivation=null;if(callback)callback()};
+window.cancelOtherTravelCost=function(){hideCostModal();pendingOtherActivation=null;activeOtherDailyCost=null;DISPLACEMENT_COSTS.Autres=0};
+document.getElementById('other-travel-cost-input')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();confirmOtherTravelCost()}if(event.key==='Escape')cancelOtherTravelCost()});
+// Interception avant le gestionnaire historique : Autres demande d'abord le coût.
+document.addEventListener('click',event=>{const button=event.target.closest('.tool-btn[data-status]');if(!button)return;const status=button.dataset.status;if(status!=='Autres'){activeOtherDailyCost=null;DISPLACEMENT_COSTS.Autres=0;return}if(allowOtherClick){allowOtherClick=false;return}event.preventDefault();event.stopImmediatePropagation();showCostModal(()=>{allowOtherClick=true;button.click()})},true);
+// Mobile : affiche la même fenêtre dès le choix Autres. La valeur reste active jusqu'au prochain type.
+document.addEventListener('click',event=>{const button=event.target.closest('[data-mobile-status]');if(!button)return;const status=button.dataset.mobileStatus;if(status!=='Autres'){activeOtherDailyCost=null;DISPLACEMENT_COSTS.Autres=0;return}showCostModal(()=>{})},true);
+function setCustomEntry(dateKey,user,status,slot){if(!customTravelCosts[dateKey])customTravelCosts[dateKey]={};if(status!=='Autres'){const old=customTravelCosts[dateKey][user];if(slot&&old&&typeof old==='object'){delete old[slot];if(!old.am&&!old.pm)delete customTravelCosts[dateKey][user]}else if(!slot)delete customTravelCosts[dateKey][user]}else if(slot){const old=customTravelCosts[dateKey][user];const value=old&&typeof old==='object'?{...old}:{};value[slot]=activeOtherDailyCost;customTravelCosts[dateKey][user]=value}else customTravelCosts[dateKey][user]=activeOtherDailyCost;if(customTravelCosts[dateKey]&&!Object.keys(customTravelCosts[dateKey]).length)delete customTravelCosts[dateKey];window.CUSTOM_TRAVEL_COSTS=customTravelCosts}
+const priorSetSecondary=window.setSecondaryCode;window.setSecondaryCode=function(dateKey,user,status,slot,code){const result=priorSetSecondary.apply(this,arguments);setCustomEntry(dateKey,user,status,slot);return result};
+const priorSave=window.savePlanningAndSecondaryData;window.savePlanningAndSecondaryData=function(){const result=priorSave.apply(this,arguments);try{localStorage.setItem('team_custom_travel_costs',JSON.stringify(customTravelCosts))}catch(_){}if(customCostRef)customCostRef.set(customTravelCosts).catch(error=>console.error('[Coûts Autres] Firebase',error));return result};
+if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap=>{customTravelCosts=snap.val()||{};window.CUSTOM_TRAVEL_COSTS=customTravelCosts})}
+})();
+</script>
+
 </body>
 </html>
