@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.47">
+  <meta name="application-version" content="2.2.51">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -6955,14 +6955,22 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     ensureFavouriteContainers();
     document.querySelectorAll('.activity-favourites-list').forEach(list => {
       list.innerHTML = '';
-      if (!activityFavourites.length) {
+      const hiddenStatuses = new Set();
+      if (document.documentElement.classList.contains('option-absence-types-disabled')) {
+        ['CA', 'JDR', 'TT'].forEach(status => hiddenStatuses.add(status));
+      }
+      if (document.documentElement.classList.contains('option-clermont-sites-disabled')) {
+        ['CAR', 'LAD', 'COM', 'CTX'].forEach(status => hiddenStatuses.add(status));
+      }
+      const visibleFavourites = activityFavourites.filter(item => !hiddenStatuses.has(item.status));
+      if (!visibleFavourites.length) {
         const empty = document.createElement('span');
         empty.className = 'activity-favourites-empty';
-        empty.textContent = 'Aucun favori';
+        empty.textContent = activityFavourites.length ? 'Aucun favori disponible' : 'Aucun favori';
         list.appendChild(empty);
         return;
       }
-      activityFavourites.forEach(item => {
+      visibleFavourites.forEach(item => {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = `activity-favourite-chip tool-${item.status}`;
@@ -6981,6 +6989,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 
   function selectFavourite(item) {
+    const forbidden = (document.documentElement.classList.contains('option-absence-types-disabled') && ['CA','JDR','TT'].includes(item.status))
+      || (document.documentElement.classList.contains('option-clermont-sites-disabled') && ['CAR','LAD','COM','CTX'].includes(item.status));
+    if (forbidden) { renderFavouriteBars(); return; }
     document.querySelectorAll('.tool-btn').forEach(button => button.classList.remove('active'));
     const original = document.querySelector(`.tool-btn[data-status="${CSS.escape(item.status)}"]`);
     original?.classList.add('active');
@@ -7542,9 +7553,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.47</button>
+<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.51</button>
 <div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.2.47 · Nouveautés</strong>
+  <strong>Version 2.2.51 · Nouveautés</strong>
   <ul>
     <li>Bloc de mise à jour supprimé</li>
     <li>Navigation mensuelle mobile réalignée</li>
@@ -7557,7 +7568,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
     <div class="release-notes-hero">
       <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.2.47</strong><small>Publiée le 18 août 2026</small></span>
+      <span><strong>Version 2.2.51</strong><small>Publiée le 18 août 2026</small></span>
     </div>
     <ul class="release-notes-list release-notes-list-no-icons">
       <li><div><strong>Paramètres allégés</strong><span>La section Mise à jour de l’application a été retirée de l’interface Paramètres.</span></div></li>
@@ -7580,13 +7591,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
    * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
    * Le changement de version déclenche automatiquement la popup une fois par profil.
    */
-  const APP_VERSION = '2.2.47';
+  const APP_VERSION = '2.2.51';
   const APP_RELEASE_DATE = '18 août 2026';
   const APP_RELEASE_ITEMS = [
-    'Saisie du coût journalier lors du choix Autres',
-    'Coût mémorisé jusqu’au changement de type de jour',
-    'Coût Autres enregistré avec le planning',
-    'Prévisionnel KPI tenant compte du coût personnalisé'
+    'Flux des favoris forcé depuis le bord gauche',
+    'Suppression définitive du recentrage après masquage',
+    'Correction appliquée sur ordinateur et mobile',
+    'Favoris enregistrés conservés pour une réactivation ultérieure'
   ];
 
   window.PLANNING_APP_RELEASE = Object.freeze({
@@ -9446,7 +9457,7 @@ function getCostEntry(dateKey,user){return costCentreData[dateKey]?.[user]}
 function setCostCentreEntry(dateKey,user,status,slot){window.COST_CENTRE_DATA=costCentreData;if(!costCentreData[dateKey])costCentreData[dateKey]={};if(!requiresSecondaryCode(status)){const current=getCostEntry(dateKey,user);if(slot&&current&&typeof current==='object'){delete current[slot];if(!current.am&&!current.pm)delete costCentreData[dateKey][user]}else if(!slot)delete costCentreData[dateKey][user]}else if(slot){const current=getCostEntry(dateKey,user);const obj=current&&typeof current==='object'?{...current}:{};obj[slot]=selectedCostCentre;costCentreData[dateKey][user]=obj}else costCentreData[dateKey][user]=selectedCostCentre;if(costCentreData[dateKey]&&!Object.keys(costCentreData[dateKey]).length)delete costCentreData[dateKey]}
 const originalSetSecondary=window.setSecondaryCode;window.setSecondaryCode=function(dateKey,user,status,slot,code){const result=originalSetSecondary.apply(this,arguments);setCostCentreEntry(dateKey,user,status,slot);return result};
 const originalSavePlanning=window.savePlanningAndSecondaryData;window.savePlanningAndSecondaryData=function(){const result=originalSavePlanning.apply(this,arguments);writeLocal('team_cost_centres',costCentreData);if(costDataRef)costDataRef.set(costCentreData).catch(error=>console.error('[Centres de coût] Firebase',error));return result};
-function applyDisplayOptions(){const root=document.documentElement;root.classList.toggle('option-presence-disabled',!!displayOptions.disablePresence);root.classList.toggle('option-clermont-sites-disabled',!!displayOptions.disableClermontSites);root.classList.toggle('option-absence-types-disabled',!!displayOptions.disableAbsenceTypes);['option-disable-presence','option-disable-clermont-sites','option-disable-absence-types'].forEach((id,index)=>{const el=document.getElementById(id);if(el)el.checked=!!displayOptions[['disablePresence','disableClermontSites','disableAbsenceTypes'][index]]});syncAdminAccess();if(displayOptions.disablePresence&&document.getElementById('view-presence')?.classList.contains('active'))switchTab(currentUser?'view-personal':'view-team')}
+function applyDisplayOptions(){const root=document.documentElement;root.classList.toggle('option-presence-disabled',!!displayOptions.disablePresence);root.classList.toggle('option-clermont-sites-disabled',!!displayOptions.disableClermontSites);root.classList.toggle('option-absence-types-disabled',!!displayOptions.disableAbsenceTypes);['option-disable-presence','option-disable-clermont-sites','option-disable-absence-types'].forEach((id,index)=>{const el=document.getElementById(id);if(el)el.checked=!!displayOptions[['disablePresence','disableClermontSites','disableAbsenceTypes'][index]]});syncAdminAccess();if(typeof renderFavouriteBars==='function')renderFavouriteBars();if(displayOptions.disablePresence&&document.getElementById('view-presence')?.classList.contains('active'))switchTab(currentUser?'view-personal':'view-team')}
 function bindOption(id,key){document.getElementById(id)?.addEventListener('change',event=>{if(!isAdmin()){applyDisplayOptions();return}displayOptions[key]=event.target.checked;writeLocal(OPTIONS_KEY,displayOptions);applyDisplayOptions()})}
 bindOption('option-disable-presence','disablePresence');bindOption('option-disable-clermont-sites','disableClermontSites');bindOption('option-disable-absence-types','disableAbsenceTypes');
 const priorSwitch=window.switchTab;window.switchTab=function(view){const target=displayOptions.disablePresence&&view==='view-presence'?(currentUser?'view-personal':'view-team'):view;const result=priorSwitch(target);applyDisplayOptions();return result};
@@ -9595,6 +9606,85 @@ const priorSave=window.savePlanningAndSecondaryData;window.savePlanningAndSecond
 if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap=>{customTravelCosts=snap.val()||{};window.CUSTOM_TRAVEL_COSTS=customTravelCosts})}
 })();
 </script>
+
+
+<style id="favorites-options-css-v2249">
+  /* Masquage fiable des favoris selon les options Admin, desktop et mobile. */
+  html.option-absence-types-disabled .activity-favourites-list .activity-favourite-chip.tool-CA,
+  html.option-absence-types-disabled .activity-favourites-list .activity-favourite-chip.tool-JDR,
+  html.option-absence-types-disabled .activity-favourites-list .activity-favourite-chip.tool-TT {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  html.option-clermont-sites-disabled .activity-favourites-list .activity-favourite-chip.tool-CAR,
+  html.option-clermont-sites-disabled .activity-favourites-list .activity-favourite-chip.tool-LAD,
+  html.option-clermont-sites-disabled .activity-favourites-list .activity-favourite-chip.tool-COM,
+  html.option-clermont-sites-disabled .activity-favourites-list .activity-favourite-chip.tool-CTX {
+    display: none !important;
+    visibility: hidden !important;
+  }
+</style>
+
+
+<style id="favorites-left-reflow-v2250">
+  .activity-favourites-list {
+    justify-content: flex-start !important;
+    align-content: flex-start !important;
+  }
+</style>
+<script id="favorites-left-reflow-v2250-script">
+(function(){
+  'use strict';
+  function realignFavouriteLists(){
+    document.querySelectorAll('.activity-favourites-list').forEach(list => {
+      list.scrollLeft = 0;
+      list.style.justifyContent = 'flex-start';
+    });
+  }
+  const optionClassObserver = new MutationObserver(mutations => {
+    if (!mutations.some(item => item.type === 'attributes' && item.attributeName === 'class')) return;
+    requestAnimationFrame(() => {
+      realignFavouriteLists();
+      requestAnimationFrame(realignFavouriteLists);
+    });
+  });
+  optionClassObserver.observe(document.documentElement, { attributes:true, attributeFilter:['class'] });
+  document.addEventListener('change', event => {
+    if (!['option-disable-absence-types','option-disable-clermont-sites'].includes(event.target?.id)) return;
+    requestAnimationFrame(() => {
+      realignFavouriteLists();
+      requestAnimationFrame(realignFavouriteLists);
+    });
+  });
+  window.addEventListener('load', realignFavouriteLists);
+})();
+</script>
+
+
+<style id="favorites-guaranteed-left-flow-v2251">
+  /* Flux inline volontaire : aucun centrage flex possible après masquage. */
+  #desktop-activity-favourites .activity-favourites-list,
+  #mobile-activity-favourites .activity-favourites-list,
+  #mobile-activity-sheet .activity-favourites-list {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding-left: 1px !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    overflow-x: auto !important;
+    direction: ltr !important;
+  }
+  #desktop-activity-favourites .activity-favourite-chip,
+  #mobile-activity-favourites .activity-favourite-chip,
+  #mobile-activity-sheet .activity-favourite-chip {
+    display: inline-flex !important;
+    float: none !important;
+    margin: 0 6px 0 0 !important;
+    vertical-align: middle !important;
+  }
+</style>
 
 </body>
 </html>
