@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.4">
+  <meta name="application-version" content="2.3.10">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -1236,7 +1236,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           <button class="tool-btn tool-ZAL" data-status="ZAL">ZAL</button>
           <button class="tool-btn tool-CTX" data-status="CTX">CTX</button>
           <button class="tool-btn tool-COM" data-status="COM">COM</button>
-          <button class="tool-btn tool-PRESENT active" data-status="PRESENT">🗑️ Effacer (Bureau)</button>
+                    <button class="tool-btn tool-PRESENT active" data-status="PRESENT">🗑️ Effacer (Bureau)</button>
         </div>
       </div>
       <div id="personal-grids-container"></div>
@@ -2540,7 +2540,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     target.classList.add('brush-painted-preview');
     brushHasChanges = true;
 
-    if (['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM'].includes(selectedTool)) {
+    if (['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM', 'Autres'].includes(selectedTool)) {
       brushLastTravelContext = { dateKey, destination: selectedTool, slot };
     }
   }
@@ -3201,7 +3201,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   });
 
   function notifySameDestination(dateKey, destination, currentUserName, slot = null) {
-    const travelCodes = ['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM'];
+    const travelCodes = ['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM', 'Autres'];
     if (!travelCodes.includes(destination)) return;
     const colleagues = getColleaguesAtSameDestination(dateKey, destination, currentUserName, slot);
     if (colleagues.length === 0) return;
@@ -6765,7 +6765,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.4">v2.3.4</span>
+<span id="app-version-indicator" aria-label="Version 2.3.10">v2.3.10</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
@@ -8352,9 +8352,10 @@ let customTravelCosts={};
 let customCostRef=null;
 try{customTravelCosts=JSON.parse(localStorage.getItem('team_custom_travel_costs')||'{}')||{}}catch(_){customTravelCosts={}}
 window.CUSTOM_TRAVEL_COSTS=customTravelCosts;
-function showCostModal(callback){pendingOtherActivation=callback;const modal=document.getElementById('other-travel-cost-modal');const input=document.getElementById('other-travel-cost-input');const secondary=document.getElementById('other-travel-secondary-code');const centre=document.getElementById('other-travel-cost-centre');secondary.innerHTML='';adminConfig.secondaryCodes.forEach(item=>{const option=document.createElement('option');option.value=item.code;option.textContent=`${item.code} - ${item.label}`;secondary.appendChild(option)});centre.innerHTML='';adminConfig.costCentres.forEach(label=>{const option=document.createElement('option');option.value=label;option.textContent=label;centre.appendChild(option)});document.getElementById('other-travel-cost-error').textContent='';input.value='';document.querySelectorAll('input[name="other-travel-transport"]').forEach(radio=>radio.checked=false);window.selectedTransportChoice=null;modal.classList.add('visible');document.body.style.overflow='hidden';setTimeout(()=>input.focus(),30)}
+function showCostModal(callback){pendingOtherActivation=callback;const modal=document.getElementById('other-travel-cost-modal');const input=document.getElementById('other-travel-cost-input');const secondary=document.getElementById('other-travel-secondary-code');const centre=document.getElementById('other-travel-cost-centre');if(!modal||!input||!secondary||!centre){console.error('[Autres] Popup incomplète');return}const config=(typeof adminConfig!=='undefined'&&adminConfig)||{};const codes=Array.isArray(config.secondaryCodes)&&config.secondaryCodes.length?config.secondaryCodes:Object.entries(SECONDARY_CODE_LABELS||{}).map(([code,label])=>({code,label}));const configuredCentres=Array.isArray(config.costCentres)?config.costCentres:[];const storedCentres=new Set(configuredCentres);Object.values(window.COST_CENTRE_DATA||{}).forEach(day=>Object.values(day||{}).forEach(value=>{if(typeof value==='string'&&value)storedCentres.add(value);else if(value&&typeof value==='object')Object.values(value).forEach(item=>item&&storedCentres.add(item))}));secondary.innerHTML='';codes.forEach(item=>{const option=document.createElement('option');option.value=item.code;option.textContent=`${item.code} - ${item.label||item.code}`;secondary.appendChild(option)});centre.innerHTML='';Array.from(storedCentres).forEach(label=>{const option=document.createElement('option');option.value=label;option.textContent=label;centre.appendChild(option)});document.getElementById('other-travel-cost-error').textContent='';input.value='';document.querySelectorAll('input[name="other-travel-transport"]').forEach(radio=>radio.checked=false);window.selectedTransportChoice=null;modal.classList.add('visible');document.body.style.overflow='hidden';setTimeout(()=>input.focus(),30)}
 function hideCostModal(){document.getElementById('other-travel-cost-modal').classList.remove('visible');document.body.style.overflow=''}
 window.openOtherDayModal=function(callback){showCostModal(callback)};
+
 window.confirmOtherTravelCost=function(){const input=document.getElementById('other-travel-cost-input');const value=Number(String(input.value).replace(',','.'));const secondary=document.getElementById('other-travel-secondary-code').value;const centre=document.getElementById('other-travel-cost-centre').value;const transport=document.querySelector('input[name="other-travel-transport"]:checked')?.value;if(input.value.trim()===''||!Number.isFinite(value)||value<0){document.getElementById('other-travel-cost-error').textContent='Saisissez manuellement un coût journalier valide en euros.';input.focus();return}if(!secondary||!centre||!transport){document.getElementById('other-travel-cost-error').textContent='Sélectionnez un code secondaire, un centre de coût et un moyen de transport.';return}window.selectedTransportChoice=transport;activeOtherDailyCost=value;DISPLACEMENT_COSTS.Autres=value;selectedSecondaryCode=secondary;selectedCostCentre=centre;window.__otherTravelDetailsReady=false;hideCostModal();const callback=pendingOtherActivation;pendingOtherActivation=null;if(callback)callback()};
 window.cancelOtherTravelCost=function(){hideCostModal();pendingOtherActivation=null;activeOtherDailyCost=null;DISPLACEMENT_COSTS.Autres=0};
 document.getElementById('other-travel-cost-input')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();confirmOtherTravelCost()}if(event.key==='Escape')cancelOtherTravelCost()});
@@ -9889,6 +9890,51 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
     return result;
   };
   window.addEventListener('load',applyDefaultOfficeSelection);
+})();
+</script>
+
+
+<style id="autres-button-v235-style">
+  #view-personal .toolbar .tool-Autres {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+</style>
+
+
+
+
+
+
+<style id="secondary-code-highlight-v2310">
+  #secondary-code-modal .secondary-code-options button.selected {
+    border-color: var(--accent) !important;
+    background: var(--accent) !important;
+    color: var(--accent-contrast) !important;
+    outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent) !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 1px var(--accent), 0 7px 18px -8px var(--accent) !important;
+    transform: translateY(-1px) !important;
+  }
+  #secondary-code-modal .secondary-code-options button.selected strong,
+  #secondary-code-modal .secondary-code-options button.selected span {
+    color: var(--accent-contrast) !important;
+  }
+</style>
+<script id="secondary-code-highlight-v2310-script">
+(function(){
+  'use strict';
+  const previousChoose=window.chooseSecondaryCode;
+  window.chooseSecondaryCode=function(code){
+    const result=previousChoose.apply(this,arguments);
+    document.querySelectorAll('#secondary-code-modal .secondary-code-options button').forEach(button=>{
+      const selected=button.querySelector('strong')?.textContent?.trim()===code;
+      button.classList.toggle('selected',selected);
+      button.setAttribute('aria-pressed',String(selected));
+    });
+    return result;
+  };
 })();
 </script>
 
