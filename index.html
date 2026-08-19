@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.73">
+  <meta name="application-version" content="2.2.79">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -2967,15 +2967,15 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         let dispDays = 0, costToAdd = 0, jdrDays = 0, caDays = 0;
 
         if (typeof status === 'string') {
-          if (DISPLACEMENT_CODES.includes(status)) { dispDays = 1; costToAdd = DISPLACEMENT_COSTS[status] || 0; }
+          if (DISPLACEMENT_CODES.includes(status)) { dispDays = 1; costToAdd = (DISPLACEMENT_COSTS[status] || 0) + getTransportCost(dateKey, user, status, null); }
           else if (status === 'JDR') jdrDays = 1;
           else if (status === 'CA') caDays = 1;
         } else if (typeof status === 'object' && status !== null) {
-          if (DISPLACEMENT_CODES.includes(status.am)) { dispDays += 0.5; costToAdd += (DISPLACEMENT_COSTS[status.am] || 0) * 0.5; }
+          if (DISPLACEMENT_CODES.includes(status.am)) { dispDays += 0.5; costToAdd += ((DISPLACEMENT_COSTS[status.am] || 0) + getTransportCost(dateKey, user, status.am, 'am')) * 0.5; }
           else if (status.am === 'JDR') jdrDays += 0.5;
           else if (status.am === 'CA') caDays += 0.5;
 
-          if (DISPLACEMENT_CODES.includes(status.pm)) { dispDays += 0.5; costToAdd += (DISPLACEMENT_COSTS[status.pm] || 0) * 0.5; }
+          if (DISPLACEMENT_CODES.includes(status.pm)) { dispDays += 0.5; costToAdd += ((DISPLACEMENT_COSTS[status.pm] || 0) + getTransportCost(dateKey, user, status.pm, 'pm')) * 0.5; }
           else if (status.pm === 'JDR') jdrDays += 0.5;
           else if (status.pm === 'CA') caDays += 0.5;
         }
@@ -3005,10 +3005,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     let spent = 0;
     let forecastRemaining = 0;
 
-    const statusCost = status => {
-      if (typeof status === 'string') return DISPLACEMENT_COSTS[status] || 0;
+    const statusCost = (status, dateKey, firstName) => {
+      if (typeof status === 'string') return (DISPLACEMENT_COSTS[status] || 0) + getTransportCost(dateKey, firstName, status, null);
       if (!status || typeof status !== 'object') return 0;
-      return ((DISPLACEMENT_COSTS[status.am] || 0) * 0.5) + ((DISPLACEMENT_COSTS[status.pm] || 0) * 0.5);
+      return (((DISPLACEMENT_COSTS[status.am] || 0) + getTransportCost(dateKey, firstName, status.am, 'am')) * 0.5) + (((DISPLACEMENT_COSTS[status.pm] || 0) + getTransportCost(dateKey, firstName, status.pm, 'pm')) * 0.5);
     };
 
     Object.entries(calendarData).forEach(([dateKey, dayData]) => {
@@ -3018,7 +3018,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         if (!member) return;
         if (selectedPitFilter !== 'ALL' && member.pit !== selectedPitFilter) return;
         if (selectedPersonFilter !== 'ALL' && firstName !== selectedPersonFilter) return;
-        const cost = statusCost(status);
+        const cost = statusCost(status, dateKey, firstName);
         if (dateKey <= todayKey) spent += cost;
         else forecastRemaining += cost;
       });
@@ -3887,7 +3887,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   function addStatusCost(target, dateKey, firstName, status, slot, multiplier) {
     if (!status || !SECONDARY_CODES.includes(getSecondaryForSlot(dateKey, firstName, slot))) return;
     const code = getSecondaryForSlot(dateKey, firstName, slot);
-    const amount = (DISPLACEMENT_COSTS[status] || 0) * multiplier;
+    const amount = ((DISPLACEMENT_COSTS[status] || 0) + getTransportCost(dateKey, firstName, status, slot)) * multiplier;
     target[code] += amount;
   }
 
@@ -7147,7 +7147,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.2.73">v2.2.73</span>
+<span id="app-version-indicator" aria-label="Version 2.2.79">v2.2.79</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
@@ -8885,7 +8885,7 @@ syncRuntimeCodes();bindStorage();applyDisplayOptions();renderAdminLists();window
           const current=rows.get(key)||{month:m,secondary,centre,days:0,amount:0};
           current.days+=typeof status==='object'?0.5:0.5;
           const customCost=valueForSlot(window.CUSTOM_TRAVEL_COSTS?.[dateKey]?.[user],slot);
-          current.amount+=(destination==='Autres'&&Number.isFinite(Number(customCost))?Number(customCost):(DISPLACEMENT_COSTS[destination]||0))*0.5;
+          current.amount+=((destination==='Autres'&&Number.isFinite(Number(customCost))?Number(customCost):(DISPLACEMENT_COSTS[destination]||0))+getTransportCost(dateKey,user,destination,slot))*0.5;
           rows.set(key,current);
         });
       });
@@ -9127,7 +9127,7 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
     Object.entries(calendarData||{}).forEach(([dateKey,day])=>{const parts=dateKey.split('-').map(Number), y=parts[0], m=parts[1]-1;if(y!==year||(monthFilter!=='ALL'&&m!==Number(monthFilter)))return;
       Object.entries(day||{}).forEach(([user,status])=>{if(!allowedUser(user))return;const slots=typeof status==='object'&&status?['am','pm']:[null];slots.forEach(slot=>{const destination=slot?status[slot]:status;if(!DISPLACEMENT_CODES.includes(destination))return;
         const centre=valueAt(window.COST_CENTRE_DATA?.[dateKey]?.[user],slot)||'Non renseigné';if(centreFilter!=='ALL'&&centre!==centreFilter)return;centres.add(centre);
-        const custom=valueAt(window.CUSTOM_TRAVEL_COSTS?.[dateKey]?.[user],slot);const daily=destination==='Autres'&&Number.isFinite(Number(custom))?Number(custom):(DISPLACEMENT_COSTS[destination]||0);const amount=daily*(slot?0.5:1);
+        const custom=valueAt(window.CUSTOM_TRAVEL_COSTS?.[dateKey]?.[user],slot);const daily=(destination==='Autres'&&Number.isFinite(Number(custom))?Number(custom):(DISPLACEMENT_COSTS[destination]||0))+getTransportCost(dateKey,user,destination,slot);const amount=daily*(slot?0.5:1);
         if(!totals[centre])totals[centre]=Array(12).fill(0);totals[centre][m]+=amount;
       })});
     });
@@ -9551,5 +9551,375 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
     }
   }
 </style>
+
+<style id="transport-costs-v2274-style">
+  .transport-choice-group{margin-top:14px}.transport-choice-group>span{display:block;margin-bottom:7px;color:var(--text-muted);font-size:.75rem;font-weight:800}
+  .transport-choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .transport-choice-card{position:relative;display:flex;align-items:center;justify-content:center;gap:7px;min-height:46px;padding:8px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:.72rem;font-weight:800;cursor:pointer}
+  .transport-choice-card input{width:17px;height:17px;margin:0;accent-color:var(--accent)}
+  .transport-choice-card:has(input:checked){border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 2px var(--accent-soft)}
+  .transport-costs-settings-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}
+  .transport-cost-row{display:grid;grid-template-columns:48px minmax(0,1fr);align-items:start;gap:7px;padding:6px 8px;border:1px solid var(--border-soft);border-radius:8px;background:var(--input-bg);box-shadow:none}
+  .transport-cost-row:hover{border-color:color-mix(in srgb,var(--accent) 55%,var(--border));background:color-mix(in srgb,var(--accent-soft) 42%,var(--input-bg))}
+  .transport-cost-row>strong{padding-top:8px;color:var(--text);font-size:.7rem;font-weight:850}
+  .transport-cost-fields{display:grid;gap:5px}.transport-cost-field{display:grid;grid-template-columns:58px minmax(0,1fr) 18px;align-items:center;gap:6px}
+  .transport-cost-field label{color:var(--text-muted);font-size:.62rem;font-weight:800}.transport-cost-field input{width:100%;min-width:0;height:32px;padding:4px 7px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);text-align:right;font-size:.74rem!important;font-weight:800;box-shadow:none}
+  .transport-cost-field input:hover{border-color:var(--accent)}.transport-cost-field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  .transport-cost-field span{color:var(--text-muted);font-size:.62rem;font-weight:800}.transport-cost-field.mas{min-height:32px}.transport-cost-field.mas strong{color:#10b981;font-size:.7rem;text-align:right}
+  @media(max-width:700px){.transport-choice-grid{grid-template-columns:1fr}.transport-choice-card{min-height:44px}.transport-costs-settings-list{grid-template-columns:1fr}.transport-cost-field input{font-size:16px!important}}
+</style>
+<script id="transport-costs-v2274-script">
+(function(){
+'use strict';
+const TRANSPORT_STORAGE_KEY='planning_transport_costs_v1';
+const TRANSPORT_DATA_KEY='team_transport_choices_v1';
+const TRANSPORT_CODES=['ARA','ALE','CGR','HBG','LVL','NKE','SPA','UCH','VLD','WAT','ZAL','CTX','COM'];
+const TRANSPORT_TYPES=['Voiture','Avion','MAS'];
+const TRANSPORT_DEFAULTS=Object.fromEntries(TRANSPORT_CODES.map(code=>[code,{Voiture:0,Avion:0,MAS:0}]));
+let transportCosts={};
+let transportData={};
+let transportCostsRef=null,transportDataRef=null;
+window.selectedTransportChoice=null;
+function localRead(key,fallback){try{return JSON.parse(localStorage.getItem(key)||'null')||fallback}catch(_){return fallback}}
+function localWrite(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(error){console.error('[Transports] Sauvegarde locale impossible',error)}}
+function normaliseCosts(value){const result={};TRANSPORT_CODES.forEach(code=>{result[code]={};TRANSPORT_TYPES.forEach(type=>{const raw=Number(value?.[code]?.[type]);result[code][type]=type==='MAS'?0:(Number.isFinite(raw)&&raw>=0?raw:TRANSPORT_DEFAULTS[code][type])})});return result}
+transportCosts=normaliseCosts(localRead(TRANSPORT_STORAGE_KEY,TRANSPORT_DEFAULTS));
+transportData=localRead(TRANSPORT_DATA_KEY,{});window.TRANSPORT_DATA=transportData;window.TRANSPORT_COSTS=transportCosts;
+function valueAt(source,slot){if(!source)return null;return typeof source==='object'&&slot?source[slot]:(typeof source==='string'?source:null)}
+window.getTransportChoice=function(dateKey,user,slot=null){return valueAt(transportData?.[dateKey]?.[user],slot)};
+window.getTransportCost=function(dateKey,user,destination,slot=null){if(!TRANSPORT_CODES.includes(destination))return 0;const type=window.getTransportChoice(dateKey,user,slot);if(!TRANSPORT_TYPES.includes(type))return 0;return Number(transportCosts?.[destination]?.[type])||0};
+function setTransportEntry(dateKey,user,status,slot){if(!transportData[dateKey])transportData[dateKey]={};if(!requiresSecondaryCode(status)){const old=transportData[dateKey][user];if(slot&&old&&typeof old==='object'){delete old[slot];if(!old.am&&!old.pm)delete transportData[dateKey][user]}else if(!slot)delete transportData[dateKey][user]}else if(slot){const old=transportData[dateKey][user];const obj=old&&typeof old==='object'?{...old}:{};obj[slot]=window.selectedTransportChoice;transportData[dateKey][user]=obj}else transportData[dateKey][user]=window.selectedTransportChoice;if(transportData[dateKey]&&!Object.keys(transportData[dateKey]).length)delete transportData[dateKey];window.TRANSPORT_DATA=transportData}
+function persist(){localWrite(TRANSPORT_DATA_KEY,transportData);localWrite(TRANSPORT_STORAGE_KEY,transportCosts);if(transportDataRef)transportDataRef.set(transportData).catch(error=>console.error('[Transports] Données Firebase',error));if(transportCostsRef)transportCostsRef.set(transportCosts).catch(error=>console.error('[Transports] Coûts Firebase',error))}
+function addTransportChoices(){const field=document.querySelector('#secondary-code-modal .travel-combined-field');if(!field||document.getElementById('transport-choice-group'))return;const group=document.createElement('div');group.id='transport-choice-group';group.className='transport-choice-group';group.innerHTML='<span>Moyen de transport</span><div class="transport-choice-grid">'+TRANSPORT_TYPES.map((type,index)=>`<label class="transport-choice-card"><input type="radio" name="travel-transport" value="${type}" ${index===0?'checked':''}><span>${type==='Avion'?'✈️':type==='Voiture'?'🚗':'🚆'} ${type}</span></label>`).join('')+'</div>';field.insertAdjacentElement('afterend',group)}
+function ensureSettingsPanel(){if(document.getElementById('transport-costs-panel'))return;const daily=document.getElementById('travel-costs-panel');if(!daily)return;const panel=document.createElement('div');panel.id='transport-costs-panel';panel.className='settings-submenu-tile admin-config-panel';panel.style.display='none';panel.innerHTML='<h3>Coût des moyens de transport</h3><p>Ajoutez le coût du trajet au coût journalier, selon la destination et le moyen choisi. Le MAS reste gratuit.</p><div id="transport-cost-settings-body" class="transport-costs-settings-list"></div><div class="travel-costs-actions"><button type="button" class="btn-secondary" onclick="resetTransportCostsSettings()">Valeurs par défaut</button><button type="button" class="btn-primary" onclick="saveTransportCostsSettings()">Enregistrer les coûts</button></div><p id="transport-cost-settings-message" class="travel-costs-settings-message" aria-live="polite"></p>';daily.insertAdjacentElement('afterend',panel)}
+function renderCosts(values=transportCosts){const body=document.getElementById('transport-cost-settings-body');if(!body)return;body.innerHTML=TRANSPORT_CODES.map(code=>`<div class="transport-cost-row"><strong>${code}</strong><div class="transport-cost-fields"><div class="transport-cost-field"><label>Voiture</label><input type="number" min="0" step="1" inputmode="decimal" data-transport-cost-code="${code}" data-transport-type="Voiture" value="${Number(values?.[code]?.Voiture||0)}"><span>€</span></div><div class="transport-cost-field"><label>Avion</label><input type="number" min="0" step="1" inputmode="decimal" data-transport-cost-code="${code}" data-transport-type="Avion" value="${Number(values?.[code]?.Avion||0)}"><span>€</span></div><div class="transport-cost-field mas"><label>MAS</label><strong>N/A</strong><span></span></div></div></div>`).join('')}
+function message(text,error=false){const el=document.getElementById('transport-cost-settings-message');if(el){el.textContent=text;el.style.color=error?'var(--danger)':'#10b981'}}
+window.saveTransportCostsSettings=function(){const member=ALL_MEMBERS.find(item=>item.firstName===currentUser);if(!hasAdminAccess(member))return;const next=normaliseCosts(transportCosts);let valid=true;document.querySelectorAll('[data-transport-cost-code]').forEach(input=>{const value=Number(String(input.value).replace(',','.'));if(!Number.isFinite(value)||value<0){valid=false;input.focus();return}next[input.dataset.transportCostCode][input.dataset.transportType]=value});if(!valid){message('Tous les coûts doivent être supérieurs ou égaux à 0 €.',true);return}transportCosts=normaliseCosts(next);window.TRANSPORT_COSTS=transportCosts;persist();message('Coûts de transport enregistrés. Ils sont maintenant ajoutés aux KPI.');if(document.getElementById('view-kpi')?.classList.contains('active'))renderKPICharts()};
+window.resetTransportCostsSettings=function(){renderCosts(TRANSPORT_DEFAULTS);message('Valeurs par défaut chargées. Cliquez sur Enregistrer les coûts pour les appliquer.')};
+addTransportChoices();ensureSettingsPanel();renderCosts();
+const originalOpen=window.openSecondaryCodeModal;window.openSecondaryCodeModal=function(destination,callback){addTransportChoices();window.selectedTransportChoice=null;const result=originalOpen.apply(this,arguments);const first=document.querySelector('input[name="travel-transport"]');if(first)first.checked=true;return result};
+const originalConfirm=window.confirmSecondaryAndCostCentre;window.confirmSecondaryAndCostCentre=function(){const selected=document.querySelector('input[name="travel-transport"]:checked')?.value;if(!TRANSPORT_TYPES.includes(selected)){document.getElementById('secondary-code-combined-error').textContent='Sélectionnez aussi un moyen de transport.';return}window.selectedTransportChoice=selected;return originalConfirm.apply(this,arguments)};
+const originalSetSecondary=window.setSecondaryCode;window.setSecondaryCode=function(dateKey,user,status,slot,code){const result=originalSetSecondary.apply(this,arguments);setTransportEntry(dateKey,user,status,slot);return result};
+const originalSave=window.savePlanningAndSecondaryData;window.savePlanningAndSecondaryData=function(){const result=originalSave.apply(this,arguments);persist();return result};
+document.addEventListener('click',event=>{const button=event.target.closest('.tool-btn[data-status], [data-mobile-status]');if(!button)return;const status=button.dataset.status||button.dataset.mobileStatus;if(!requiresSecondaryCode(status))window.selectedTransportChoice=null},true);
+const priorSettings=window.renderSettingsView;window.renderSettingsView=function(){const result=priorSettings.apply(this,arguments);ensureSettingsPanel();renderCosts();const member=ALL_MEMBERS.find(item=>item.firstName===currentUser);const panel=document.getElementById('transport-costs-panel');const allowed=hasAdminAccess(member);if(panel){panel.classList.toggle('admin-config-visible',allowed);panel.style.display=allowed?'block':'none';panel.querySelectorAll('input,button').forEach(el=>el.disabled=!allowed)}return result};
+if(db){transportCostsRef=db.ref('app_config/transport_costs');transportCostsRef.on('value',snap=>{if(snap.val()){transportCosts=normaliseCosts(snap.val());window.TRANSPORT_COSTS=transportCosts;localWrite(TRANSPORT_STORAGE_KEY,transportCosts);renderCosts()}});transportDataRef=db.ref('transport_choices');transportDataRef.on('value',snap=>{transportData=snap.val()||{};window.TRANSPORT_DATA=transportData;localWrite(TRANSPORT_DATA_KEY,transportData)})}
+window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();renderCosts()});
+})();
+</script>
+
+
+<style id="settings-balanced-panels-v2276">
+  /* Remplace l'ancien column-count par deux vraies colonnes équilibrées. */
+  @media (min-width: 901px) {
+    #view-settings > .form-box {
+      column-count: initial !important;
+      column-gap: normal !important;
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 12px !important;
+      align-items: start !important;
+    }
+    #view-settings > .form-box > h2 {
+      grid-column: 1 / -1 !important;
+      margin: 0 0 2px !important;
+    }
+    #view-settings .settings-balanced-column {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 12px !important;
+      min-width: 0 !important;
+      align-self: start !important;
+    }
+    #view-settings .settings-balanced-column > .settings-submenu-tile,
+    #view-settings .settings-balanced-column > .security-panel,
+    #view-settings .settings-balanced-column > .remember-device-panel,
+    #view-settings .settings-balanced-column > .app-update-panel {
+      display: block;
+      width: 100% !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+      break-inside: auto !important;
+      box-sizing: border-box !important;
+    }
+    #view-settings #manager-team-deletion-section.settings-layout-source {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+    }
+  }
+  @media (max-width: 900px) {
+    #view-settings .settings-balanced-column {
+      display: contents !important;
+    }
+  }
+</style>
+<script id="settings-balanced-panels-v2276-script">
+(function(){
+  'use strict';
+  function visiblePanel(element){
+    if(!element || element.hidden) return false;
+    if(element.classList.contains('admin-config-panel') && !element.classList.contains('admin-config-visible')) return false;
+    return getComputedStyle(element).display !== 'none';
+  }
+  function collectPanels(form){
+    const managerSource=document.getElementById('manager-team-deletion-section');
+    if(managerSource){
+      managerSource.classList.add('settings-layout-source');
+      Array.from(managerSource.children).forEach(child=>form.appendChild(child));
+    }
+    return Array.from(form.children).filter(element=>
+      element.tagName!=='H2' &&
+      !element.classList.contains('settings-balanced-column') &&
+      element.id!=='manager-team-deletion-section' &&
+      (element.classList.contains('settings-submenu-tile') ||
+       element.classList.contains('security-panel') ||
+       element.classList.contains('remember-device-panel') ||
+       element.classList.contains('app-update-panel'))
+    );
+  }
+  function preferredColumn(panel){
+    if(['planning-options-panel','travel-costs-panel'].includes(panel.id)) return 0;
+    if(['transport-costs-panel','planning-lists-panel'].includes(panel.id)) return 1;
+    return null;
+  }
+  function arrangeSettingsPanels(){
+    const form=document.querySelector('#view-settings > .form-box');
+    if(!form) return;
+    form.querySelectorAll(':scope > .settings-balanced-column').forEach(column=>{
+      Array.from(column.children).forEach(child=>form.appendChild(child));
+      column.remove();
+    });
+    const panels=collectPanels(form);
+    const left=document.createElement('div');
+    const right=document.createElement('div');
+    left.className='settings-balanced-column settings-balanced-column-left';
+    right.className='settings-balanced-column settings-balanced-column-right';
+    form.append(left,right);
+    if(!window.matchMedia('(min-width: 901px)').matches){
+      panels.forEach(panel=>left.appendChild(panel));
+      return;
+    }
+    let heights=[0,0];
+    panels.forEach(panel=>{
+      if(!visiblePanel(panel)){ right.appendChild(panel); return; }
+      const preference=preferredColumn(panel);
+      const targetIndex=preference===null ? (heights[0]<=heights[1]?0:1) : preference;
+      const target=targetIndex===0?left:right;
+      target.appendChild(panel);
+      heights[targetIndex]+=Math.max(panel.getBoundingClientRect().height, panel.scrollHeight, 80)+12;
+    });
+  }
+  window.arrangeSettingsPanels=arrangeSettingsPanels;
+  const previousRender=window.renderSettingsView;
+  window.renderSettingsView=function(){
+    const result=previousRender.apply(this,arguments);
+    requestAnimationFrame(()=>requestAnimationFrame(arrangeSettingsPanels));
+    return result;
+  };
+  window.addEventListener('resize',()=>{
+    if(document.getElementById('view-settings')?.classList.contains('active')) arrangeSettingsPanels();
+  });
+  window.addEventListener('load',()=>{
+    if(document.getElementById('view-settings')?.classList.contains('active')) arrangeSettingsPanels();
+  });
+})();
+</script>
+
+
+<style id="settings-strict-role-visibility-v2277">
+  #view-settings .settings-role-hidden {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+</style>
+<script id="settings-strict-role-visibility-v2277-script">
+(function(){
+  'use strict';
+  function identifySecurityPanels(form){
+    form.querySelectorAll('.security-panel').forEach(panel=>{
+      const heading=(panel.querySelector('h3')?.textContent||'').trim();
+      if(panel.dataset.adminOnly==='true' || heading.includes('Administration des rôles')) {
+        panel.dataset.settingsAccess='admin';
+      } else if(heading.includes('Sécurité des comptes de mon équipe')) {
+        panel.dataset.settingsAccess='manager';
+      } else {
+        panel.dataset.settingsAccess='admin';
+      }
+    });
+  }
+  function accessLevel(){
+    const member=ALL_MEMBERS.find(item=>item.firstName===currentUser);
+    if(hasAdminAccess(member)) return 'admin';
+    if(member?.isManager) return 'manager';
+    return 'user';
+  }
+  function permitted(panel,level){
+    if(panel.classList.contains('settings-pin-tile') || panel.classList.contains('settings-delete-account-tile')) return true;
+    if(level==='admin') return true;
+    if(level==='manager') {
+      return panel.classList.contains('settings-team-accounts-tile') ||
+             panel.dataset.settingsAccess==='manager';
+    }
+    return false;
+  }
+  function applyStrictSettingsVisibility(){
+    const form=document.querySelector('#view-settings > .form-box');
+    if(!form) return;
+    identifySecurityPanels(form);
+    const level=accessLevel();
+    const panels=form.querySelectorAll(
+      '.settings-submenu-tile, .security-panel, .remember-device-panel, .app-update-panel'
+    );
+    panels.forEach(panel=>{
+      const allowed=permitted(panel,level);
+      panel.classList.toggle('settings-role-hidden',!allowed);
+      panel.setAttribute('aria-hidden',String(!allowed));
+      panel.querySelectorAll('input,button,select,textarea').forEach(control=>{
+        if(!allowed){
+          if(!control.hasAttribute('data-role-previous-disabled')) {
+            control.setAttribute('data-role-previous-disabled',String(control.disabled));
+          }
+          control.disabled=true;
+          control.tabIndex=-1;
+        } else if(control.hasAttribute('data-role-previous-disabled')) {
+          control.disabled=control.getAttribute('data-role-previous-disabled')==='true';
+          control.removeAttribute('data-role-previous-disabled');
+          control.removeAttribute('tabindex');
+        }
+      });
+    });
+    const managerSource=document.getElementById('manager-team-deletion-section');
+    if(managerSource) managerSource.style.display=level==='admin'||level==='manager'?'block':'none';
+    if(typeof window.arrangeSettingsPanels==='function') {
+      requestAnimationFrame(()=>window.arrangeSettingsPanels());
+    }
+  }
+  window.applyStrictSettingsVisibility=applyStrictSettingsVisibility;
+  const previousRender=window.renderSettingsView;
+  window.renderSettingsView=function(){
+    const result=previousRender.apply(this,arguments);
+    requestAnimationFrame(()=>requestAnimationFrame(applyStrictSettingsVisibility));
+    return result;
+  };
+  window.addEventListener('load',()=>{
+    if(document.getElementById('view-settings')?.classList.contains('active')) applyStrictSettingsVisibility();
+  });
+})();
+</script>
+
+
+<style id="settings-role-layout-v2278">
+  @media (min-width: 901px) {
+    #view-settings > .form-box {
+      grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+      gap: 12px !important;
+      align-items: start !important;
+    }
+    #view-settings .settings-balanced-column {
+      gap: 12px !important;
+    }
+    #view-settings.settings-layout-user > .form-box,
+    #view-settings.settings-layout-manager > .form-box {
+      max-width: 1120px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #view-settings.settings-layout-user .settings-balanced-column,
+    #view-settings.settings-layout-manager .settings-balanced-column {
+      align-content: start;
+    }
+  }
+  @media (max-width: 900px) {
+    #view-settings > .form-box {
+      display: block !important;
+    }
+    #view-settings .settings-balanced-column {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 10px !important;
+    }
+    #view-settings .settings-balanced-column:empty { display:none !important; }
+  }
+</style>
+<script id="settings-role-layout-v2278-script">
+(function(){
+  'use strict';
+  function roleLevel(){
+    const member=ALL_MEMBERS.find(item=>item.firstName===currentUser);
+    if(hasAdminAccess(member)) return 'admin';
+    if(member?.isManager) return 'manager';
+    return 'user';
+  }
+  function titleOf(panel){ return (panel?.querySelector('h3')?.textContent||'').trim(); }
+  function isVisible(panel){
+    return panel && !panel.classList.contains('settings-role-hidden') && getComputedStyle(panel).display!=='none';
+  }
+  function findPanel(panels,matcher){ return panels.find(panel=>matcher(panel,titleOf(panel))); }
+  function optimiseSettingsPlacement(){
+    const view=document.getElementById('view-settings');
+    const form=view?.querySelector(':scope > .form-box');
+    if(!view||!form) return;
+    form.querySelectorAll(':scope > .settings-balanced-column').forEach(column=>{
+      Array.from(column.children).forEach(child=>form.appendChild(child));
+      column.remove();
+    });
+    const panels=Array.from(form.children).filter(element=>
+      element.tagName!=='H2' && element.id!=='manager-team-deletion-section' &&
+      (element.classList.contains('settings-submenu-tile') || element.classList.contains('security-panel') || element.classList.contains('remember-device-panel') || element.classList.contains('app-update-panel'))
+    );
+    const left=document.createElement('div'), right=document.createElement('div');
+    left.className='settings-balanced-column settings-balanced-column-left';
+    right.className='settings-balanced-column settings-balanced-column-right';
+    form.append(left,right);
+    const level=roleLevel();
+    view.classList.remove('settings-layout-admin','settings-layout-manager','settings-layout-user');
+    view.classList.add('settings-layout-'+level);
+    const visible=panels.filter(isVisible);
+    const hidden=panels.filter(panel=>!isVisible(panel));
+    hidden.forEach(panel=>right.appendChild(panel));
+    if(level==='user'){
+      const pin=findPanel(visible,p=>p.classList.contains('settings-pin-tile'));
+      const del=findPanel(visible,p=>p.classList.contains('settings-delete-account-tile'));
+      if(pin) left.appendChild(pin);
+      if(del) right.appendChild(del);
+      visible.filter(p=>p!==pin&&p!==del).forEach(p=>left.appendChild(p));
+    } else if(level==='manager'){
+      const pin=findPanel(visible,p=>p.classList.contains('settings-pin-tile'));
+      const del=findPanel(visible,p=>p.classList.contains('settings-delete-account-tile'));
+      const security=findPanel(visible,(p,t)=>t.includes('Sécurité des comptes de mon équipe'));
+      const accounts=findPanel(visible,p=>p.classList.contains('settings-team-accounts-tile'));
+      [pin,security].filter(Boolean).forEach(p=>left.appendChild(p));
+      [del,accounts].filter(Boolean).forEach(p=>right.appendChild(p));
+      visible.filter(p=>![pin,del,security,accounts].includes(p)).forEach(p=>left.scrollHeight<=right.scrollHeight?left.appendChild(p):right.appendChild(p));
+    } else {
+      const leftPriority=['planning-options-panel','travel-costs-panel'];
+      const rightPriority=['transport-costs-panel','planning-lists-panel'];
+      leftPriority.forEach(id=>{const p=visible.find(x=>x.id===id);if(p)left.appendChild(p)});
+      rightPriority.forEach(id=>{const p=visible.find(x=>x.id===id);if(p)right.appendChild(p)});
+      visible.filter(p=>!leftPriority.includes(p.id)&&!rightPriority.includes(p.id)).forEach(panel=>{
+        const lh=left.scrollHeight, rh=right.scrollHeight;
+        (lh<=rh?left:right).appendChild(panel);
+      });
+    }
+  }
+  window.optimiseSettingsPlacement=optimiseSettingsPlacement;
+  const previousApply=window.applyStrictSettingsVisibility;
+  window.applyStrictSettingsVisibility=function(){
+    const result=previousApply.apply(this,arguments);
+    requestAnimationFrame(()=>requestAnimationFrame(optimiseSettingsPlacement));
+    return result;
+  };
+  window.arrangeSettingsPanels=optimiseSettingsPlacement;
+  window.addEventListener('resize',()=>{
+    if(document.getElementById('view-settings')?.classList.contains('active')) optimiseSettingsPlacement();
+  });
+})();
+</script>
+
 </body>
 </html>
