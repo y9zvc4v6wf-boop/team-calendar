@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.51">
+  <meta name="application-version" content="2.2.73">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -426,7 +426,7 @@
       grid-template-columns: repeat(3, 1fr);
     }
     .personal-multi-container.months-12 {
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: 1fr;
       gap: 4px;
     }
     @media (max-width: 1200px) {
@@ -1136,6 +1136,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           <select id="cp-pit">
             <option value="PIT Archi">PIT Archi</option>
             <option value="PIT CAC">PIT CAC</option>
+            <option value="ED">ED</option>
             <option value="PIT Prep">PIT Prep</option>
             <option value="PIT TBM">PIT TBM</option>
             <option value="ULT ARA">ULT ARA</option>
@@ -1161,7 +1162,19 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
             <label class="planning-option-row"><input type="checkbox" id="option-disable-presence"><span><strong>Désactiver la page « Présence Équipe »</strong><small>Masque ou réaffiche la page dans les navigations ordinateur et mobile.</small></span></label>
             <label class="planning-option-row"><input type="checkbox" id="option-disable-clermont-sites"><span><strong>Désactiver les sites Clermontois</strong><small>Masque CAR, LAD, COM et CTX dans Mon Calendrier.</small></span></label>
             <label class="planning-option-row"><input type="checkbox" id="option-disable-absence-types"><span><strong>Désactiver CA/JDR/TT</strong><small>Masque CA, JDR et TT dans Mon Calendrier.</small></span></label>
+            <label class="planning-option-row"><input type="checkbox" id="option-disable-formation"><span><strong>Désactiver Formation</strong><small>Masque Formation dans Mon Calendrier.</small></span></label>
+            <label class="planning-option-row"><input type="checkbox" id="option-disable-half-days"><span><strong>Désactiver les demi-journées</strong><small>Affiche des journées entières dans Mon Calendrier et Vue Équipe pour la semaine actuelle et la suivante.</small></span></label>
           </div>
+        </div>
+        <div class="settings-submenu-tile admin-config-panel" id="travel-costs-panel" style="display:none;">
+          <h3>Coût journalier par type de déplacement</h3>
+          <p>Définissez la base de coût utilisée dans les KPI pour une journée complète. Une demi-journée utilise automatiquement 50 % du montant.</p>
+          <div id="travel-costs-settings-list" class="travel-costs-settings-list"></div>
+          <div class="travel-costs-actions">
+            <button type="button" class="btn-secondary" onclick="resetTravelCostsSettings()">Valeurs par défaut</button>
+            <button type="button" class="btn-primary" onclick="saveTravelCostsSettings()">Enregistrer les coûts</button>
+          </div>
+          <p id="travel-costs-settings-message" class="travel-costs-settings-message" aria-live="polite"></p>
         </div>
         <div class="settings-submenu-tile admin-config-panel" id="planning-lists-panel" style="display:none;">
           <h3>Codes secondaires et centres de coût</h3>
@@ -1250,7 +1263,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           <button class="tool-btn tool-ZAL" data-status="ZAL">ZAL</button>
           <button class="tool-btn tool-CTX" data-status="CTX">CTX</button>
           <button class="tool-btn tool-COM" data-status="COM">COM</button>
-          <button class="tool-btn tool-Autres" data-status="Autres">Autres</button>
           <button class="tool-btn tool-PRESENT" data-status="PRESENT">🗑️ Effacer (Bureau)</button>
         </div>
       </div>
@@ -1319,10 +1331,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
             <thead>
               <tr>
                 <th style="padding: 2px;">Mois</th>
-                <th style="padding: 2px;">JDR</th>
-                <th style="padding: 2px;">CA</th>
-                <th style="padding: 2px;">Formation</th>
-                <th style="padding: 2px;">Déplacements</th>
+                <th style="padding: 2px;">Déplacements Europe</th>
+                <th style="padding: 2px;">Intercontinentaux</th>
               </tr>
             </thead>
             <tbody id="annual-detail-tbody"></tbody>
@@ -1367,6 +1377,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           <span style="font-weight: bold; font-size: 0.8rem; margin-left: 6px; color: var(--text-muted);">Personne :</span>
           <select id="kpi-person-filter" style="width: auto;" onchange="renderKPICharts();">
             <option value="ALL">Toutes les personnes</option>
+          </select>
+          <span style="font-weight: bold; font-size: 0.8rem; margin-left: 6px; color: var(--text-muted);">Centre de coût :</span>
+          <select id="kpi-cost-centre-filter" style="width: auto;" onchange="renderKPICostCentreMonthlyChart();">
+            <option value="ALL">Tous les centres</option>
           </select>
           <button class="btn-primary" style="width: auto; margin-top: 0; padding: 5px 12px;" onclick="renderKPICharts()">Actualiser</button>
         </div>
@@ -1426,6 +1440,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           <h3>Coût des Déplacements par PIT (€)</h3>
           <canvas id="kpi-cost-chart"></canvas>
         </div>
+        <div class="chart-box kpi-cost-centre-monthly-box">
+          <h3>Coûts mensuels par centre de coût (€)</h3>
+          <canvas id="kpi-cost-centre-monthly-chart"></canvas>
+        </div>
       </div>
     </div>
 
@@ -1453,8 +1471,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           <button type="button" onclick="chooseSecondaryCode('VMA')"><strong>VMA</strong><span>Visite managers</span></button>
           <button type="button" onclick="chooseSecondaryCode('RSX')"><strong>RSX</strong><span>Reseaux</span></button>
         </div>
+        <div class="travel-combined-field">
+          <label for="secondary-code-cost-centre">Centre de coût</label>
+          <select id="secondary-code-cost-centre"></select>
+        </div>
+        <p id="secondary-code-combined-error" class="other-cost-error" aria-live="polite"></p>
         <div class="app-modal-actions">
           <button type="button" class="btn-secondary app-modal-ok" onclick="cancelSecondaryCodeSelection()">Annuler</button>
+          <button type="button" class="btn-primary app-modal-ok" onclick="confirmSecondaryAndCostCentre()">Valider</button>
         </div>
       </div>
     </div>
@@ -1478,6 +1502,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         <div class="app-modal-heading"><div class="app-modal-icon">💶</div><div><h2 id="other-travel-cost-title" class="app-modal-title">Coût journalier du déplacement</h2><p class="app-modal-subtitle">Type de jour : Autres</p></div></div>
         <label class="other-cost-label" for="other-travel-cost-input">Coût journalier en euros</label>
         <div class="other-cost-input-row"><input id="other-travel-cost-input" type="number" min="0" step="1" inputmode="decimal" placeholder="Ex. 250"><span>€ / jour</span></div>
+        <div class="travel-combined-field"><label for="other-travel-secondary-code">Code secondaire</label><select id="other-travel-secondary-code"></select></div>
+        <div class="travel-combined-field"><label for="other-travel-cost-centre">Centre de coût</label><select id="other-travel-cost-centre"></select></div>
         <p id="other-travel-cost-error" class="other-cost-error" aria-live="polite"></p>
         <div class="app-modal-actions other-cost-actions"><button type="button" class="btn-secondary" onclick="cancelOtherTravelCost()">Annuler</button><button type="button" class="btn-primary" onclick="confirmOtherTravelCost()">Valider</button></div>
       </div>
@@ -1544,6 +1570,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   const PIT_COLORS = {
     "PIT Archi": "#0ea5e9",
     "PIT CAC": "#10b981",
+    "ED": "#6366f1",
     "PIT TBM": "#f59e0b",
     "PIT Prep": "#ef4444",
     "ULT ARA": "#8b5cf6"
@@ -1813,7 +1840,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
            dateObj.getDate() === todayDate;
   }
 
-  const SECONDARY_CODE_DESTINATIONS = ['ARA', 'ALE', 'SPA', 'CGR', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM'];
+  const SECONDARY_CODE_DESTINATIONS = ['ARA', 'ALE', 'SPA', 'CGR', 'NKE', 'WAT', 'LVL', 'LLV', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM'];
   const SECONDARY_CODES = ['VSM', 'WKS', 'PRJ', 'SPU', 'FOR', 'VFO', 'VMA', 'RSX'];
 
   function requiresSecondaryCode(status) { return SECONDARY_CODE_DESTINATIONS.includes(status); }
@@ -2784,7 +2811,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     DISPLACEMENT_CODES.forEach(code => { destinationStats[code] = 0; });
     let monthlyData = [];
     const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-    for (let m = 0; m < 12; m++) monthlyData.push({ jdr: 0, ca: 0, form: 0, disp: 0 });
+    for (let m = 0; m < 12; m++) monthlyData.push({ jdr: 0, ca: 0, form: 0, disp: 0, europe: 0, inter: 0 });
 
     Object.keys(calendarData).forEach(dateKey => {
       const [dYear, dMonthStr] = dateKey.split('-');
@@ -2826,6 +2853,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       monthlyData[dMonthInt].ca += caCount;
       monthlyData[dMonthInt].form += formCount;
       monthlyData[dMonthInt].disp += dispCount;
+      const europeCodes = ['ARA','ALE','ZAL','LLV','LVL','HBG','VLD'];
+      const interCodes = ['SPA','NKE','WAT','UCH','CGR'];
+      const addGroup = value => { if (europeCodes.includes(value)) monthlyData[dMonthInt].europe += 0.5; if (interCodes.includes(value)) monthlyData[dMonthInt].inter += 0.5; };
+      if (typeof status === 'string') { if (europeCodes.includes(status)) monthlyData[dMonthInt].europe += 1; if (interCodes.includes(status)) monthlyData[dMonthInt].inter += 1; }
+      else if (status && typeof status === 'object') { addGroup(status.am); addGroup(status.pm); }
     });
 
     document.getElementById('stat-jdr-count').textContent = totalJdr;
@@ -2840,10 +2872,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="text-align: left; padding: 2px 4px; font-weight: bold;">${monthName}</td>
-        <td style="color: #f59e0b; font-weight: bold; padding: 2px;">${mStat.jdr}</td>
-        <td style="color: #ec4899; font-weight: bold; padding: 2px;">${mStat.ca}</td>
-        <td style="color: #7c3aed; font-weight: bold; padding: 2px;">${mStat.form}</td>
-        <td style="color: #06b6d4; font-weight: bold; padding: 2px;">${mStat.disp}</td>
+        <td style="color: #2563eb; font-weight: bold; padding: 2px;">${mStat.europe}</td>
+        <td style="color: #7c3aed; font-weight: bold; padding: 2px;">${mStat.inter}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -3308,8 +3338,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           }
           cell.appendChild(numDiv);
 
-          if (!isWeekend) {
-            const useHalves = isCurrentOrNextWeek(dayDate);
+          {
+            const useHalves = isCurrentOrNextWeek(dayDate) && !document.documentElement.classList.contains('option-half-days-disabled');
             if (useHalves) {
               const halvesCont = document.createElement('div');
               halvesCont.className = 'halves-container';
@@ -3492,7 +3522,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           if (isTodayDate) td.classList.add('today-cell');
 
           if (!isWeekend) {
-            const useHalves = isCurrentOrNextWeek(dayDate);
+            const useHalves = isCurrentOrNextWeek(dayDate) && !document.documentElement.classList.contains('option-half-days-disabled');
 
             // Gestion des demi-journées si semaine en cours/suivante
             if (useHalves) {
@@ -5184,7 +5214,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   function updateActivityLabels(){document.getElementById('mobile-current-activity').textContent=activityLabel();document.getElementById('mobile-sheet-selection').textContent=activityLabel();}
   function weekText(start){const end=new Date(start);end.setDate(start.getDate()+6);const f=new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short'});return `${f.format(start)} – ${f.format(end)}`;}
   function makeSlot(key,status,slot,label){
-    const box=document.createElement('div');box.className='mobile-focus-slot';box.dataset.brushDate=key;box.dataset.brushSlot=slot;box.dataset.calendarTooltip='true';box.dataset.tooltipDate=key;box.dataset.tooltipUser=currentUser;box.dataset.tooltipSlot=slot;
+    const box=document.createElement('div');box.className='mobile-focus-slot';box.dataset.brushDate=key;if(slot)box.dataset.brushSlot=slot;box.dataset.calendarTooltip='true';box.dataset.tooltipDate=key;box.dataset.tooltipUser=currentUser;box.dataset.tooltipSlot=slot||'';
     const top=document.createElement('div');top.className='mobile-focus-slot-label';top.textContent=label;box.appendChild(top);
     const value=document.createElement('div');value.className='mobile-focus-slot-value';const resolved=status||'PRESENT';
     if(resolved==='PRESENT') value.textContent='Bureau'; else {box.classList.add(`bg-${resolved}`);renderStatusWithSecondary(value,resolved,key,currentUser,slot);}
@@ -5211,7 +5241,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     const fullDate=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long'}).format(selectedMobileDate);
     card.innerHTML=`<header class="mobile-focus-date"><div><h2>${fullDate}</h2><p>${holidays.has(key)?'Jour férié':'Votre planning de la journée'}</p></div>${isToday(selectedMobileDate)?'<span class="mobile-focus-date-badge">Aujourd’hui</span>':''}</header><div class="mobile-focus-slots"></div>`;
     const slots=card.querySelector('.mobile-focus-slots');
-    if(value&&typeof value==='object'){slots.appendChild(makeSlot(key,value.am,'am','Matin'));slots.appendChild(makeSlot(key,value.pm,'pm','Après-midi'));}
+    if(document.documentElement.classList.contains('option-half-days-disabled')){const status=typeof value==='string'?value:value&&typeof value==='object'?(value.am||value.pm||'PRESENT'):'PRESENT';slots.appendChild(makeSlot(key,status,null,'Journée'));}
+    else if(value&&typeof value==='object'){slots.appendChild(makeSlot(key,value.am,'am','Matin'));slots.appendChild(makeSlot(key,value.pm,'pm','Après-midi'));}
     else {const status=typeof value==='string'?value:'PRESENT';slots.appendChild(makeSlot(key,status,'am','Matin'));slots.appendChild(makeSlot(key,status,'pm','Après-midi'));}
     container.appendChild(card);updateActivityLabels();
   }
@@ -5228,7 +5259,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   };
   document.getElementById('mobile-next-week').onclick=()=>{selectedMobileDate.setDate(selectedMobileDate.getDate()+7);currentDate=new Date(selectedMobileDate);renderFocus();};
   document.getElementById('mobile-go-today').onclick=()=>{selectedMobileDate=new Date();currentDate=new Date();renderFocus();};
-  function renderCategory(category){document.querySelectorAll('.mobile-activity-categories button').forEach(b=>b.classList.toggle('active',b.dataset.category===category));const root=document.getElementById('mobile-activity-options');root.innerHTML='';categories[category].forEach(status=>{const original=document.querySelector(`.tool-btn[data-status="${status}"]`);const button=document.createElement('button');button.type='button';button.dataset.mobileStatus=status;button.className=`tool-${status}`;button.textContent=status==='Formation'?'Formation':status;button.classList.toggle('active',selectedTool===status);button.onclick=()=>selectMobileStatus(status,original);root.appendChild(button);});}
+  function renderCategory(category){document.querySelectorAll('.mobile-activity-categories button').forEach(b=>b.classList.toggle('active',b.dataset.category===category));const root=document.getElementById('mobile-activity-options');root.innerHTML='';categories[category].filter(status=>status!=='Autres'&&!(status==='Formation'&&document.documentElement.classList.contains('option-formation-disabled'))).forEach(status=>{const original=document.querySelector(`.tool-btn[data-status="${status}"]`);const button=document.createElement('button');button.type='button';button.dataset.mobileStatus=status;button.className=`tool-${status}`;button.textContent=status==='Formation'?'Formation':status;button.classList.toggle('active',selectedTool===status);button.onclick=()=>selectMobileStatus(status,original);root.appendChild(button);});}
   function selectMobileStatus(status,original){if(requiresSecondaryCode(status)){openSecondaryCodeModal(status,code=>{original?.click();selectedTool=status;selectedSecondaryCode=code;updateActivityLabels();closeMobileActivitySheet();});}else{original?.click();selectedTool=status;selectedSecondaryCode=null;updateActivityLabels();closeMobileActivitySheet();}}
   window.openMobileActivitySheet=function(){document.getElementById('mobile-activity-sheet').classList.add('visible');document.getElementById('mobile-activity-backdrop').classList.add('visible');document.getElementById('mobile-activity-button').setAttribute('aria-expanded','true');renderCategory(requiresSecondaryCode(selectedTool)?'travel':['CA','JDR','Formation'].includes(selectedTool)?'absence':'presence');};
   window.closeMobileActivitySheet=function(){document.getElementById('mobile-activity-sheet').classList.remove('visible');document.getElementById('mobile-activity-backdrop').classList.remove('visible');document.getElementById('mobile-activity-button').setAttribute('aria-expanded','false');};
@@ -6752,355 +6783,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     border-radius: var(--ui-radius-sm, 8px) !important;
   }
 </style>
-
-
-<style id="personal-activity-favourites-styles">
-  .activity-favourites {
-    margin: 8px 0 10px;
-    padding: 8px;
-    border: 1px solid var(--border-soft);
-    border-radius: var(--ui-radius-md, 12px);
-    background: color-mix(in srgb, var(--card) 88%, transparent);
-  }
-  .activity-favourites-header {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:8px;
-    margin-bottom:6px;
-    color:var(--text-muted);
-    font-size:.65rem;
-    font-weight:850;
-  }
-  .activity-favourites-header small { font-size:.55rem; font-weight:650; opacity:.82; }
-  .activity-favourites-list {
-    display:flex;
-    align-items:center;
-    gap:6px;
-    min-height:34px;
-    overflow-x:auto;
-    padding:2px 1px 4px;
-    scrollbar-width:thin;
-  }
-  .activity-favourite-chip {
-    position:relative;
-    flex:0 0 auto;
-    min-width:54px;
-    min-height:34px;
-    margin:0 !important;
-    padding:6px 22px 6px 9px !important;
-    display:inline-flex !important;
-    align-items:center;
-    justify-content:center;
-    gap:4px;
-    border:1px solid color-mix(in srgb, var(--accent) 24%, var(--border)) !important;
-    border-radius:999px !important;
-    color:var(--status-text-color, #fff);
-    font-family:inherit;
-    font-size:.67rem !important;
-    font-weight:850 !important;
-    white-space:nowrap;
-    box-shadow:0 3px 10px rgba(0,0,0,.12);
-    touch-action:manipulation;
-  }
-  .activity-favourite-chip.active {
-    outline:2px solid color-mix(in srgb, var(--accent) 52%, transparent);
-    outline-offset:1px;
-  }
-  .activity-favourite-chip::after {
-    content:'★';
-    position:absolute;
-    right:7px;
-    top:50%;
-    transform:translateY(-50%);
-    color:rgba(255,255,255,.82);
-    font-size:.55rem;
-  }
-  .activity-favourite-chip .fav-secondary {
-    padding:1px 4px;
-    border-radius:999px;
-    background:rgba(15,23,42,.72);
-    color:#fff;
-    font-size:.5rem;
-    line-height:1.2;
-  }
-  .activity-favourites-empty {
-    color:var(--text-muted);
-    font-size:.61rem;
-    font-style:italic;
-  }
-  .favourite-hold-hint {
-    margin:4px 0 0;
-    color:var(--text-muted);
-    font-size:.54rem;
-    text-align:center;
-  }
-  .tool-btn.favourite-hold-ready,
-  #mobile-activity-options button.favourite-hold-ready {
-    box-shadow:0 0 0 2px color-mix(in srgb, #fbbf24 65%, transparent) !important;
-  }
-  @media (max-width:700px) and (orientation:portrait) {
-    #mobile-activity-sheet .activity-favourites { margin:4px 0 8px; padding:7px; }
-    #mobile-activity-sheet .activity-favourites-list { gap:5px; }
-    #mobile-activity-sheet .activity-favourite-chip { min-height:38px; font-size:.7rem !important; }
-  }
-</style>
-
-<script id="personal-activity-favourites-script">
-(function () {
-  'use strict';
-  const MAX_FAVOURITES = 6;
-  const DEFAULT_FAVOURITES = [
-    { status: 'LAD', secondaryCode: null },
-    { status: 'TT', secondaryCode: null },
-    { status: 'CA', secondaryCode: null }
-  ];
-  let activityFavourites = [];
-  let favouriteUser = null;
-  let favouriteFirebaseRef = null;
-  let holdTimer = null;
-  let holdTriggered = false;
-
-  function safeUserKey(name) {
-    return String(name || '').replace(/[.#$\[\]\/]/g, '_');
-  }
-  function normaliseFavourite(item) {
-    if (!item || typeof item.status !== 'string') return null;
-    const status = item.status;
-    const validButton = document.querySelector(`.tool-btn[data-status="${CSS.escape(status)}"]`);
-    if (!validButton && status !== 'PRESENT') return null;
-    const secondaryCode = requiresSecondaryCode(status) && SECONDARY_CODES.includes(item.secondaryCode)
-      ? item.secondaryCode : null;
-    if (requiresSecondaryCode(status) && !secondaryCode) return null;
-    return { status, secondaryCode };
-  }
-  function normaliseList(value) {
-    const source = Array.isArray(value) ? value : value && typeof value === 'object' ? Object.values(value) : [];
-    const unique = [];
-    source.forEach(raw => {
-      const item = normaliseFavourite(raw);
-      if (!item) return;
-      const key = `${item.status}|${item.secondaryCode || ''}`;
-      if (!unique.some(existing => `${existing.status}|${existing.secondaryCode || ''}` === key)) unique.push(item);
-    });
-    return unique.slice(0, MAX_FAVOURITES);
-  }
-  function favouriteLabel(item) {
-    return item.secondaryCode ? `${item.status} · ${item.secondaryCode}` : item.status === 'PRESENT' ? 'Bureau' : item.status;
-  }
-  function favouriteKey(item) { return `${item.status}|${item.secondaryCode || ''}`; }
-  function localStorageKey() { return `planning_activity_favourites_${safeUserKey(favouriteUser)}`; }
-
-  async function persistFavourites() {
-    if (!favouriteUser) return;
-    try { localStorage.setItem(localStorageKey(), JSON.stringify(activityFavourites)); } catch (_) {}
-    if (favouriteFirebaseRef) {
-      try { await favouriteFirebaseRef.set(activityFavourites); }
-      catch (error) { console.error('[Favoris] Sauvegarde Firebase impossible', error); }
-    }
-    renderFavouriteBars();
-  }
-
-  function setFavouriteData(value, initialiseWhenEmpty) {
-    const normalised = normaliseList(value);
-    if (!normalised.length && initialiseWhenEmpty) {
-      activityFavourites = DEFAULT_FAVOURITES.slice();
-      persistFavourites();
-    } else {
-      activityFavourites = normalised;
-      renderFavouriteBars();
-    }
-  }
-
-  function bindUserFavourites() {
-    if (!currentUser || currentUser === favouriteUser) return;
-    if (favouriteFirebaseRef) favouriteFirebaseRef.off();
-    favouriteUser = currentUser;
-    favouriteFirebaseRef = null;
-    let local = null;
-    try { local = JSON.parse(localStorage.getItem(localStorageKey()) || 'null'); } catch (_) {}
-    setFavouriteData(local, true);
-    if (db) {
-      favouriteFirebaseRef = db.ref('user_favourites').child(safeUserKey(currentUser));
-      favouriteFirebaseRef.on('value', snapshot => {
-        const value = snapshot.val();
-        setFavouriteData(value, value == null);
-      });
-    }
-  }
-
-  function ensureFavouriteContainers() {
-    const mobileCategories = document.querySelector('#mobile-activity-sheet .mobile-activity-categories');
-    if (mobileCategories && !document.getElementById('mobile-activity-favourites')) {
-      const block = buildFavouriteBlock('mobile-activity-favourites');
-      mobileCategories.parentNode.insertBefore(block, mobileCategories);
-    }
-    const firstTool = document.querySelector('#view-personal .tool-btn');
-    const toolParent = firstTool?.parentElement;
-    if (toolParent && !document.getElementById('desktop-activity-favourites')) {
-      const block = buildFavouriteBlock('desktop-activity-favourites');
-      toolParent.parentNode.insertBefore(block, toolParent);
-    }
-  }
-
-  function buildFavouriteBlock(id) {
-    const block = document.createElement('section');
-    block.id = id;
-    block.className = 'activity-favourites';
-    block.innerHTML = `<div class="activity-favourites-header"><span>⭐ Mes favoris</span><small>${MAX_FAVOURITES} maximum</small></div><div class="activity-favourites-list"></div><p class="favourite-hold-hint">Appui long sur une activité pour l’ajouter ou la retirer.</p>`;
-    return block;
-  }
-
-  function renderFavouriteBars() {
-    ensureFavouriteContainers();
-    document.querySelectorAll('.activity-favourites-list').forEach(list => {
-      list.innerHTML = '';
-      const hiddenStatuses = new Set();
-      if (document.documentElement.classList.contains('option-absence-types-disabled')) {
-        ['CA', 'JDR', 'TT'].forEach(status => hiddenStatuses.add(status));
-      }
-      if (document.documentElement.classList.contains('option-clermont-sites-disabled')) {
-        ['CAR', 'LAD', 'COM', 'CTX'].forEach(status => hiddenStatuses.add(status));
-      }
-      const visibleFavourites = activityFavourites.filter(item => !hiddenStatuses.has(item.status));
-      if (!visibleFavourites.length) {
-        const empty = document.createElement('span');
-        empty.className = 'activity-favourites-empty';
-        empty.textContent = activityFavourites.length ? 'Aucun favori disponible' : 'Aucun favori';
-        list.appendChild(empty);
-        return;
-      }
-      visibleFavourites.forEach(item => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = `activity-favourite-chip tool-${item.status}`;
-        button.dataset.favoriteKey = favouriteKey(item);
-        button.innerHTML = `<span>${item.status === 'PRESENT' ? 'Bureau' : item.status}</span>${item.secondaryCode ? `<span class="fav-secondary">${item.secondaryCode}</span>` : ''}`;
-        button.title = `${favouriteLabel(item)} · Appui long pour retirer`;
-        button.classList.toggle('active', selectedTool === item.status && (selectedSecondaryCode || null) === item.secondaryCode);
-        button.addEventListener('click', event => {
-          if (holdTriggered) { holdTriggered = false; event.preventDefault(); return; }
-          selectFavourite(item);
-        });
-        attachLongPress(button, () => removeFavourite(item));
-        list.appendChild(button);
-      });
-    });
-  }
-
-  function selectFavourite(item) {
-    const forbidden = (document.documentElement.classList.contains('option-absence-types-disabled') && ['CA','JDR','TT'].includes(item.status))
-      || (document.documentElement.classList.contains('option-clermont-sites-disabled') && ['CAR','LAD','COM','CTX'].includes(item.status));
-    if (forbidden) { renderFavouriteBars(); return; }
-    document.querySelectorAll('.tool-btn').forEach(button => button.classList.remove('active'));
-    const original = document.querySelector(`.tool-btn[data-status="${CSS.escape(item.status)}"]`);
-    original?.classList.add('active');
-    selectedTool = item.status;
-    selectedSecondaryCode = item.secondaryCode || null;
-    if (original) original.title = item.secondaryCode ? `${item.status} • ${item.secondaryCode}` : item.status;
-    if (typeof updateActivityLabels === 'function') updateActivityLabels();
-    renderFavouriteBars();
-    if (document.getElementById('mobile-activity-sheet')?.classList.contains('visible')) closeMobileActivitySheet();
-  }
-
-  async function addFavourite(status, secondaryCode) {
-    const item = normaliseFavourite({ status, secondaryCode });
-    if (!item) return;
-    if (activityFavourites.some(existing => favouriteKey(existing) === favouriteKey(item))) {
-      await removeFavourite(item);
-      return;
-    }
-    if (activityFavourites.length >= MAX_FAVOURITES) {
-      await appAlert(`Vous pouvez enregistrer jusqu’à ${MAX_FAVOURITES} favoris. Retirez-en un avant d’en ajouter un nouveau.`);
-      return;
-    }
-    const confirmed = await appConfirm(`Ajouter ${favouriteLabel(item)} à vos favoris ?`);
-    if (!confirmed) return;
-    activityFavourites.push(item);
-    await persistFavourites();
-  }
-
-  async function removeFavourite(item) {
-    const confirmed = await appConfirm(`Retirer ${favouriteLabel(item)} de vos favoris ?`, { danger: true });
-    if (!confirmed) return;
-    activityFavourites = activityFavourites.filter(existing => favouriteKey(existing) !== favouriteKey(item));
-    await persistFavourites();
-  }
-
-  function requestFavourite(status) {
-    if (requiresSecondaryCode(status)) {
-      openSecondaryCodeModal(status, code => addFavourite(status, code));
-    } else {
-      addFavourite(status, null);
-    }
-  }
-
-  function attachLongPress(element, callback) {
-    if (element.dataset.longPressBound === 'true') return;
-    element.dataset.longPressBound = 'true';
-    const start = event => {
-      if (event.button != null && event.button !== 0) return;
-      holdTriggered = false;
-      element.classList.add('favourite-hold-ready');
-      holdTimer = setTimeout(() => {
-        holdTriggered = true;
-        element.classList.remove('favourite-hold-ready');
-        navigator.vibrate?.(35);
-        callback();
-      }, 650);
-    };
-    const cancel = () => {
-      clearTimeout(holdTimer);
-      element.classList.remove('favourite-hold-ready');
-    };
-    element.addEventListener('pointerdown', start);
-    ['pointerup','pointercancel','pointerleave'].forEach(type => element.addEventListener(type, cancel));
-    element.addEventListener('contextmenu', event => event.preventDefault());
-  }
-
-  function bindLongPressToActivityButtons() {
-    document.querySelectorAll('.tool-btn[data-status]').forEach(button => {
-      attachLongPress(button, () => requestFavourite(button.dataset.status));
-    });
-    document.querySelectorAll('#mobile-activity-options button[data-mobile-status]').forEach(button => {
-      attachLongPress(button, () => requestFavourite(button.dataset.mobileStatus));
-    });
-  }
-
-  const mobileOptionsObserver = new MutationObserver(() => bindLongPressToActivityButtons());
-  const mobileOptions = document.getElementById('mobile-activity-options');
-  if (mobileOptions) mobileOptionsObserver.observe(mobileOptions, { childList: true });
-
-  const originalOpenMobileActivitySheet = window.openMobileActivitySheet;
-  if (typeof originalOpenMobileActivitySheet === 'function') {
-    window.openMobileActivitySheet = function () {
-      const result = originalOpenMobileActivitySheet.apply(this, arguments);
-      bindUserFavourites();
-      renderFavouriteBars();
-      bindLongPressToActivityButtons();
-      return result;
-    };
-  }
-
-  const originalLoginSuccessForFavourites = window.loginSuccess;
-  window.loginSuccess = function () {
-    const result = originalLoginSuccessForFavourites.apply(this, arguments);
-    setTimeout(() => { bindUserFavourites(); renderFavouriteBars(); bindLongPressToActivityButtons(); }, 0);
-    return result;
-  };
-
-  window.addEventListener('load', () => {
-    ensureFavouriteContainers();
-    bindLongPressToActivityButtons();
-    const userProbe = setInterval(() => {
-      if (currentUser) { bindUserFavourites(); renderFavouriteBars(); clearInterval(userProbe); }
-    }, 300);
-    setTimeout(() => clearInterval(userProbe), 15000);
-  });
-})();
-</script>
-
-
 <style id="copy-previous-week-styles">
   .copy-week-button {
     display:inline-flex !important;
@@ -7428,363 +7110,44 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 </script>
 
 
-<style id="application-release-notes-styles">
+<style id="application-version-indicator-styles">
   #app-version-indicator {
-    position:fixed;
-    left:max(10px, env(safe-area-inset-left));
-    bottom:max(9px, env(safe-area-inset-bottom));
-    z-index:19000;
-    min-width:48px;
-    min-height:26px;
-    margin:0;
-    padding:4px 8px;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    border:1px solid var(--border-soft);
-    border-radius:999px !important;
-    background:color-mix(in srgb, var(--card) 88%, transparent);
-    color:var(--text-muted);
-    font-family:inherit;
-    font-size:.56rem;
-    font-weight:850;
-    line-height:1;
-    letter-spacing:.02em;
-    box-shadow:0 4px 14px rgba(0,0,0,.16);
-    backdrop-filter:blur(14px);
-    -webkit-backdrop-filter:blur(14px);
-    cursor:pointer;
+    position: fixed;
+    left: max(10px, env(safe-area-inset-left));
+    bottom: max(9px, env(safe-area-inset-bottom));
+    z-index: 19000;
+    min-width: 48px;
+    min-height: 26px;
+    padding: 4px 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--card) 88%, transparent);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: .56rem;
+    font-weight: 850;
+    line-height: 1;
+    letter-spacing: .02em;
+    box-shadow: 0 4px 14px rgba(0,0,0,.16);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    pointer-events: none;
   }
-  #app-version-indicator:hover,
-  #app-version-indicator:focus-visible {
-    border-color:color-mix(in srgb, var(--accent) 55%, var(--border));
-    color:var(--accent);
-    outline:none;
-  }
-  #app-version-tooltip {
-    position:fixed;
-    left:max(10px, env(safe-area-inset-left));
-    bottom:calc(max(9px, env(safe-area-inset-bottom)) + 34px);
-    z-index:19001;
-    width:min(310px, calc(100vw - 20px));
-    padding:10px 11px;
-    border:1px solid var(--border-soft);
-    border-radius:var(--ui-radius-md, 12px);
-    background:color-mix(in srgb, var(--card) 96%, transparent);
-    color:var(--text);
-    box-shadow:var(--shadow-lg);
-    opacity:0;
-    visibility:hidden;
-    transform:translateY(5px);
-    transition:opacity .15s ease, transform .15s ease, visibility .15s ease;
-    pointer-events:none;
-    backdrop-filter:blur(18px);
-    -webkit-backdrop-filter:blur(18px);
-  }
-  #app-version-indicator:hover + #app-version-tooltip,
-  #app-version-indicator:focus-visible + #app-version-tooltip {
-    opacity:1;
-    visibility:visible;
-    transform:translateY(0);
-  }
-  #app-version-tooltip strong { display:block; margin-bottom:5px; font-size:.68rem; }
-  #app-version-tooltip ul { margin:0; padding-left:17px; color:var(--text-muted); font-size:.59rem; line-height:1.45; }
-  #release-notes-modal .release-notes-card { width:min(530px, 100%); }
-  .release-notes-hero {
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin:7px 0 12px;
-    padding:10px;
-    border:1px solid color-mix(in srgb, var(--accent) 26%, var(--border));
-    border-radius:var(--ui-radius-md, 12px);
-    background:color-mix(in srgb, var(--accent) 9%, var(--card));
-  }
-  .release-notes-icon {
-    width:38px;
-    height:38px;
-    flex:0 0 38px;
-    display:grid;
-    place-items:center;
-    border-radius:11px;
-    background:var(--accent);
-    color:var(--accent-contrast);
-    font-size:1.05rem;
-  }
-  .release-notes-hero strong { display:block; color:var(--text); font-size:.82rem; }
-  .release-notes-hero small { display:block; margin-top:2px; color:var(--text-muted); font-size:.58rem; }
-  .release-notes-list { display:grid; gap:7px; margin:0; padding:0; list-style:none; }
-  .release-notes-list li {
-    display:grid;
-    grid-template-columns:28px minmax(0,1fr);
-    gap:8px;
-    align-items:start;
-    padding:8px;
-    border:1px solid var(--border-soft);
-    border-radius:var(--ui-radius-sm, 8px);
-    background:var(--input-bg);
-  }
-  .release-note-symbol {
-    width:28px;
-    height:28px;
-    display:grid;
-    place-items:center;
-    border-radius:8px;
-    background:color-mix(in srgb, var(--accent) 13%, var(--card));
-    font-size:.78rem;
-  }
-  .release-notes-list strong { display:block; color:var(--text); font-size:.67rem; }
-  .release-notes-list span { display:block; margin-top:2px; color:var(--text-muted); font-size:.59rem; line-height:1.35; }
-  .release-notes-actions { display:flex; justify-content:flex-end; margin-top:11px; }
   @media (max-width:700px) and (orientation:portrait) {
     #app-version-indicator {
-      left:max(8px, env(safe-area-inset-left));
-      bottom:calc(72px + env(safe-area-inset-bottom));
-      min-height:24px;
-      padding:3px 7px;
-      font-size:.52rem;
-    }
-    #app-version-tooltip { display:none; }
-    #release-notes-modal { padding:max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)); }
-    #release-notes-modal .release-notes-card { max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y:auto; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    #app-version-tooltip { transition:none; }
-  }
-</style>
-
-<button type="button" id="app-version-indicator" aria-describedby="app-version-tooltip" onclick="openReleaseNotes()">v2.2.51</button>
-<div id="app-version-tooltip" role="tooltip">
-  <strong>Version 2.2.51 · Nouveautés</strong>
-  <ul>
-    <li>Bloc de mise à jour supprimé</li>
-    <li>Navigation mensuelle mobile réalignée</li>
-    <li>Contrôles plus compacts</li>
-    <li>Fonctions existantes conservées</li>
-  </ul>
-</div>
-<div id="release-notes-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="release-notes-title">
-  <div class="app-modal-card release-notes-card">
-    <h2 id="release-notes-title">Nouveautés de Planning Équipe</h2>
-    <div class="release-notes-hero">
-      <span class="release-notes-icon">✦</span>
-      <span><strong>Version 2.2.51</strong><small>Publiée le 18 août 2026</small></span>
-    </div>
-    <ul class="release-notes-list release-notes-list-no-icons">
-      <li><div><strong>Paramètres allégés</strong><span>La section Mise à jour de l’application a été retirée de l’interface Paramètres.</span></div></li>
-      <li><div><strong>Navigation mensuelle mobile réalignée</strong><span>Les flèches, le mois et le bouton Aujourd’hui sont désormais disposés sur une ligne stable.</span></div></li>
-      <li><div><strong>Calendrier et Vue Équipe corrigés</strong><span>Les contrôles utilisent le même placement compact sur les deux pages mobiles.</span></div></li>
-      <li><div><strong>Fonctions conservées</strong><span>Le filtrage Présence par PIT, la salutation horaire, Firebase et la connexion restent inchangés.</span></div></li>
-    </ul>
-    <div class="release-notes-actions"><button type="button" class="btn-primary" onclick="closeReleaseNotes()">J’ai compris</button></div>
-  </div>
-</div>
-
-<script id="application-release-notes-script">
-(function () {
-  'use strict';
-
-  /*
-   * À CHAQUE PUBLICATION :
-   * 1. incrémenter APP_VERSION ;
-   * 2. mettre à jour APP_RELEASE_DATE ;
-   * 3. modifier APP_RELEASE_ITEMS, le texte du badge et la fenêtre HTML.
-   * Le changement de version déclenche automatiquement la popup une fois par profil.
-   */
-  const APP_VERSION = '2.2.51';
-  const APP_RELEASE_DATE = '18 août 2026';
-  const APP_RELEASE_ITEMS = [
-    'Flux des favoris forcé depuis le bord gauche',
-    'Suppression définitive du recentrage après masquage',
-    'Correction appliquée sur ordinateur et mobile',
-    'Favoris enregistrés conservés pour une réactivation ultérieure'
-  ];
-
-  window.PLANNING_APP_RELEASE = Object.freeze({
-    version: APP_VERSION,
-    date: APP_RELEASE_DATE,
-    items: APP_RELEASE_ITEMS.slice()
-  });
-  document.documentElement.dataset.appVersion = APP_VERSION;
-
-  function releaseSeenKey(userName) {
-    const safeName = String(userName || 'anonymous').replace(/[^a-z0-9_-]/gi, '_');
-    return `planning_release_seen_${safeName}_${APP_VERSION}`;
-  }
-  function hasSeenRelease(userName) {
-    try { return localStorage.getItem(releaseSeenKey(userName)) === '1'; }
-    catch (_) { return false; }
-  }
-  function markReleaseSeen(userName) {
-    try { localStorage.setItem(releaseSeenKey(userName), '1'); } catch (_) {}
-  }
-
-  window.openReleaseNotes = function (options = {}) {
-    const modal = document.getElementById('release-notes-modal');
-    if (!modal) return;
-    modal.dataset.firstLogin = options.firstLogin ? 'true' : 'false';
-    modal.classList.add('visible');
-    document.body.style.overflow = 'hidden';
-  };
-  window.closeReleaseNotes = function () {
-    const modal = document.getElementById('release-notes-modal');
-    if (!modal) return;
-    if (currentUser) markReleaseSeen(currentUser);
-    modal.classList.remove('visible');
-    document.body.style.overflow = '';
-  };
-
-  const modal = document.getElementById('release-notes-modal');
-  modal?.addEventListener('click', event => {
-    if (event.target === modal) closeReleaseNotes();
-  });
-  document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && modal?.classList.contains('visible')) closeReleaseNotes();
-  });
-
-  const previousLoginSuccessForReleaseNotes = window.loginSuccess;
-  window.loginSuccess = function (name) {
-    const result = previousLoginSuccessForReleaseNotes.apply(this, arguments);
-    const profileName = name || currentUser;
-    if (profileName && !hasSeenRelease(profileName)) {
-      setTimeout(() => openReleaseNotes({ firstLogin: true }), 220);
-    }
-    return result;
-  };
-
-  window.addEventListener('load', () => {
-    const indicator = document.getElementById('app-version-indicator');
-    if (indicator) {
-      indicator.textContent = `v${APP_VERSION}`;
-      indicator.setAttribute('aria-label', `Version ${APP_VERSION}. Afficher les nouveautés.`);
-      indicator.title = `Version ${APP_VERSION} · ${APP_RELEASE_ITEMS.join(' · ')}`;
-    }
-  });
-})();
-</script>
-
-
-<style id="release-notes-uniform-spacing-fix">
-  
-  #release-notes-modal.app-modal-overlay {
-    padding: 24px !important;
-    box-sizing: border-box !important;
-  }
-
-  #release-notes-modal .release-notes-card {
-    width: min(530px, calc(100vw - 48px)) !important;
-    max-width: calc(100vw - 48px) !important;
-    max-height: calc(100dvh - 48px) !important;
-    margin: auto !important;
-    padding: 20px !important;
-    overflow-y: auto !important;
-    box-sizing: border-box !important;
-  }
-
-  #release-notes-modal .release-notes-card > :first-child {
-    margin-top: 0 !important;
-  }
-
-  #release-notes-modal .release-notes-card > :last-child {
-    margin-bottom: 0 !important;
-  }
-
-  @media (max-width: 700px) and (orientation: portrait) {
-    #release-notes-modal.app-modal-overlay {
-      padding:
-        max(14px, env(safe-area-inset-top))
-        14px
-        max(14px, env(safe-area-inset-bottom)) !important;
-    }
-
-    #release-notes-modal .release-notes-card {
-      width: 100% !important;
-      max-width: 100% !important;
-      max-height: calc(
-        100dvh
-        - max(14px, env(safe-area-inset-top))
-        - max(14px, env(safe-area-inset-bottom))
-      ) !important;
-      margin: auto !important;
-      padding: 16px !important;
+      left: max(8px, env(safe-area-inset-left));
+      bottom: calc(72px + env(safe-area-inset-bottom));
+      min-height: 24px;
+      padding: 3px 7px;
+      font-size: .52rem;
     }
   }
 </style>
 
-
-<style id="desktop-favourites-classic-button-style">
-  
-  #desktop-activity-favourites {
-    padding: 7px 8px !important;
-  }
-
-  #desktop-activity-favourites .activity-favourites-list {
-    align-items: center !important;
-    gap: 6px !important;
-    min-height: 34px !important;
-    overflow-x: auto !important;
-  }
-
-  #desktop-activity-favourites .activity-favourite-chip {
-    position: relative !important;
-    width: auto !important;
-    min-width: 46px !important;
-    min-height: 32px !important;
-    height: 32px !important;
-    margin: 0 !important;
-    padding: 5px 8px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 4px !important;
-    border: 1px solid var(--border) !important;
-    border-radius: var(--ui-radius-sm, 8px) !important;
-    color: var(--status-text-color, #ffffff) !important;
-    font-family: inherit !important;
-    font-size: .68rem !important;
-    font-weight: 800 !important;
-    line-height: 1 !important;
-    letter-spacing: normal !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-    box-shadow: none !important;
-    outline: none !important;
-  }
-
-  
-  #desktop-activity-favourites .activity-favourite-chip::after {
-    content: none !important;
-    display: none !important;
-  }
-
-  #desktop-activity-favourites .activity-favourite-chip:hover {
-    filter: brightness(1.07);
-    border-color: color-mix(in srgb, var(--accent) 48%, var(--border)) !important;
-  }
-
-  #desktop-activity-favourites .activity-favourite-chip.active {
-    border-color: var(--accent) !important;
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent) !important;
-    transform: none !important;
-  }
-
-  #desktop-activity-favourites .activity-favourite-chip .fav-secondary {
-    min-width: 20px !important;
-    min-height: 16px !important;
-    padding: 2px 4px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 4px !important;
-    background: rgba(15, 23, 42, .72) !important;
-    color: #ffffff !important;
-    font-size: .48rem !important;
-    font-weight: 850 !important;
-    line-height: 1 !important;
-  }
-</style>
-
-
+<span id="app-version-indicator" aria-label="Version 2.2.73">v2.2.73</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
@@ -9411,6 +8774,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   html.option-presence-disabled #tab-presence,html.option-presence-disabled #mobile-bottom-nav [data-mobile-view="view-presence"]{display:none!important}
   html.option-clermont-sites-disabled .tool-CAR,html.option-clermont-sites-disabled .tool-LAD,html.option-clermont-sites-disabled .tool-COM,html.option-clermont-sites-disabled .tool-CTX{display:none!important}
   html.option-absence-types-disabled .tool-CA,html.option-absence-types-disabled .tool-JDR,html.option-absence-types-disabled .tool-TT{display:none!important}
+  html.option-formation-disabled .tool-Formation,html.option-formation-disabled #mobile-activity-options .tool-Formation{display:none!important}
   @media(max-width:700px) and (orientation:portrait){html.option-presence-disabled #mobile-bottom-nav{grid-template-columns:repeat(3,minmax(0,1fr))!important}.admin-add-row{grid-template-columns:1fr}.admin-add-row button{width:100%}.planning-option-row{min-height:52px}}
 </style>
 <script id="admin-lists-and-cost-centres-v2236-script">
@@ -9420,7 +8784,7 @@ const OPTIONS_KEY='planning_display_options_v1';
 const CONFIG_KEY='planning_admin_lists_v1';
 const DEFAULT_CODES=[{code:'VSM',label:'Value Stream Mapping'},{code:'WKS',label:'Workshop'},{code:'PRJ',label:'Projet'},{code:'SPU',label:'Support usine'},{code:'FOR',label:'Formation'},{code:'VFO',label:'Visite fournisseur'},{code:'VMA',label:'Visite managers'},{code:'RSX',label:'Réseaux'}];
 const DEFAULT_COSTS=['Marche courante','Projet'];
-let displayOptions=readLocal(OPTIONS_KEY,{disablePresence:false,disableClermontSites:false,disableAbsenceTypes:false});
+let displayOptions=readLocal(OPTIONS_KEY,{disablePresence:false,disableClermontSites:false,disableAbsenceTypes:false,disableFormation:false,disableHalfDays:false});
 let adminConfig=normaliseConfig(readLocal(CONFIG_KEY,{secondaryCodes:DEFAULT_CODES,costCentres:DEFAULT_COSTS}));
 let pendingSecondaryCode=null,pendingDestination=null,pendingCostCallback=null;
 let configRef=null,costDataRef=null;window.COST_CENTRE_DATA=costCentreData;
@@ -9450,16 +8814,16 @@ function openCostCentreModal(callback){pendingCostCallback=callback;const root=d
 window.chooseCostCentre=function(label){if(!adminConfig.costCentres.includes(label))return;selectedCostCentre=label;document.getElementById('cost-centre-modal').classList.remove('visible');document.body.style.overflow='';const callback=pendingCostCallback;pendingCostCallback=null;if(callback)callback(label)};
 window.cancelCostCentreSelection=function(){document.getElementById('cost-centre-modal').classList.remove('visible');document.body.style.overflow='';pendingCostCallback=null;pendingSecondaryCode=null;selectedCostCentre=null};
 window.handleCostCentreOverlay=function(event){if(event.target.id==='cost-centre-modal')cancelCostCentreSelection()};
-window.openSecondaryCodeModal=function(destination,callback){secondaryCodeSelectionCallback=callback;pendingDestination=destination;selectedCostCentre=null;document.getElementById('secondary-code-modal-subtitle').textContent=`Sélectionnez le code associé à ${destination}`;renderSecondaryChoices();document.getElementById('secondary-code-modal').classList.add('visible');document.body.style.overflow='hidden'};
-window.chooseSecondaryCode=function(code){if(!adminConfig.secondaryCodes.some(item=>item.code===code))return;pendingSecondaryCode=code;document.getElementById('secondary-code-modal').classList.remove('visible');openCostCentreModal(()=>{const callback=secondaryCodeSelectionCallback;secondaryCodeSelectionCallback=null;const selected=pendingSecondaryCode;pendingSecondaryCode=null;if(callback)callback(selected)})};
+window.openSecondaryCodeModal=function(destination,callback){if(destination==='Autres'&&window.__otherTravelDetailsReady){window.__otherTravelDetailsReady=false;if(callback)callback(selectedSecondaryCode);return}secondaryCodeSelectionCallback=callback;pendingDestination=destination;pendingSecondaryCode=null;selectedCostCentre=null;document.getElementById('secondary-code-modal-subtitle').textContent=`Sélectionnez le code secondaire et le centre de coût associés à ${destination}`;renderSecondaryChoices();const select=document.getElementById('secondary-code-cost-centre');select.innerHTML='';adminConfig.costCentres.forEach(label=>{const option=document.createElement('option');option.value=label;option.textContent=label;select.appendChild(option)});document.getElementById('secondary-code-combined-error').textContent='';document.getElementById('secondary-code-modal').classList.add('visible');document.body.style.overflow='hidden'};
+window.chooseSecondaryCode=function(code){if(!adminConfig.secondaryCodes.some(item=>item.code===code))return;pendingSecondaryCode=code;document.querySelectorAll('#secondary-code-modal .secondary-code-options button').forEach(button=>button.classList.toggle('selected',button.querySelector('strong')?.textContent===code));document.getElementById('secondary-code-combined-error').textContent=''};window.confirmSecondaryAndCostCentre=function(){const centre=document.getElementById('secondary-code-cost-centre').value;if(!pendingSecondaryCode||!centre){document.getElementById('secondary-code-combined-error').textContent='Sélectionnez un code secondaire et un centre de coût.';return}selectedSecondaryCode=pendingSecondaryCode;selectedCostCentre=centre;document.getElementById('secondary-code-modal').classList.remove('visible');document.body.style.overflow='';const callback=secondaryCodeSelectionCallback;secondaryCodeSelectionCallback=null;const selected=pendingSecondaryCode;pendingSecondaryCode=null;if(callback)callback(selected)};
 const originalCancelSecondary=window.cancelSecondaryCodeSelection;window.cancelSecondaryCodeSelection=function(){pendingSecondaryCode=null;selectedCostCentre=null;return originalCancelSecondary.apply(this,arguments)};
 function getCostEntry(dateKey,user){return costCentreData[dateKey]?.[user]}
 function setCostCentreEntry(dateKey,user,status,slot){window.COST_CENTRE_DATA=costCentreData;if(!costCentreData[dateKey])costCentreData[dateKey]={};if(!requiresSecondaryCode(status)){const current=getCostEntry(dateKey,user);if(slot&&current&&typeof current==='object'){delete current[slot];if(!current.am&&!current.pm)delete costCentreData[dateKey][user]}else if(!slot)delete costCentreData[dateKey][user]}else if(slot){const current=getCostEntry(dateKey,user);const obj=current&&typeof current==='object'?{...current}:{};obj[slot]=selectedCostCentre;costCentreData[dateKey][user]=obj}else costCentreData[dateKey][user]=selectedCostCentre;if(costCentreData[dateKey]&&!Object.keys(costCentreData[dateKey]).length)delete costCentreData[dateKey]}
 const originalSetSecondary=window.setSecondaryCode;window.setSecondaryCode=function(dateKey,user,status,slot,code){const result=originalSetSecondary.apply(this,arguments);setCostCentreEntry(dateKey,user,status,slot);return result};
 const originalSavePlanning=window.savePlanningAndSecondaryData;window.savePlanningAndSecondaryData=function(){const result=originalSavePlanning.apply(this,arguments);writeLocal('team_cost_centres',costCentreData);if(costDataRef)costDataRef.set(costCentreData).catch(error=>console.error('[Centres de coût] Firebase',error));return result};
-function applyDisplayOptions(){const root=document.documentElement;root.classList.toggle('option-presence-disabled',!!displayOptions.disablePresence);root.classList.toggle('option-clermont-sites-disabled',!!displayOptions.disableClermontSites);root.classList.toggle('option-absence-types-disabled',!!displayOptions.disableAbsenceTypes);['option-disable-presence','option-disable-clermont-sites','option-disable-absence-types'].forEach((id,index)=>{const el=document.getElementById(id);if(el)el.checked=!!displayOptions[['disablePresence','disableClermontSites','disableAbsenceTypes'][index]]});syncAdminAccess();if(typeof renderFavouriteBars==='function')renderFavouriteBars();if(displayOptions.disablePresence&&document.getElementById('view-presence')?.classList.contains('active'))switchTab(currentUser?'view-personal':'view-team')}
+function applyDisplayOptions(){const root=document.documentElement;root.classList.toggle('option-presence-disabled',!!displayOptions.disablePresence);root.classList.toggle('option-clermont-sites-disabled',!!displayOptions.disableClermontSites);root.classList.toggle('option-absence-types-disabled',!!displayOptions.disableAbsenceTypes);root.classList.toggle('option-formation-disabled',!!displayOptions.disableFormation);root.classList.toggle('option-half-days-disabled',!!displayOptions.disableHalfDays);['option-disable-presence','option-disable-clermont-sites','option-disable-absence-types','option-disable-formation','option-disable-half-days'].forEach((id,index)=>{const el=document.getElementById(id);if(el)el.checked=!!displayOptions[['disablePresence','disableClermontSites','disableAbsenceTypes','disableFormation','disableHalfDays'][index]]});if(displayOptions.disableFormation&&selectedTool==='Formation'){selectedTool='PRESENT';selectedSecondaryCode=null;document.querySelectorAll('.tool-btn').forEach(button=>button.classList.toggle('active',button.dataset.status==='PRESENT'))}syncAdminAccess();if(displayOptions.disablePresence&&document.getElementById('view-presence')?.classList.contains('active'))switchTab(currentUser?'view-personal':'view-team');if(document.getElementById('view-personal')?.classList.contains('active'))renderPersonalCalendar(currentDate.getFullYear(),currentDate.getMonth())}
 function bindOption(id,key){document.getElementById(id)?.addEventListener('change',event=>{if(!isAdmin()){applyDisplayOptions();return}displayOptions[key]=event.target.checked;writeLocal(OPTIONS_KEY,displayOptions);applyDisplayOptions()})}
-bindOption('option-disable-presence','disablePresence');bindOption('option-disable-clermont-sites','disableClermontSites');bindOption('option-disable-absence-types','disableAbsenceTypes');
+bindOption('option-disable-presence','disablePresence');bindOption('option-disable-clermont-sites','disableClermontSites');bindOption('option-disable-absence-types','disableAbsenceTypes');bindOption('option-disable-formation','disableFormation');bindOption('option-disable-half-days','disableHalfDays');
 const priorSwitch=window.switchTab;window.switchTab=function(view){const target=displayOptions.disablePresence&&view==='view-presence'?(currentUser?'view-personal':'view-team'):view;const result=priorSwitch(target);applyDisplayOptions();return result};
 const priorSettings=window.renderSettingsView;window.renderSettingsView=function(){const result=priorSettings.apply(this,arguments);syncAdminAccess();renderAdminLists();return result};
 const priorLogin=window.loginSuccess;window.loginSuccess=function(){const result=priorLogin.apply(this,arguments);applyDisplayOptions();return result};
@@ -9484,37 +8848,6 @@ syncRuntimeCodes();bindStorage();applyDisplayOptions();renderAdminLists();window
     overflow: hidden !important;
   }
 </style>
-
-
-<style id="annual-report-two-metrics-v2242">
-  /* Bilan Annuel : conserver uniquement Formation et Déplacements. */
-  #view-annual .form-box > div[style*="grid-template-columns: repeat(4"] {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-  #view-annual #stat-jdr-count,
-  #view-annual #stat-ca-count {
-    display: none !important;
-  }
-  #view-annual #stat-jdr-count.parent-placeholder,
-  #view-annual #stat-ca-count.parent-placeholder { display:none !important; }
-  #view-annual .form-box > div[style*="grid-template-columns: repeat(4"] > div:has(#stat-jdr-count),
-  #view-annual .form-box > div[style*="grid-template-columns: repeat(4"] > div:has(#stat-ca-count) {
-    display: none !important;
-  }
-  #view-annual #annual-detail-tbody tr > :nth-child(2),
-  #view-annual #annual-detail-tbody tr > :nth-child(3),
-  #view-annual table:has(#annual-detail-tbody) thead tr > :nth-child(2),
-  #view-annual table:has(#annual-detail-tbody) thead tr > :nth-child(3) {
-    display: none !important;
-  }
-  @media (max-width:700px) {
-    #view-annual .form-box > div[style*="grid-template-columns: repeat(4"] {
-      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    }
-  }
-</style>
-
-
 <style id="kpi-forecast-manager-v2243">
   #view-kpi .kpi-budget-summary { display:none !important; }
   .kpi-forecast-section{margin:10px auto 12px;max-width:1180px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--card);box-shadow:var(--shadow-sm)}
@@ -9591,15 +8924,16 @@ let customTravelCosts={};
 let customCostRef=null;
 try{customTravelCosts=JSON.parse(localStorage.getItem('team_custom_travel_costs')||'{}')||{}}catch(_){customTravelCosts={}}
 window.CUSTOM_TRAVEL_COSTS=customTravelCosts;
-function showCostModal(callback){pendingOtherActivation=callback;const modal=document.getElementById('other-travel-cost-modal');const input=document.getElementById('other-travel-cost-input');document.getElementById('other-travel-cost-error').textContent='';input.value=activeOtherDailyCost??'';modal.classList.add('visible');document.body.style.overflow='hidden';setTimeout(()=>input.focus(),30)}
+function showCostModal(callback){pendingOtherActivation=callback;const modal=document.getElementById('other-travel-cost-modal');const input=document.getElementById('other-travel-cost-input');const secondary=document.getElementById('other-travel-secondary-code');const centre=document.getElementById('other-travel-cost-centre');secondary.innerHTML='';adminConfig.secondaryCodes.forEach(item=>{const option=document.createElement('option');option.value=item.code;option.textContent=`${item.code} - ${item.label}`;secondary.appendChild(option)});centre.innerHTML='';adminConfig.costCentres.forEach(label=>{const option=document.createElement('option');option.value=label;option.textContent=label;centre.appendChild(option)});document.getElementById('other-travel-cost-error').textContent='';input.value=activeOtherDailyCost??'';modal.classList.add('visible');document.body.style.overflow='hidden';setTimeout(()=>input.focus(),30)}
 function hideCostModal(){document.getElementById('other-travel-cost-modal').classList.remove('visible');document.body.style.overflow=''}
-window.confirmOtherTravelCost=function(){const input=document.getElementById('other-travel-cost-input');const value=Number(String(input.value).replace(',','.'));if(!Number.isFinite(value)||value<0){document.getElementById('other-travel-cost-error').textContent='Saisissez un coût valide supérieur ou égal à 0 €.';input.focus();return}activeOtherDailyCost=value;DISPLACEMENT_COSTS.Autres=value;hideCostModal();const callback=pendingOtherActivation;pendingOtherActivation=null;if(callback)callback()};
+window.openOtherDayModal=function(callback){showCostModal(callback)};
+window.confirmOtherTravelCost=function(){const input=document.getElementById('other-travel-cost-input');const value=Number(String(input.value).replace(',','.'));const secondary=document.getElementById('other-travel-secondary-code').value;const centre=document.getElementById('other-travel-cost-centre').value;if(!Number.isFinite(value)||value<0){document.getElementById('other-travel-cost-error').textContent='Saisissez un coût valide supérieur ou égal à 0 €.';input.focus();return}if(!secondary||!centre){document.getElementById('other-travel-cost-error').textContent='Sélectionnez un code secondaire et un centre de coût.';return}activeOtherDailyCost=value;DISPLACEMENT_COSTS.Autres=value;selectedSecondaryCode=secondary;selectedCostCentre=centre;window.__otherTravelDetailsReady=true;hideCostModal();const callback=pendingOtherActivation;pendingOtherActivation=null;if(callback)callback()};
 window.cancelOtherTravelCost=function(){hideCostModal();pendingOtherActivation=null;activeOtherDailyCost=null;DISPLACEMENT_COSTS.Autres=0};
 document.getElementById('other-travel-cost-input')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();confirmOtherTravelCost()}if(event.key==='Escape')cancelOtherTravelCost()});
 // Interception avant le gestionnaire historique : Autres demande d'abord le coût.
-document.addEventListener('click',event=>{const button=event.target.closest('.tool-btn[data-status]');if(!button)return;const status=button.dataset.status;if(status!=='Autres'){activeOtherDailyCost=null;DISPLACEMENT_COSTS.Autres=0;return}if(allowOtherClick){allowOtherClick=false;return}event.preventDefault();event.stopImmediatePropagation();showCostModal(()=>{allowOtherClick=true;button.click()})},true);
+document.addEventListener('click',event=>{const button=event.target.closest('.tool-btn[data-status]');if(!button||button.dataset.status==='Autres')return;activeOtherDailyCost=null;DISPLACEMENT_COSTS.Autres=0},true);
 // Mobile : affiche la même fenêtre dès le choix Autres. La valeur reste active jusqu'au prochain type.
-document.addEventListener('click',event=>{const button=event.target.closest('[data-mobile-status]');if(!button)return;const status=button.dataset.mobileStatus;if(status!=='Autres'){activeOtherDailyCost=null;DISPLACEMENT_COSTS.Autres=0;return}showCostModal(()=>{})},true);
+document.addEventListener('click',event=>{const button=event.target.closest('[data-mobile-status]');if(!button||button.dataset.mobileStatus==='Autres')return;activeOtherDailyCost=null;DISPLACEMENT_COSTS.Autres=0},true);
 function setCustomEntry(dateKey,user,status,slot){if(!customTravelCosts[dateKey])customTravelCosts[dateKey]={};if(status!=='Autres'){const old=customTravelCosts[dateKey][user];if(slot&&old&&typeof old==='object'){delete old[slot];if(!old.am&&!old.pm)delete customTravelCosts[dateKey][user]}else if(!slot)delete customTravelCosts[dateKey][user]}else if(slot){const old=customTravelCosts[dateKey][user];const value=old&&typeof old==='object'?{...old}:{};value[slot]=activeOtherDailyCost;customTravelCosts[dateKey][user]=value}else customTravelCosts[dateKey][user]=activeOtherDailyCost;if(customTravelCosts[dateKey]&&!Object.keys(customTravelCosts[dateKey]).length)delete customTravelCosts[dateKey];window.CUSTOM_TRAVEL_COSTS=customTravelCosts}
 const priorSetSecondary=window.setSecondaryCode;window.setSecondaryCode=function(dateKey,user,status,slot,code){const result=priorSetSecondary.apply(this,arguments);setCustomEntry(dateKey,user,status,slot);return result};
 const priorSave=window.savePlanningAndSecondaryData;window.savePlanningAndSecondaryData=function(){const result=priorSave.apply(this,arguments);try{localStorage.setItem('team_custom_travel_costs',JSON.stringify(customTravelCosts))}catch(_){}if(customCostRef)customCostRef.set(customTravelCosts).catch(error=>console.error('[Coûts Autres] Firebase',error));return result};
@@ -9607,84 +8941,615 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
 })();
 </script>
 
-
-<style id="favorites-options-css-v2249">
-  /* Masquage fiable des favoris selon les options Admin, desktop et mobile. */
-  html.option-absence-types-disabled .activity-favourites-list .activity-favourite-chip.tool-CA,
-  html.option-absence-types-disabled .activity-favourites-list .activity-favourite-chip.tool-JDR,
-  html.option-absence-types-disabled .activity-favourites-list .activity-favourite-chip.tool-TT {
-    display: none !important;
-    visibility: hidden !important;
-  }
-  html.option-clermont-sites-disabled .activity-favourites-list .activity-favourite-chip.tool-CAR,
-  html.option-clermont-sites-disabled .activity-favourites-list .activity-favourite-chip.tool-LAD,
-  html.option-clermont-sites-disabled .activity-favourites-list .activity-favourite-chip.tool-COM,
-  html.option-clermont-sites-disabled .activity-favourites-list .activity-favourite-chip.tool-CTX {
-    display: none !important;
-    visibility: hidden !important;
-  }
-</style>
-
-
-<style id="favorites-left-reflow-v2250">
-  .activity-favourites-list {
-    justify-content: flex-start !important;
-    align-content: flex-start !important;
-  }
-</style>
-<script id="favorites-left-reflow-v2250-script">
-(function(){
+<script id="tab-change-reset-today-v2253">
+(function () {
   'use strict';
-  function realignFavouriteLists(){
-    document.querySelectorAll('.activity-favourites-list').forEach(list => {
-      list.scrollLeft = 0;
-      list.style.justifyContent = 'flex-start';
-    });
-  }
-  const optionClassObserver = new MutationObserver(mutations => {
-    if (!mutations.some(item => item.type === 'attributes' && item.attributeName === 'class')) return;
-    requestAnimationFrame(() => {
-      realignFavouriteLists();
-      requestAnimationFrame(realignFavouriteLists);
-    });
-  });
-  optionClassObserver.observe(document.documentElement, { attributes:true, attributeFilter:['class'] });
-  document.addEventListener('change', event => {
-    if (!['option-disable-absence-types','option-disable-clermont-sites'].includes(event.target?.id)) return;
-    requestAnimationFrame(() => {
-      realignFavouriteLists();
-      requestAnimationFrame(realignFavouriteLists);
-    });
-  });
-  window.addEventListener('load', realignFavouriteLists);
+  const previousSwitchTab = window.switchTab;
+  if (typeof previousSwitchTab !== 'function') return;
+  window.switchTab = function (viewId) {
+    const today = new Date();
+    currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    personalAnnualSelectedYear = today.getFullYear();
+    const result = previousSwitchTab.apply(this, arguments);
+    if (viewId === 'view-personal') {
+      const mobileTodayButton = document.getElementById('mobile-go-today');
+      if (window.matchMedia('(max-width:700px) and (orientation:portrait)').matches && mobileTodayButton) {
+        mobileTodayButton.click();
+      } else {
+        renderPersonalCalendar(currentDate.getFullYear(), currentDate.getMonth());
+      }
+    } else if (viewId === 'view-team') {
+      renderTeamCalendar(currentDate.getFullYear(), currentDate.getMonth());
+      const label = document.getElementById('team-mobile-month-label');
+      if (label) label.textContent = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(currentDate);
+    }
+    if (typeof updateTodayShortcut === 'function') updateTodayShortcut();
+    return result;
+  };
 })();
 </script>
 
-
-<style id="favorites-guaranteed-left-flow-v2251">
-  /* Flux inline volontaire : aucun centrage flex possible après masquage. */
-  #desktop-activity-favourites .activity-favourites-list,
-  #mobile-activity-favourites .activity-favourites-list,
-  #mobile-activity-sheet .activity-favourites-list {
-    display: block !important;
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    padding-left: 1px !important;
-    text-align: left !important;
-    white-space: nowrap !important;
-    overflow-x: auto !important;
-    direction: ltr !important;
+<style id="team-calendar-compact-v2255">
+  /* Vue Equipe plus compacte, sans modifier les donnees ni la navigation. */
+  #view-team .sticky-header-section {
+    margin-bottom: 8px !important;
   }
-  #desktop-activity-favourites .activity-favourite-chip,
-  #mobile-activity-favourites .activity-favourite-chip,
-  #mobile-activity-sheet .activity-favourite-chip {
-    display: inline-flex !important;
-    float: none !important;
-    margin: 0 6px 0 0 !important;
-    vertical-align: middle !important;
+  #view-team .team-subnav {
+    padding: 5px 8px !important;
+    gap: 5px !important;
+  }
+  #team-table-container > .month-section {
+    padding: 7px !important;
+    border-radius: 10px !important;
+  }
+  #team-table-container > .month-section > .month-section-title {
+    margin: -7px -7px 6px !important;
+    padding: 6px 9px !important;
+    font-size: .86rem !important;
+    line-height: 1.15 !important;
+  }
+  #view-team .team-table-wrapper table {
+    border-spacing: 1px !important;
+    font-size: .7rem !important;
+  }
+  #team-table-container th:not(.member-col) {
+    min-width: 43px !important;
+    padding: 3px 2px !important;
+  }
+  #team-table-container .team-day-number {
+    font-size: .66rem !important;
+  }
+  #team-table-container .team-weekday-name {
+    margin-top: 2px !important;
+    font-size: .48rem !important;
+  }
+  #team-table-container thead .member-col,
+  #team-table-container tbody .member-col {
+    width: 190px !important;
+    min-width: 190px !important;
+    max-width: 190px !important;
+    padding-left: 6px !important;
+    font-size: .72rem !important;
+  }
+  #team-table-container .member-pit {
+    margin-top: 1px !important;
+    font-size: .58rem !important;
+    line-height: 1.05 !important;
+  }
+  #team-table-container tbody tr,
+  #team-table-container tbody td {
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+  }
+  #team-table-container tbody td {
+    min-width: 27px !important;
+    padding: 2px 1px !important;
+    font-size: .66rem !important;
+  }
+  #team-table-container .halves-container {
+    gap: 1px !important;
+    min-height: 32px !important;
+  }
+  #team-table-container .day-half {
+    min-height: 15px !important;
+    padding: 0 1px !important;
+    font-size: .58rem !important;
+    line-height: 1 !important;
+  }
+  #team-table-container .secondary-code-initial {
+    transform: scale(.82);
+    transform-origin: top right;
+  }
+  #team-table-container .manager-badge {
+    min-height: 15px !important;
+    margin-left: 3px !important;
+    padding: 2px 4px !important;
+    font-size: .48rem !important;
+  }
+  #team-table-container.team-three-months {
+    gap: 12px !important;
+  }
+  @media (max-width:700px) and (orientation:portrait) {
+    #view-team .team-subnav {
+      gap: 5px !important;
+      padding: 6px !important;
+    }
+    #team-table-container > .month-section {
+      padding: 6px !important;
+    }
+    #team-table-container > .month-section > .month-section-title {
+      margin: -6px -6px 5px !important;
+      padding: 5px 7px !important;
+      font-size: .78rem !important;
+    }
+    #view-team .team-table-wrapper .member-col,
+    #team-table-container thead .member-col,
+    #team-table-container tbody .member-col {
+      width: 128px !important;
+      min-width: 128px !important;
+      max-width: 128px !important;
+      padding-left: 5px !important;
+      font-size: .66rem !important;
+    }
+    #team-table-container th:not(.member-col) {
+      min-width: 42px !important;
+    }
+    #team-table-container tbody tr,
+    #team-table-container tbody td {
+      height: 37px !important;
+      min-height: 37px !important;
+      max-height: 37px !important;
+    }
   }
 </style>
 
+<style id="combined-travel-fields-v2256-safe">
+.travel-combined-field{display:grid;gap:6px;margin-top:12px}.travel-combined-field label{color:var(--text-muted);font-size:.75rem;font-weight:800}.travel-combined-field select{width:100%;min-height:42px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);padding:8px 10px;font:inherit;font-weight:700}.secondary-code-options button.selected{outline:3px solid var(--primary);outline-offset:1px}.app-modal-actions .btn-primary.app-modal-ok{width:auto;margin-top:6px}@media(max-width:700px){.travel-combined-field select{min-height:44px;font-size:16px}}
+</style>
+
+<style id="annual-groups-weekend-ed-v2258">
+#view-annual .form-box>div[style*="grid-template-columns"]>div:has(#stat-jdr-count),
+#view-annual .form-box>div[style*="grid-template-columns"]>div:has(#stat-ca-count),
+#view-annual .form-box>div[style*="grid-template-columns"]>div:has(#stat-form-count){display:none!important}
+#view-annual .form-box>div[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+#view-annual table:has(#annual-detail-tbody) th,
+#view-annual table:has(#annual-detail-tbody) td{display:table-cell!important}
+#view-personal .day-card.weekend{opacity:.82!important;cursor:pointer!important}
+#view-personal .day-card.weekend:hover{transform:translateY(-1px);border-color:var(--accent)!important}
+#view-personal.brush-mode-active .day-card.weekend{cursor:crosshair!important}
+.mobile-day-row.weekend,.mobile-focus-card.weekend{opacity:1!important;pointer-events:auto!important}
+</style>
+
+<script id="kpi-cost-centre-monthly-safe-v2260">
+(function(){
+  'use strict';
+  let chart=null;
+  const months=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
+  function valueAt(source,slot){if(!source)return null;return typeof source==='object'?source[slot]:source}
+  function escapeOption(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function populate(){
+    const select=document.getElementById('kpi-cost-centre-filter');if(!select)return;
+    const current=select.value||'ALL', found=new Set();
+    (window.COST_CENTRE_DATA&&Object.values(window.COST_CENTRE_DATA)||[]).forEach(day=>Object.values(day||{}).forEach(value=>{if(value&&typeof value==='object')Object.values(value).forEach(v=>v&&found.add(v));else if(value)found.add(value)}));
+    if(typeof adminConfig!=='undefined'&&adminConfig&&Array.isArray(adminConfig.costCentres))adminConfig.costCentres.forEach(v=>v&&found.add(v));
+    select.innerHTML='<option value="ALL">Tous les centres</option>'+[...found].sort((a,b)=>String(a).localeCompare(String(b),'fr')).map(v=>`<option value="${escapeOption(v)}">${escapeOption(v)}</option>`).join('');
+    if([...select.options].some(o=>o.value===current))select.value=current;
+  }
+  function allowedUser(user){
+    const pit=document.getElementById('kpi-pit-filter')?.value||'ALL', person=document.getElementById('kpi-person-filter')?.value||'ALL';
+    const member=ALL_MEMBERS.find(m=>m.firstName===user);return (pit==='ALL'||member?.pit===pit)&&(person==='ALL'||user===person);
+  }
+  window.renderKPICostCentreMonthlyChart=function(){
+    populate();const canvas=document.getElementById('kpi-cost-centre-monthly-chart');if(!canvas||typeof Chart==='undefined')return;
+    const year=Number(document.getElementById('kpi-year')?.value||new Date().getFullYear()), monthFilter=document.getElementById('kpi-month')?.value||'ALL', centreFilter=document.getElementById('kpi-cost-centre-filter')?.value||'ALL';
+    const centres=new Set(), totals={};
+    Object.entries(calendarData||{}).forEach(([dateKey,day])=>{const parts=dateKey.split('-').map(Number), y=parts[0], m=parts[1]-1;if(y!==year||(monthFilter!=='ALL'&&m!==Number(monthFilter)))return;
+      Object.entries(day||{}).forEach(([user,status])=>{if(!allowedUser(user))return;const slots=typeof status==='object'&&status?['am','pm']:[null];slots.forEach(slot=>{const destination=slot?status[slot]:status;if(!DISPLACEMENT_CODES.includes(destination))return;
+        const centre=valueAt(window.COST_CENTRE_DATA?.[dateKey]?.[user],slot)||'Non renseigné';if(centreFilter!=='ALL'&&centre!==centreFilter)return;centres.add(centre);
+        const custom=valueAt(window.CUSTOM_TRAVEL_COSTS?.[dateKey]?.[user],slot);const daily=destination==='Autres'&&Number.isFinite(Number(custom))?Number(custom):(DISPLACEMENT_COSTS[destination]||0);const amount=daily*(slot?0.5:1);
+        if(!totals[centre])totals[centre]=Array(12).fill(0);totals[centre][m]+=amount;
+      })});
+    });
+    if(chart)chart.destroy();const labels=monthFilter==='ALL'?months:[months[Number(monthFilter)]], palette=['#2563eb','#7c3aed','#059669','#d97706','#dc2626','#0891b2','#4f46e5','#65a30d'];
+    const datasets=[...centres].sort((a,b)=>a.localeCompare(b,'fr')).map((centre,i)=>({label:centre,data:monthFilter==='ALL'?totals[centre]:[totals[centre][Number(monthFilter)]],backgroundColor:palette[i%palette.length],borderColor:palette[i%palette.length],borderWidth:1,borderRadius:4}));
+    chart=new Chart(canvas.getContext('2d'),{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,animation:false,scales:{x:{stacked:false},y:{beginAtZero:true}},plugins:{legend:{display:true,position:'bottom'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(c.parsed.y)}`}}}}});
+  };
+  document.getElementById('view-kpi')?.addEventListener('change',event=>{if(['kpi-year','kpi-month','kpi-pit-filter','kpi-person-filter'].includes(event.target.id))renderKPICostCentreMonthlyChart()});
+  window.addEventListener('load',()=>{populate();setTimeout(renderKPICostCentreMonthlyChart,0)});
+})();
+</script>
+
+<style id="secondary-modal-actions-balanced-v2261">
+  #secondary-code-modal .app-modal-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+    margin-top: 18px !important;
+  }
+  #secondary-code-modal .app-modal-actions > button {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 48px !important;
+    margin: 0 !important;
+    padding: 10px 18px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 10px !important;
+    box-sizing: border-box !important;
+    font: inherit !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+  }
+  @media (max-width: 700px) {
+    #secondary-code-modal .app-modal-actions {
+      gap: 10px !important;
+    }
+    #secondary-code-modal .app-modal-actions > button {
+      min-height: 46px !important;
+      padding: 9px 12px !important;
+    }
+  }
+</style>
+
+<style id="remove-autres-selector-v2268">
+  .tool-btn[data-status="Autres"],
+  [data-mobile-status="Autres"],
+  #mobile-activity-options .tool-Autres {
+    display: none !important;
+  }
+</style>
+
+<style id="travel-cost-settings-v2269">
+  .travel-costs-settings-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+  .travel-cost-row{display:grid;grid-template-columns:58px minmax(0,1fr);align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--border-soft);border-radius:11px;background:color-mix(in srgb,var(--card) 92%,var(--primary) 8%)}
+  .travel-cost-row strong{font-size:.8rem;color:var(--text)}
+  .travel-cost-input-wrap{display:flex;align-items:center;gap:6px}
+  .travel-cost-input-wrap input{width:100%;min-width:0;height:38px;padding:7px 9px;text-align:right;font-weight:800}
+  .travel-cost-input-wrap span{color:var(--text-muted);font-size:.72rem;font-weight:800;white-space:nowrap}
+  .travel-costs-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+  .travel-costs-actions button{width:100%;min-height:42px;margin:0}
+  .travel-costs-settings-message{min-height:18px;margin:8px 0 0;color:var(--success);font-size:.7rem;font-weight:750;text-align:center}
+  @media(max-width:700px){.travel-costs-settings-list{grid-template-columns:1fr}.travel-costs-actions{grid-template-columns:1fr}.travel-cost-row{grid-template-columns:64px minmax(0,1fr)}.travel-cost-input-wrap input{font-size:16px}}
+</style>
+
+<script id="travel-cost-settings-v2269-script">
+(function(){
+  'use strict';
+  const STORAGE_KEY='planning_travel_costs_v1';
+  const CODES=['ARA','ALE','CGR','HBG','LVL','NKE','SPA','UCH','VLD','WAT','ZAL','CTX','COM'];
+  const DEFAULTS={ARA:210,ALE:220,CGR:250,HBG:225,LVL:200,NKE:279,SPA:365,UCH:249,VLD:210,WAT:306,ZAL:200,CTX:210,COM:220};
+  function read(){try{const value=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');return value&&typeof value==='object'?value:{}}catch(_){return {}}}
+  function apply(values){CODES.forEach(code=>{const value=Number(values[code]);DISPLACEMENT_COSTS[code]=Number.isFinite(value)&&value>=0?value:DEFAULTS[code]})}
+  function render(values){
+    const root=document.getElementById('travel-costs-settings-list');if(!root)return;root.innerHTML='';
+    CODES.forEach(code=>{const row=document.createElement('label');row.className='travel-cost-row';row.innerHTML=`<strong>${code}</strong><span class="travel-cost-input-wrap"><input type="number" min="0" step="1" inputmode="decimal" data-travel-cost-code="${code}" value="${Number(values[code]??DISPLACEMENT_COSTS[code]??DEFAULTS[code])}"><span>€ / jour</span></span>`;root.appendChild(row)});
+  }
+  function showMessage(text,error){const target=document.getElementById('travel-costs-settings-message');if(!target)return;target.textContent=text;target.style.color=error?'var(--danger)':'var(--success)'}
+  const stored=read();apply({...DEFAULTS,...stored});
+  window.saveTravelCostsSettings=function(){
+    if(typeof isAdmin==='function'&&!isAdmin())return;
+    const values={};let valid=true;
+    document.querySelectorAll('[data-travel-cost-code]').forEach(input=>{const value=Number(String(input.value).replace(',','.'));if(!Number.isFinite(value)||value<0){valid=false;input.focus();return}values[input.dataset.travelCostCode]=value});
+    if(!valid){showMessage('Tous les coûts doivent être supérieurs ou égaux à 0 €.',true);return}
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify(values))}catch(error){showMessage('Sauvegarde impossible sur cet appareil.',true);return}
+    apply(values);showMessage('Base de coûts enregistrée. Les KPI utilisent maintenant ces montants.',false);
+    if(document.getElementById('view-kpi')?.classList.contains('active')&&typeof renderKPICharts==='function')renderKPICharts();
+    if(typeof renderKPICostCentreMonthlyChart==='function')renderKPICostCentreMonthlyChart();
+  };
+  window.resetTravelCostsSettings=function(){render(DEFAULTS);showMessage('Valeurs par défaut chargées. Cliquez sur Enregistrer les coûts pour les appliquer.',false)};
+  function initialise(){render({...DEFAULTS,...read()});apply({...DEFAULTS,...read()})}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialise,{once:true});else initialise();
+})();
+</script>
+
+<style id="settings-compact-two-columns-v2270">
+/* Parametres compacts et affichage web en deux colonnes */
+@media (min-width: 901px) {
+  #view-settings > .form-box {
+    max-width: 1120px !important;
+    width: min(1120px, calc(100% - 24px)) !important;
+    margin: 10px auto !important;
+    padding: 14px !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    align-items: start !important;
+    text-align: left !important;
+  }
+
+  #view-settings > .form-box > h2 {
+    grid-column: 1 / -1 !important;
+    margin: 0 0 2px !important;
+    text-align: center !important;
+    font-size: 1rem !important;
+  }
+
+  #view-settings > .form-box > .settings-submenu-tile,
+  #view-settings > .form-box > #manager-team-deletion-section {
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  #view-settings > .form-box > #manager-team-deletion-section {
+    display: contents;
+  }
+
+  #view-settings > .form-box > #manager-team-deletion-section > .settings-submenu-tile {
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+}
+
+/* Police et espacements plus compacts dans tout l'onglet Parametres */
+#view-settings .settings-submenu-tile {
+  padding: 12px !important;
+}
+
+#view-settings .settings-submenu-tile h3 {
+  margin: 0 0 5px !important;
+  font-size: 0.86rem !important;
+  line-height: 1.2 !important;
+}
+
+#view-settings .settings-submenu-tile h4 {
+  margin: 7px 0 5px !important;
+  font-size: 0.75rem !important;
+}
+
+#view-settings .settings-submenu-tile p,
+#view-settings .settings-submenu-tile small,
+#view-settings .planning-option-row small {
+  font-size: 0.66rem !important;
+  line-height: 1.3 !important;
+}
+
+#view-settings .planning-option-row strong,
+#view-settings .admin-editable-row strong,
+#view-settings .form-group label {
+  font-size: 0.72rem !important;
+}
+
+#view-settings .planning-option-row {
+  min-height: 42px !important;
+  padding: 7px 8px !important;
+}
+
+#view-settings .travel-costs-settings-list {
+  gap: 7px !important;
+  margin-top: 8px !important;
+}
+
+#view-settings .travel-cost-row {
+  grid-template-columns: 48px minmax(0, 1fr) !important;
+  gap: 7px !important;
+  padding: 6px 8px !important;
+  border-radius: 8px !important;
+}
+
+#view-settings .travel-cost-row strong {
+  font-size: 0.7rem !important;
+}
+
+#view-settings .travel-cost-input-wrap input {
+  height: 32px !important;
+  padding: 4px 7px !important;
+  font-size: 0.74rem !important;
+}
+
+#view-settings .travel-cost-input-wrap span {
+  font-size: 0.62rem !important;
+}
+
+#view-settings button,
+#view-settings input,
+#view-settings select {
+  font-size: 0.72rem !important;
+}
+
+#view-settings .travel-costs-actions {
+  gap: 8px !important;
+  margin-top: 9px !important;
+}
+
+#view-settings .travel-costs-actions button {
+  min-height: 36px !important;
+}
+
+@media (max-width: 900px) {
+  #view-settings > .form-box {
+    max-width: 480px !important;
+    display: block !important;
+  }
+
+  #view-settings .settings-submenu-tile {
+    margin-bottom: 10px !important;
+  }
+}
+
+</style>
+
+<style id="travel-cost-cards-app-style-v2271">
+  /* Harmonisation des cases de coûts avec les autres blocs de Paramètres */
+  #view-settings .travel-cost-row {
+    border: 1px solid var(--border-soft) !important;
+    background: var(--input-bg) !important;
+    box-shadow: none !important;
+  }
+
+  #view-settings .travel-cost-row:hover {
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border)) !important;
+    background: color-mix(in srgb, var(--accent-soft) 42%, var(--input-bg)) !important;
+  }
+
+  #view-settings .travel-cost-input-wrap input {
+    border: 1px solid var(--border) !important;
+    background: var(--card) !important;
+    color: var(--text) !important;
+    box-shadow: none !important;
+  }
+
+  #view-settings .travel-cost-input-wrap input:hover {
+    border-color: var(--accent) !important;
+  }
+
+  #view-settings .travel-cost-input-wrap input:focus {
+    outline: none !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 2px var(--accent-soft) !important;
+  }
+
+  [data-theme="light"] #view-settings .travel-cost-row {
+    background: var(--input-bg) !important;
+  }
+
+  [data-theme="dark"] #view-settings .travel-cost-row {
+    background: var(--input-bg) !important;
+  }
+</style>
+
+<style id="settings-masonry-no-gaps-v2272">
+  /* Empilement naturel des panneaux pour supprimer les trous entre les blocs. */
+  @media (min-width: 901px) {
+    #view-settings > .form-box {
+      display: block !important;
+      max-width: 1120px !important;
+      width: min(1120px, calc(100% - 24px)) !important;
+      column-count: 2 !important;
+      column-gap: 12px !important;
+      padding: 14px !important;
+      text-align: left !important;
+    }
+
+    #view-settings > .form-box > h2 {
+      column-span: all !important;
+      display: block !important;
+      margin: 0 0 12px !important;
+      text-align: center !important;
+    }
+
+    #view-settings > .form-box > .settings-submenu-tile,
+    #view-settings > .form-box > #manager-team-deletion-section > .settings-submenu-tile {
+      display: inline-block;
+      width: 100% !important;
+      margin: 0 0 12px !important;
+      vertical-align: top !important;
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      -webkit-column-break-inside: avoid !important;
+    }
+
+    #view-settings > .form-box > #manager-team-deletion-section {
+      display: inline !important;
+    }
+  }
+
+  @media (max-width: 900px) {
+    #view-settings > .form-box {
+      column-count: 1 !important;
+      display: block !important;
+    }
+  }
+</style>
+
+<style id="personal-annual-four-months-v2273">
+  /* Mon Calendrier, vue annuelle : 4 mois par ligne comme la maquette. */
+  #view-personal .personal-multi-container.months-12 {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+  }
+
+  #view-personal .personal-multi-container.months-12 .month-section {
+    min-width: 0 !important;
+    min-height: 286px !important;
+    margin: 0 !important;
+    padding: 0 7px 8px !important;
+    overflow: hidden !important;
+    border: 2px solid var(--accent) !important;
+    border-radius: 11px !important;
+    background: var(--card) !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+
+  #view-personal .personal-multi-container.months-12 .month-section-title {
+    margin: 0 -7px 7px !important;
+    padding: 6px 8px !important;
+    min-height: 31px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-bottom: 2px solid var(--accent) !important;
+    background: color-mix(in srgb, var(--card) 88%, var(--accent) 12%) !important;
+    color: var(--text) !important;
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+    line-height: 1.1 !important;
+    text-align: center !important;
+    text-transform: capitalize !important;
+  }
+
+  #view-personal .personal-multi-container.months-12 .calendar-grid {
+    grid-template-columns: 22px repeat(7, minmax(0, 1fr)) !important;
+    gap: 3px !important;
+    align-items: stretch !important;
+  }
+
+  #view-personal .personal-multi-container.months-12 .week-number-header,
+  #view-personal .personal-multi-container.months-12 .day-header {
+    min-width: 0 !important;
+    padding: 2px 0 3px !important;
+    color: var(--text-muted) !important;
+    font-size: 0.55rem !important;
+    font-weight: 800 !important;
+  }
+
+  #view-personal .personal-multi-container.months-12 .week-number-cell {
+    min-height: 42px !important;
+    padding: 2px 0 !important;
+    border-radius: 5px !important;
+    font-size: 0.48rem !important;
+  }
+
+  #view-personal .personal-multi-container.months-12 .day-card {
+    min-width: 0 !important;
+    min-height: 42px !important;
+    padding: 3px !important;
+    border-radius: 8px !important;
+  }
+
+  #view-personal .personal-multi-container.months-12 .day-num {
+    margin: 0 0 1px !important;
+    font-size: 0.62rem !important;
+    line-height: 1 !important;
+  }
+
+  #view-personal .personal-multi-container.months-12 .halves-container {
+    gap: 1px !important;
+  }
+
+  #view-personal .personal-multi-container.months-12 .day-half {
+    min-height: 13px !important;
+    padding: 0 1px !important;
+    border-radius: 3px !important;
+    font-size: 0.46rem !important;
+    line-height: 1 !important;
+  }
+
+  #view-personal .personal-multi-container.months-12 .status-badge,
+  #view-personal .personal-multi-container.months-12 .formation-short-label {
+    min-width: 0 !important;
+    font-size: 0.48rem !important;
+    line-height: 1 !important;
+  }
+
+  @media (max-width: 1250px) {
+    #view-personal .personal-multi-container.months-12 {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+  }
+
+  @media (max-width: 950px) {
+    #view-personal .personal-multi-container.months-12 {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+  }
+
+  @media (max-width: 700px) {
+    #view-personal .personal-multi-container.months-12 {
+      grid-template-columns: 1fr !important;
+      gap: 8px !important;
+    }
+
+    #view-personal .personal-multi-container.months-12 .month-section {
+      min-height: 0 !important;
+    }
+  }
+</style>
 </body>
 </html>
