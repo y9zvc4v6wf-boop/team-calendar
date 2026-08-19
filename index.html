@@ -2,14 +2,13 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.2.79">
+  <meta name="application-version" content="2.3.0">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Planning Équipe — TT, Congés & KPI</title>
 
-  
   <script>
     (function () {
       try {
@@ -22,16 +21,13 @@
     })();
   </script>
 
-  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-  
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
@@ -61,7 +57,6 @@
       --badge-neutral-text: #e2e8f0;
       --status-text-color: #ffffff;
 
-      
       --color-CA: #eb7405;
       --color-JDR: #A26000;
       --color-Formation: #F48FB1;
@@ -89,7 +84,7 @@
       --pit-prep: #C78FFF;
       --ult-ara: #FFEA00;
     }
-    
+
     [data-theme="light"] {
       --bg: #f4f6fb;
       --card: #ffffff;
@@ -153,7 +148,6 @@
 
     html { color-scheme: dark; }
     [data-theme="light"] { color-scheme: light; }
-
 
     body {
       font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -331,7 +325,6 @@
     .tool-btn:hover { filter: brightness(1.12); color: var(--status-text-color); }
     .tool-btn.active { border-color: rgba(120,120,120,0.5); transform: scale(1.05); box-shadow: 0 0 0 2px var(--accent-soft); }
 
-    
     .tool-CA, .bg-CA, .day-half.bg-CA { background: var(--color-CA) !important; color: var(--status-text-color); }
     .tool-JDR, .bg-JDR, .day-half.bg-JDR { background: var(--color-JDR) !important; color: var(--status-text-color); }
     .tool-Formation, .bg-Formation, .day-half.bg-Formation { background: var(--color-Formation) !important; color: var(--status-text-color); }
@@ -354,7 +347,6 @@
     .tool-Autres, .bg-Autres, .day-half.bg-Autres { background: var(--color-Autres) !important; color: var(--status-text-color); }
     .tool-PRESENT { background: var(--badge-neutral-bg); color: var(--badge-neutral-text) !important; border: 1px solid var(--border); }
 
-    
     .calendar-grid {
       display: grid; grid-template-columns: 26px repeat(7, 1fr); gap: 3px; align-items: stretch;
     }
@@ -417,7 +409,6 @@
     }
     .day-half:hover { border-color: var(--accent); background: var(--accent-soft); }
 
-    
     .personal-multi-container {
       display: grid;
       gap: 6px;
@@ -483,7 +474,6 @@
       padding: 1px 2px;
     }
 
-    
     #view-presence [class*="bg-"],
     #view-presence .status-badge,
     #view-personal [class*="bg-"],
@@ -560,7 +550,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     #team-table-container table { border-collapse: separate; border-spacing: 2px; }
     #team-table-container th, #team-table-container td { border-radius: 4px; }
 
-    
     #team-table-container .team-table-wrapper { position: relative; }
     .team-column-outline {
       position: absolute;
@@ -581,7 +570,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.18);
     }
 
-    
     #team-table-container th.today-header,
     #team-table-container td.today-cell,
     #team-table-container th.holiday-header,
@@ -669,8 +657,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       from { opacity: 0; transform: translateY(2px); }
       to { opacity: 1; transform: translateY(0); }
     }
-  
-    
+
     .app-modal-overlay {
       position: fixed;
       inset: 0;
@@ -726,8 +713,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       from { opacity: 0; transform: translateY(8px) scale(0.98); }
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
-  
-    
+
     #view-presence .presence-days-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -918,8 +904,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     .login-name-option:hover,
     .login-name-option.selected { background: var(--accent-soft); }
     .login-name-option .login-option-pit { margin-left: auto; color: var(--text-muted); font-size: 0.72rem; }
-  
-    
+
     #view-annual .form-box {
       max-width: 940px !important;
       margin: 2px auto !important;
@@ -943,8 +928,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     #view-annual #annual-destination-chart-box h3 { margin-bottom: 2px !important; font-size: 0.66rem !important; }
     #view-annual #annual-destination-chart { height: 112px !important; }
     #view-annual .sticky-header-section { margin-bottom: 2px !important; padding-bottom: 1px !important; }
-  
-    
+
     #view-annual .form-box {
       display: grid;
       grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
@@ -978,7 +962,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
   </style>
 
-  
   <meta name="theme-color" content="#0a0e1a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -987,16 +970,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   <meta name="format-detection" content="telephone=no">
   <link rel="manifest" href="manifest.webmanifest">
 
-  
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 
-  
   <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/web-icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icons/web-icon-512.png">
-
 
 <style id="remember-session-boot-styles">
   #remember-session-boot {
@@ -1051,7 +1031,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       </button>
     </div>
 
-    
     <header id="main-header" style="display: none;">
       <div class="user-greeting" id="header-greeting"></div>
       <div class="bibendum-head-medallion" aria-hidden="true" title="MS B2B PIT Archi">
@@ -1065,7 +1044,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       </div>
     </header>
 
-    
     <div class="tabs" id="main-tabs" style="display: none;">
       <button class="tab-btn" id="tab-presence" onclick="switchTab('view-presence')" style="display: none;">👥 Présence Équipe</button>
       <button class="tab-btn" id="tab-personal" onclick="switchTab('view-personal')">Mon Calendrier</button>
@@ -1076,7 +1054,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       <button class="tab-btn danger" onclick="logout()">Déconnexion</button>
     </div>
 
-    
     <div id="view-login" class="view active">
       <div class="form-box">
         <h2>🔒 Connexion</h2>
@@ -1119,7 +1096,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       </div>
     </div>
 
-    
     <div id="view-create-profile" class="view">
       <div class="form-box">
         <h2>👤 Nouveau Profil</h2>
@@ -1151,7 +1127,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       </div>
     </div>
 
-    
     <div id="view-settings" class="view">
       <div class="form-box" style="max-width: 480px;">
         <h2>⚙️ Paramètres</h2>
@@ -1222,7 +1197,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       </div>
     </div>
 
-    
     <div id="view-presence" class="view">
       <div class="form-box" style="max-width: 1100px; text-align: left;">
         <h2>👥 Présence aujourd'hui et demain - Équipe</h2>
@@ -1231,7 +1205,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       </div>
     </div>
 
-    
     <div id="view-personal" class="view">
       <div class="sticky-header-section">
         <div class="team-subnav" style="margin-bottom: 6px;">
@@ -1269,7 +1242,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       <div id="personal-grids-container"></div>
     </div>
 
-    
     <div id="view-team" class="view">
       <div class="sticky-header-section">
         <button class="btn-secondary" id="btn-back-login" style="margin-bottom: 6px; width: auto; display: none;" onclick="logout()">◄ Retour à la connexion</button>
@@ -1292,7 +1264,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       <div id="team-table-container"></div>
     </div>
 
-    
     <div id="view-annual" class="view">
       <div class="sticky-header-section" style="padding-bottom: 2px;">
         <div class="team-subnav" style="padding: 4px 8px; gap: 6px;">
@@ -1348,7 +1319,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       </div>
     </div>
 
-    
     <div id="view-kpi" class="view">
       <div class="sticky-header-section">
         <button class="btn-secondary" id="btn-back-login-kpi" style="margin-bottom: 6px; width: auto; display: none;" onclick="logout()">◄ Retour à la connexion</button>
@@ -1449,7 +1419,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   </div>
 
-
   <div id="secondary-code-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="secondary-code-modal-title" onclick="handleSecondaryCodeOverlay(event)">
     <div class="app-modal-card secondary-code-modal-card">
       <div class="app-modal-accent"></div>
@@ -1502,6 +1471,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         <div class="app-modal-heading"><div class="app-modal-icon">💶</div><div><h2 id="other-travel-cost-title" class="app-modal-title">Coût journalier du déplacement</h2><p class="app-modal-subtitle">Type de jour : Autres</p></div></div>
         <label class="other-cost-label" for="other-travel-cost-input">Coût journalier en euros</label>
         <div class="other-cost-input-row"><input id="other-travel-cost-input" type="number" min="0" step="1" inputmode="decimal" placeholder="Ex. 250"><span>€ / jour</span></div>
+        <div class="transport-choice-group" id="other-transport-choice-group"><span>Moyen de transport</span><div class="transport-choice-grid"><label class="transport-choice-card"><input type="radio" name="other-travel-transport" value="Voiture"><span>🚗 Voiture</span></label><label class="transport-choice-card"><input type="radio" name="other-travel-transport" value="Avion"><span>✈️ Avion</span></label><label class="transport-choice-card"><input type="radio" name="other-travel-transport" value="MAS"><span>🚆 MAS</span></label></div></div>
         <div class="travel-combined-field"><label for="other-travel-secondary-code">Code secondaire</label><select id="other-travel-secondary-code"></select></div>
         <div class="travel-combined-field"><label for="other-travel-cost-centre">Centre de coût</label><select id="other-travel-cost-centre"></select></div>
         <p id="other-travel-cost-error" class="other-cost-error" aria-live="polite"></p>
@@ -1551,6 +1521,17 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   let usersPins = {};
   let customMembers = [];
   let ALL_MEMBERS = [];
+  let memberLookupCache = { source: null, size: -1, map: new Map() };
+  function getMemberByFirstName(firstName) {
+    if (memberLookupCache.source !== ALL_MEMBERS || memberLookupCache.size !== ALL_MEMBERS.length) {
+      memberLookupCache = {
+        source: ALL_MEMBERS,
+        size: ALL_MEMBERS.length,
+        map: new Map(ALL_MEMBERS.map(member => [member.firstName, member]))
+      };
+    }
+    return memberLookupCache.map.get(firstName);
+  }
   const legacyNameMappings = {};
   let selectedTool = 'CA';
   let brushModeEnabled = true;
@@ -1743,7 +1724,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       db.ref('planning').on('value', (snap) => {
         calendarData = snap.val() || {};
         if (migrateLegacyPlanningKeys()) db.ref('planning').set(calendarData);
-        // Met à jour le compteur LAD même si la vue Présence n'est pas ouverte.
         window.updateLadPresenceCounter?.();
         if(currentUser || document.getElementById('view-team').classList.contains('active') || document.getElementById('view-kpi').classList.contains('active') || document.getElementById('view-presence').classList.contains('active') || document.getElementById('view-annual').classList.contains('active')) {
           renderViews();
@@ -1810,7 +1790,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       return { ...member, isManager: nextManager, isAdmin: nextAdmin };
     });
 
-    // Répercute la source de vérité des rôles dans custom_users pour les anciens clients.
     if (profilesChangedByOverride) saveCustomUsers();
     ALL_MEMBERS = [...BASE_TEAM_MEMBERS, ...customMembers];
     populateDropdowns();
@@ -1840,7 +1819,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
            dateObj.getDate() === todayDate;
   }
 
-  const SECONDARY_CODE_DESTINATIONS = ['ARA', 'ALE', 'SPA', 'CGR', 'NKE', 'WAT', 'LVL', 'LLV', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM'];
+  const SECONDARY_CODE_DESTINATIONS = ['ARA', 'ALE', 'SPA', 'CGR', 'NKE', 'WAT', 'LVL', 'LLV', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM', 'Autres'];
   const SECONDARY_CODES = ['VSM', 'WKS', 'PRJ', 'SPU', 'FOR', 'VFO', 'VMA', 'RSX'];
 
   function requiresSecondaryCode(status) { return SECONDARY_CODE_DESTINATIONS.includes(status); }
@@ -2006,7 +1985,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     if (currentUser) return;
     const greeting = document.getElementById('header-greeting');
     if (!greeting) return;
-    const member = ALL_MEMBERS.find(item => item.firstName === firstName);
+    const member = getMemberByFirstName(firstName);
     if (!member) {
       greeting.textContent = getTimeAwareGreeting();
       return;
@@ -2020,7 +1999,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   function selectLoginName(firstName) {
     const userSelect = document.getElementById('login-name');
     userSelect.value = firstName;
-    const user = ALL_MEMBERS.find(member => member.firstName === firstName);
+    const user = getMemberByFirstName(firstName);
     const content = document.getElementById('login-name-trigger-content');
     if (user) {
       const badge = user.isManager ? '<span class="manager-badge">Manager</span>' : '';
@@ -2130,7 +2109,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       const currentAnnPerson = annualPerson.value;
       annualPerson.innerHTML = '';
       let allowedMembers = ALL_MEMBERS;
-      const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
+      const userObj = getMemberByFirstName(currentUser);
       if (hasAdminAccess(userObj) || (userObj && userObj.isManager)) {
         allowedMembers = ALL_MEMBERS;
       } else if (currentUser) {
@@ -2179,7 +2158,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   function loginSuccess(name) {
     currentUser = name;
     document.getElementById('login-pin').value = '';
-    const userObj = ALL_MEMBERS.find(m => m.firstName === name);
+    const userObj = getMemberByFirstName(name);
     let greetingHtml = `${getTimeAwareGreeting()}, ${currentUser}`;
     if (userObj && userObj.isAdmin) greetingHtml += ` <span class="manager-badge">Admin</span>`;
     else if (userObj && userObj.isManager) greetingHtml += ` <span class="manager-badge">Manager</span>`;
@@ -2356,7 +2335,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 
   async function deleteTeamMemberAccount(memberName) {
-    const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
+    const userObj = getMemberByFirstName(currentUser);
     if (!hasManagerAccess(userObj)) return;
 
     if (await appConfirm(`Voulez-vous vraiment supprimer le compte de ${memberName} ?`, { danger: true })) {
@@ -2381,7 +2360,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   function switchTab(viewId) {
     if (viewId === 'view-kpi') {
-      const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
+      const userObj = getMemberByFirstName(currentUser);
       if (!hasManagerAccess(userObj)) {
         alert("Accès refusé : cette page est réservée aux profils Manager ou Administrateur.");
         return;
@@ -2510,8 +2489,23 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         selectedSecondaryCode = secondaryCode || null;
         selectedButton.title = secondaryCode ? `${requestedTool} • ${secondaryCode}` : requestedTool;
       };
-      if (requiresSecondaryCode(requestedTool)) openSecondaryCodeModal(requestedTool, activateTool);
-      else activateTool(null);
+      if (requestedTool === 'Autres') {
+        toolBtns.forEach(button => button.classList.remove('active'));
+        selectedButton.classList.add('active');
+        selectedTool = 'Autres';
+        selectedSecondaryCode = null;
+        selectedCostCentre = null;
+        selectedButton.title = 'Autres';
+        openOtherDayModal(() => {
+          selectedTool = 'Autres';
+          selectedButton.classList.add('active');
+          selectedButton.title = selectedSecondaryCode ? `Autres • ${selectedSecondaryCode}` : 'Autres';
+        });
+      } else if (requiresSecondaryCode(requestedTool)) {
+        openSecondaryCodeModal(requestedTool, activateTool);
+      } else {
+        activateTool(null);
+      }
     };
   });
 
@@ -2623,7 +2617,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   });
 
   function exportPlanningToExcel() {
-    const userObj = ALL_MEMBERS.find(member => member.firstName === currentUser);
+    const userObj = getMemberByFirstName(currentUser);
     if (!hasManagerAccess(userObj)) {
       alert("Accès refusé : l'export Excel est réservé aux Managers ou Administrateurs.");
       return;
@@ -2636,7 +2630,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     Object.keys(calendarData).sort().forEach(dateKey => {
       const dayData = calendarData[dateKey] || {};
       Object.keys(dayData).sort().forEach(firstName => {
-        const member = ALL_MEMBERS.find(item => item.firstName === firstName);
+        const member = getMemberByFirstName(firstName);
         const value = dayData[firstName];
         const base = {
           Date: dateKey,
@@ -2671,14 +2665,15 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 
   function renderSettingsView() {
-    const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
+    const userObj = getMemberByFirstName(currentUser);
     const managerSection = document.getElementById('manager-team-deletion-section');
     if (hasManagerAccess(userObj)) {
       managerSection.style.display = 'block';
-      document.getElementById('manager-pit-name').textContent = userObj.pit;
+      const adminScope = hasAdminAccess(userObj);
+      document.getElementById('manager-pit-name').textContent = adminScope ? 'Tous les utilisateurs' : userObj.pit;
       const teamListContainer = document.getElementById('team-members-list-for-deletion');
       teamListContainer.innerHTML = '';
-      const teamMembers = ALL_MEMBERS.filter(m => m.pit === userObj.pit && m.firstName !== currentUser);
+      const teamMembers = ALL_MEMBERS.filter(m => m.firstName !== currentUser && (adminScope || m.pit === userObj.pit));
       if (teamMembers.length === 0) {
         teamListContainer.innerHTML = '<p style="font-size: 0.78rem; color: var(--text-dim);">Aucun autre membre.</p>';
       } else {
@@ -2703,7 +2698,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 
   function renderTeamPresence() {
-    const userObj = ALL_MEMBERS.find(m => m.firstName === currentUser);
+    const userObj = getMemberByFirstName(currentUser);
     if (!userObj) return;
     const container = document.getElementById('presence-list-container');
     container.innerHTML = '';
@@ -2749,7 +2744,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         `;
         const statusDiv = document.createElement('div');
         statusDiv.className = 'presence-status-block';
-        // Utilise exactement la même source et la même normalisation que Vue Équipe.
         const amStat = getStatus(dateKey, member.firstName, 'am');
         const pmStat = getStatus(dateKey, member.firstName, 'pm');
         const halves = document.createElement('div');
@@ -2958,7 +2952,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
       const dayData = calendarData[dateKey];
       Object.keys(dayData).forEach(user => {
-        const userObj = ALL_MEMBERS.find(m => m.firstName === user);
+        const userObj = getMemberByFirstName(user);
         if (!userObj) return;
         if (selectedPitFilter !== 'ALL' && userObj.pit !== selectedPitFilter) return;
         if (selectedPersonFilter !== 'ALL' && user !== selectedPersonFilter) return;
@@ -3014,7 +3008,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     Object.entries(calendarData).forEach(([dateKey, dayData]) => {
       if (!dateKey.startsWith(`${currentYear}-`) || !dayData || typeof dayData !== 'object') return;
       Object.entries(dayData).forEach(([firstName, status]) => {
-        const member = ALL_MEMBERS.find(item => item.firstName === firstName);
+        const member = getMemberByFirstName(firstName);
         if (!member) return;
         if (selectedPitFilter !== 'ALL' && member.pit !== selectedPitFilter) return;
         if (selectedPersonFilter !== 'ALL' && firstName !== selectedPersonFilter) return;
@@ -3062,7 +3056,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     Chart.defaults.borderColor = rootStyles.getPropertyValue('--border-soft').trim() || '#334155';
 
     const personColors = Object.keys(personStats).map(user => {
-      const uObj = ALL_MEMBERS.find(m => m.firstName === user);
+      const uObj = getMemberByFirstName(user);
       return uObj ? getPitColor(uObj.pit) : '#3b82f6';
     });
 
@@ -3075,7 +3069,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
     const personCostLabels = Object.keys(personCosts);
     const personCostColors = personCostLabels.map(user => {
-      const member = ALL_MEMBERS.find(item => item.firstName === user);
+      const member = getMemberByFirstName(user);
       return member ? getPitColor(member.pit) : '#3b82f6';
     });
     kpiPitChart = new Chart(document.getElementById('kpi-pit-chart').getContext('2d'), {
@@ -3460,7 +3454,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
       const lastDay = new Date(mYear, mMonth + 1, 0).getDate();
 
-      // Création de l'en-tête (Numéros des jours)
       for (let d = 1; d <= lastDay; d++) {
         const dayDate = new Date(mYear, mMonth, d);
         const teamTodayStart = new Date(todayYear, todayMonth, todayDate);
@@ -3493,18 +3486,15 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
       const tbody = document.createElement('tbody');
 
-      // Création des lignes pour chaque membre
       membersToDisplay.forEach(member => {
         const tr = document.createElement('tr');
 
-        // Colonne de gauche (Membre)
         const nameTd = document.createElement('td');
         nameTd.className = 'member-col';
         const managerBadge = member.isManager ? '<span class="manager-badge">Manager</span>' : '';
         nameTd.innerHTML = `${member.firstName} ${member.lastName}${managerBadge}<br><span class="member-pit">${member.pit}</span>`;
         tr.appendChild(nameTd);
 
-        // Cellules des jours du mois
         for (let d = 1; d <= lastDay; d++) {
           const dayDate = new Date(mYear, mMonth, d);
           const teamTodayStart = new Date(todayYear, todayMonth, todayDate);
@@ -3524,7 +3514,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           if (!isWeekend) {
             const useHalves = isCurrentOrNextWeek(dayDate) && !document.documentElement.classList.contains('option-half-days-disabled');
 
-            // Gestion des demi-journées si semaine en cours/suivante
             if (useHalves) {
               const halvesCont = document.createElement('div');
               halvesCont.className = 'halves-container';
@@ -3547,14 +3536,12 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
                   halfDiv.textContent = slot === 'am' ? 'M' : 'A';
                 }
 
-
                 halvesCont.appendChild(halfDiv);
               });
               td.appendChild(halvesCont);
               td.style.padding = '1px'; // Réduction du padding du td parent
 
             } else {
-              // Gestion journée entière standard
               td.dataset.calendarTooltip = 'true';
               td.dataset.tooltipDate = dateKey;
               td.dataset.tooltipUser = member.firstName;
@@ -3581,12 +3568,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
   }
 
-  // Initialisation de l'application
   syncData();
 
 </script>
 <style>
-  
+
   #view-annual .annual-chart-pane,
   #view-annual #annual-destination-chart-box {
     min-width: 0 !important;
@@ -3670,9 +3656,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   })();
 </script>
 
-
 <style id="page-zoom-connexion-bilan">
-  
+
   #view-login > .form-box {
     zoom: 1.10;
   }
@@ -3682,16 +3667,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     transform-origin: top center;
   }
 
-  
   #view-annual > .form-box {
     width: calc(100% / 1.10) !important;
     max-width: calc(100% / 1.10) !important;
   }
 </style>
 
-
 <style id="bilan-table-team-3m-enhancements">
-  
+
   #view-annual #annual-detail-tbody td:not(:first-child) {
     font-size: 0.78rem !important;
     font-weight: 800 !important;
@@ -3702,7 +3685,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-size: 0.70rem !important;
   }
 
-  
   #team-table-container.team-three-months {
     display: flex;
     flex-direction: column;
@@ -3730,9 +3712,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="calendar-blue-outline-all-views">
-  
+
   #team-table-container > .month-section {
     padding: 10px;
     border: 2px solid #3b82f6 !important;
@@ -3750,7 +3731,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-weight: 800;
   }
 
-  
   #personal-grids-container > .month-section {
     padding: 8px !important;
     border: 2px solid #3b82f6 !important;
@@ -3768,7 +3748,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-weight: 800;
   }
 
-  
   #personal-grids-container.personal-multi-container > .month-section {
     padding: 6px !important;
     border-radius: 9px !important;
@@ -3780,7 +3759,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     border-radius: 7px 7px 0 0;
   }
 </style>
-
 
 <style id="brush-mode-styles">
   #brush-mode-toggle {
@@ -3820,7 +3798,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     border-color: var(--accent) !important;
   }
 </style>
-
 
 <style id="secondary-code-styles">
   .secondary-code-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:14px 0 18px; }
@@ -3905,7 +3882,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       const [dateYear, dateMonth] = dateKey.split('-').map(Number);
       if (dateYear !== year || (month !== 'ALL' && dateMonth - 1 !== Number(month))) return;
       Object.entries(dayData || {}).forEach(([firstName, status]) => {
-        const member = ALL_MEMBERS.find(item => item.firstName === firstName);
+        const member = getMemberByFirstName(firstName);
         if (!member || (pit !== 'ALL' && member.pit !== pit) || (person !== 'ALL' && firstName !== person)) return;
         if (typeof status === 'string') addStatusCost(periodCosts, dateKey, firstName, status, null, 1);
         else if (status && typeof status === 'object') {
@@ -3919,7 +3896,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     Object.entries(calendarData).forEach(([dateKey, dayData]) => {
       if (!dateKey.startsWith(`${currentYear}-`)) return;
       Object.entries(dayData || {}).forEach(([firstName, status]) => {
-        const member = ALL_MEMBERS.find(item => item.firstName === firstName);
+        const member = getMemberByFirstName(firstName);
         if (!member || (pit !== 'ALL' && member.pit !== pit) || (person !== 'ALL' && firstName !== person)) return;
         const target = dateKey <= todayKey ? spent : forecast;
         if (typeof status === 'string') addStatusCost(target, dateKey, firstName, status, null, 1);
@@ -3963,7 +3940,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   ensureSecondaryKPIVisuals();
 })();
 </script>
-
 
 <style id="annual-secondary-chart-styles">
   #annual-secondary-chart-box {
@@ -4100,7 +4076,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
-
 <style id="secondary-code-badge-perfect-centering">
   .secondary-code-initial {
     box-sizing: border-box !important;
@@ -4124,7 +4099,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <script id="brush-default-on-initializer">
 (function () {
   const personalView = document.getElementById('view-personal');
@@ -4137,7 +4111,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 })();
 </script>
-
 
 <style id="secondary-code-two-letter-badges">
   .secondary-code-initial {
@@ -4155,7 +4128,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-size: .38rem !important;
   }
 </style>
-
 
 <style id="calendar-hover-tooltip-styles">
   #calendar-hover-tooltip {
@@ -4282,6 +4254,22 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     const secondaryText = secondary
       ? `${secondary} : ${SECONDARY_CODE_LABELS[secondary] || secondary}`
       : 'Non renseigné';
+    const tooltipStoredValue = (source, requestedSlot) => {
+      if (!source) return null;
+      if (typeof source === 'string') return source;
+      if (requestedSlot) return source[requestedSlot] || null;
+      return source.am && source.am === source.pm ? source.am : null;
+    };
+    const formatSplitTooltipValue = (source, getter) => {
+      if (!Array.isArray(status)) return getter(source, slot) || 'Non renseigné';
+      const morning = getter(source, 'am') || 'Non renseigné';
+      const afternoon = getter(source, 'pm') || 'Non renseigné';
+      return morning === afternoon ? morning : `Matin : ${morning} · Après-midi : ${afternoon}`;
+    };
+    const costCentreSource = window.COST_CENTRE_DATA?.[dateKey]?.[firstName];
+    const costCentreText = formatSplitTooltipValue(costCentreSource, tooltipStoredValue);
+    const transportSource = window.TRANSPORT_DATA?.[dateKey]?.[firstName];
+    const transportText = formatSplitTooltipValue(transportSource, tooltipStoredValue);
     const destination = Array.isArray(status) ? null : status;
     const colleagues = destination ? colleaguesForTooltip(dateKey, destination, firstName, slot) : [];
     const slotText = slot === 'am' ? 'Matin' : slot === 'pm' ? 'Après-midi' : 'Journée';
@@ -4301,6 +4289,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       <div class="calendar-tooltip-row"><span class="calendar-tooltip-label">Créneau</span><span class="calendar-tooltip-value">${escapeTooltipHtml(slotText)}</span></div>
       <div class="calendar-tooltip-row"><span class="calendar-tooltip-label">Type de jour</span><span class="calendar-tooltip-value">${escapeTooltipHtml(displayStatus)}</span></div>
       <div class="calendar-tooltip-row"><span class="calendar-tooltip-label">Code secondaire</span><span class="calendar-tooltip-value">${escapeTooltipHtml(secondaryText)}</span></div>
+      <div class="calendar-tooltip-row"><span class="calendar-tooltip-label">Centre de coût</span><span class="calendar-tooltip-value">${escapeTooltipHtml(costCentreText)}</span></div>
+      <div class="calendar-tooltip-row"><span class="calendar-tooltip-label">Transport</span><span class="calendar-tooltip-value">${escapeTooltipHtml(transportText)}</span></div>
       ${colleaguesSection}`;
   }
 
@@ -4361,7 +4351,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   window.addEventListener('blur', hideTooltip);
 })();
 </script>
-
 
 <style id="light-security-styles">
   .security-panel { margin: 14px 0; padding: 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg); text-align: left; }
@@ -4442,8 +4431,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     delete securityData.loginAttempts[name];
     await saveSecurityData();
   }
-  function currentMember() { return ALL_MEMBERS.find(member => member.firstName === currentUser); }
-  function memberByName(name) { return ALL_MEMBERS.find(member => member.firstName === name); }
+  function currentMember() { return getMemberByFirstName(currentUser); }
+  function memberByName(name) { return getMemberByFirstName(name); }
   function isCurrentAdmin() { return Boolean(currentMember()?.isAdmin); }
   function canManageMember(target) {
     const actor = currentMember();
@@ -4458,7 +4447,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     return Boolean(hasManagerAccess(member) && await verifyProtectedSecret(usersPins[currentUser], pin));
   }
 
-  // Synchronisation légère des informations de sécurité.
   function loadSecurityData() {
     if (db) {
       db.ref('security').on('value', snap => {
@@ -4482,7 +4470,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
   }
 
-  // Messages de connexion neutres, sans exposer Firebase.
   if (banner) banner.textContent = db ? '🟢 Synchronisation en ligne active' : '🟡 Mode local actif';
 
   window.handleLogin = async function () {
@@ -4501,7 +4488,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         alert(nowRemaining ? `Trop de tentatives incorrectes. Connexion verrouillée pendant ${nowRemaining} minutes.` : 'Informations de connexion incorrectes.');
         return;
       }
-      // Migration automatique du PIN historique en texte vers une empreinte salée.
       if (typeof stored === 'string') await setProtectedPin(name, pin);
       await clearLoginFailures(name);
       loginSuccess(name);
@@ -4589,7 +4575,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       : Boolean(document.getElementById('security-role-admin')?.checked);
 
     try {
-      // Le mot de passe Administrateur reste obligatoire à chaque modification.
       if (!await initialiseOrVerifyAdminCode(adminCode)) return;
 
       const savedOverride = securityData.roleOverrides?.[target.firstName];
@@ -4688,9 +4673,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
     const teamPanel = document.createElement('div');
     teamPanel.className = 'security-panel';
-    teamPanel.innerHTML = '<h3>🔑 Sécurité des comptes de mon équipe</h3><p>Réinitialisez un PIN ou déverrouillez un compte après plusieurs erreurs.</p>';
-    const members = ALL_MEMBERS.filter(member => member.firstName !== currentUser && (manager.isAdmin || member.pit === manager.pit));
-    if (!members.length) teamPanel.insertAdjacentHTML('beforeend','<div class="security-note">Aucun autre membre dans votre équipe.</div>');
+    teamPanel.innerHTML = `<h3>🔑 ${hasAdminAccess(manager) ? 'Sécurité de tous les comptes' : 'Sécurité des comptes de mon équipe'}</h3><p>Réinitialisez un PIN ou déverrouillez un compte après plusieurs erreurs.</p>`;
+    const members = ALL_MEMBERS.filter(member => member.firstName !== currentUser && (hasAdminAccess(manager) || member.pit === manager.pit));
+    if (!members.length) teamPanel.insertAdjacentHTML('beforeend',`<div class="security-note">${hasAdminAccess(manager) ? 'Aucun autre utilisateur.' : 'Aucun autre membre dans votre équipe.'}</div>`);
     members.forEach(member => {
       const row = document.createElement('div'); row.className = 'security-member-row';
       const locked = remainingLockMinutes(member.firstName);
@@ -4700,7 +4685,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     form.appendChild(teamPanel);
   };
 
-  // Sauvegardes avec erreurs techniques uniquement dans la console.
   window.addEventListener('unhandledrejection', event => {
     console.error('[Application] Opération asynchrone non aboutie', event.reason);
     event.preventDefault();
@@ -4708,7 +4692,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   loadSecurityData();
 })();
 </script>
-
 
 <style id="unified-app-modal-styles">
   #unified-app-modal { z-index: 9000; }
@@ -4798,7 +4781,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   window.appAlert = function (text, options = {}) { return openModal('alert', text, options); };
   window.appConfirm = function (text, options = {}) { return openModal('confirm', text, options); };
   window.appPrompt = function (text, options = {}) { return openModal('prompt', text, options); };
-  // Tous les anciens alert() du code utilisent désormais la fenêtre de l'application.
   window.alert = function (text) { void window.appAlert(text); };
 
   confirmButton.addEventListener('click', () => closeModal(mode === 'prompt' ? input.value : true));
@@ -4818,7 +4800,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
-
 <style id="team-account-delete-button-centering">
   #team-members-list-for-deletion .team-account-deletion-row {
     min-height: 38px;
@@ -4837,7 +4818,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     vertical-align: middle !important;
   }
 </style>
-
 
 <style id="ios-pwa-styles">
   html, body { min-height: 100%; overscroll-behavior-y: none; }
@@ -4869,7 +4849,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <script id="ios-pwa-script">
 (function () {
   if (
@@ -4893,15 +4872,12 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           }
         );
 
-        // Vérifie immédiatement si une nouvelle version du service worker existe.
         await registration.update();
 
-        // Active immédiatement un worker déjà en attente.
         if (registration.waiting) {
           registration.waiting.postMessage({ type: 'SKIP_WAITING' });
         }
 
-        // Active aussi les futures mises à jour dès leur installation.
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           if (!newWorker) return;
@@ -4936,8 +4912,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
-
-
 <nav id="mobile-bottom-nav" aria-label="Navigation mobile">
   <button type="button" data-mobile-view="view-presence" onclick="mobileNavigate('view-presence')" aria-label="Présence Équipe">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -4967,7 +4941,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 </section>
 <button type="button" id="mobile-tool-fab" onclick="toggleMobileToolSheet()" aria-expanded="false">＋ <span>Ajouter</span></button>
 <div id="mobile-tool-backdrop" onclick="closeMobileToolSheet()"></div>
-
 
 <style id="mobile-portrait-v2-styles">
   #mobile-bottom-nav, #mobile-more-sheet, #mobile-more-backdrop, #mobile-tool-fab, #mobile-tool-backdrop { display:none; }
@@ -5025,7 +4998,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     .mobile-day-row.holiday .mobile-day-date { color:#f59e0b; }
   }
 </style>
-
 
 <script id="mobile-portrait-v2-script">
 (function () {
@@ -5099,8 +5071,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
-
-
 <div id="mobile-day-toolbar" aria-label="Navigation de la semaine">
   <div class="mobile-week-controls">
     <button type="button" id="mobile-prev-week" aria-label="Semaine précédente">‹</button>
@@ -5117,7 +5087,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 </button>
 </div>
 
-
 <div id="mobile-activity-backdrop" onclick="closeMobileActivitySheet()"></div>
 <section id="mobile-activity-sheet" aria-label="Sélectionner un type de jour">
   <div class="mobile-sheet-handle"></div>
@@ -5133,7 +5102,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   <div id="mobile-activity-options"></div>
   <button type="button" class="mobile-clear-day" data-mobile-status="PRESENT">🗑️ Remettre au bureau</button>
 </section>
-
 
 <style id="mobile-portrait-v3-styles">
   #mobile-day-toolbar, #mobile-activity-button, #mobile-activity-sheet, #mobile-activity-backdrop { display:none; }
@@ -5198,7 +5166,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <script id="mobile-portrait-v3-script">
 (function(){
   const mq=window.matchMedia('(max-width:700px) and (orientation:portrait)');
@@ -5260,7 +5227,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   document.getElementById('mobile-next-week').onclick=()=>{selectedMobileDate.setDate(selectedMobileDate.getDate()+7);currentDate=new Date(selectedMobileDate);renderFocus();};
   document.getElementById('mobile-go-today').onclick=()=>{selectedMobileDate=new Date();currentDate=new Date();renderFocus();};
   function renderCategory(category){document.querySelectorAll('.mobile-activity-categories button').forEach(b=>b.classList.toggle('active',b.dataset.category===category));const root=document.getElementById('mobile-activity-options');root.innerHTML='';categories[category].filter(status=>status!=='Autres'&&!(status==='Formation'&&document.documentElement.classList.contains('option-formation-disabled'))).forEach(status=>{const original=document.querySelector(`.tool-btn[data-status="${status}"]`);const button=document.createElement('button');button.type='button';button.dataset.mobileStatus=status;button.className=`tool-${status}`;button.textContent=status==='Formation'?'Formation':status;button.classList.toggle('active',selectedTool===status);button.onclick=()=>selectMobileStatus(status,original);root.appendChild(button);});}
-  function selectMobileStatus(status,original){if(requiresSecondaryCode(status)){openSecondaryCodeModal(status,code=>{original?.click();selectedTool=status;selectedSecondaryCode=code;updateActivityLabels();closeMobileActivitySheet();});}else{original?.click();selectedTool=status;selectedSecondaryCode=null;updateActivityLabels();closeMobileActivitySheet();}}
+  function selectMobileStatus(status,original){if(status==='Autres'){selectedTool='Autres';selectedSecondaryCode=null;selectedCostCentre=null;document.querySelectorAll('.tool-btn').forEach(button=>button.classList.remove('active'));original?.classList.add('active');updateActivityLabels();openOtherDayModal(()=>{selectedTool='Autres';original?.classList.add('active');updateActivityLabels();closeMobileActivitySheet();});}else if(requiresSecondaryCode(status)){openSecondaryCodeModal(status,code=>{original?.click();selectedTool=status;selectedSecondaryCode=code;updateActivityLabels();closeMobileActivitySheet();});}else{original?.click();selectedTool=status;selectedSecondaryCode=null;updateActivityLabels();closeMobileActivitySheet();}}
   window.openMobileActivitySheet=function(){document.getElementById('mobile-activity-sheet').classList.add('visible');document.getElementById('mobile-activity-backdrop').classList.add('visible');document.getElementById('mobile-activity-button').setAttribute('aria-expanded','true');renderCategory(requiresSecondaryCode(selectedTool)?'travel':['CA','JDR','Formation'].includes(selectedTool)?'absence':'presence');};
   window.closeMobileActivitySheet=function(){document.getElementById('mobile-activity-sheet').classList.remove('visible');document.getElementById('mobile-activity-backdrop').classList.remove('visible');document.getElementById('mobile-activity-button').setAttribute('aria-expanded','false');};
   document.querySelectorAll('.mobile-activity-categories button').forEach(button=>button.onclick=()=>renderCategory(button.dataset.category));
@@ -5270,7 +5237,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   window.addEventListener('load',()=>{selectedMobileDate=new Date(currentDate);document.getElementById('mobile-day-toolbar').style.display='none';document.getElementById('mobile-activity-button').style.display='none';});
 })();
 </script>
-
 
 <style id="mobile-portrait-v4-no-horizontal-scroll">
   @media (max-width: 700px) and (orientation: portrait) {
@@ -5371,7 +5337,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <script id="mobile-portrait-v4-navigation-script">
 (function () {
   const portrait = window.matchMedia('(max-width: 700px) and (orientation: portrait)');
@@ -5407,10 +5372,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
-
 <style id="mobile-v5-presence-calendar-team-fixes">
 @media (max-width:700px) and (orientation:portrait) {
-  
+
   #view-presence .form-box { padding:12px !important; }
   #view-presence .presence-day-panel { padding:10px !important; }
   #view-presence .presence-member-card {
@@ -5466,7 +5430,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   #view-presence .presence-status-block > .status-badge { width:100% !important; }
   #view-presence .presence-half-status { width:100% !important; height:auto !important; }
 
-  
   .mobile-focus-slots { gap:8px !important; padding:10px 12px 12px !important; }
   .mobile-focus-slot {
     min-height:78px !important;
@@ -5488,7 +5451,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
   .mobile-focus-slot .secondary-code-initial[data-two-letters="true"] { width:28px !important; }
 
-  
   #team-table-container { overflow-x:visible !important; }
   #view-team .team-table-wrapper {
     position:relative !important;
@@ -5531,9 +5493,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 }
 </style>
 
-
 <style id="ios-input-no-auto-zoom">
-  
+
   @media (max-width: 700px) {
     input[type="password"],
     input[type="text"],
@@ -5563,7 +5524,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
   }
 </style>
-
 
 <style id="remember-session-styles">
   .remember-session-option {
@@ -5813,9 +5773,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
-
 <style id="v46-admin-select-and-future-calendar-styles">
-  
+
   #view-settings #security-role-person,
   #view-settings #security-role-value {
     font-family: inherit !important;
@@ -5829,7 +5788,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font: inherit !important;
   }
   @media (max-width:700px) {
-    
+
     #view-settings #security-role-person,
     #view-settings #security-role-value {
       font-size:16px !important;
@@ -5838,9 +5797,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="v47-future-weeks-and-weekday-names">
-  
+
   #team-table-container th:not(.member-col) {
     min-width: 52px;
     padding: 4px 3px;
@@ -5874,7 +5832,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="presence-team-shared-status-styles">
   #view-presence .presence-office-status {
     background: var(--badge-neutral-bg) !important;
@@ -5907,9 +5864,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="iphone-16-pro-rounded-screen-design">
-  
+
   @media (display-mode: standalone) and (max-width: 430px) {
     :root {
       --iphone-side-inset: max(12px, env(safe-area-inset-left), env(safe-area-inset-right));
@@ -6047,10 +6003,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="iphone-mobile-calendar-presence-fixes">
   @media (display-mode: standalone) and (max-width:430px) and (orientation:portrait) {
-    
+
     #view-personal.view.active {
       overflow:visible !important;
       border-radius:0 !important;
@@ -6145,7 +6100,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       max-width:calc(100vw - (2 * var(--iphone-side-inset)) - 8px) !important;
     }
 
-    
     #view-presence.view.active {
       overflow:visible !important;
       border-radius:0 !important;
@@ -6245,10 +6199,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="iphone-calendar-final-repair">
   @media (display-mode: standalone) and (max-width:430px) and (orientation:portrait) {
-    
+
     body:has(#view-personal.active) {
       overflow-x:hidden !important;
       overflow-y:auto !important;
@@ -6440,9 +6393,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="final-badge-centering-and-mobile-dark-calendar">
-  
+
   .manager-badge,
   .status-badge,
   .mobile-focus-date-badge,
@@ -6467,7 +6419,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     line-height: 1.1 !important;
   }
 
-  
   .user-greeting .manager-badge,
   .presence-member-name-line .manager-badge,
   #view-team .manager-badge,
@@ -6477,7 +6428,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: 0 !important;
   }
 
-  
   @media (display-mode: standalone) and (max-width: 430px) and (orientation: portrait) {
     [data-theme="dark"] #view-personal .mobile-focus-slot[class*="bg-"] {
       color: #ffffff !important;
@@ -6513,7 +6463,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       font-weight: 850 !important;
     }
 
-    
     [data-theme="dark"] #view-personal .mobile-focus-slot[class*="bg-"] .secondary-code-initial,
     [data-theme="dark"] #view-personal .mobile-status-line[class*="bg-"] .secondary-code-initial {
       color: #f8fafc !important;
@@ -6522,7 +6471,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="visual-polish-v1">
   :root {
     --ui-radius-sm: 8px;
@@ -6530,7 +6478,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     --ui-radius-lg: 18px;
   }
 
-  
   .form-box,
   .month-section,
   .presence-day-panel,
@@ -6550,7 +6497,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   .app-modal-card,
   .mobile-focus-card { border-radius: var(--ui-radius-lg) !important; }
 
-  
   .presence-tab-count {
     display: inline-flex;
     align-items: center;
@@ -6571,7 +6517,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     color: inherit;
   }
 
-  
   #visual-go-today {
     display: none;
     width: auto;
@@ -6583,7 +6528,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
   #visual-go-today.visible { display: inline-flex; align-items: center; justify-content: center; }
 
-  
   #visual-save-toast {
     position: fixed;
     right: max(14px, env(safe-area-inset-right));
@@ -6657,7 +6601,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       tab.appendChild(badge);
     }
 
-    const currentProfile = ALL_MEMBERS.find(member => member.firstName === currentUser);
+    const currentProfile = getMemberByFirstName(currentUser);
     const visibleMembers = currentProfile
       ? ALL_MEMBERS.filter(member => member.pit === currentProfile.pit)
       : [];
@@ -6673,10 +6617,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     tab.setAttribute('aria-label', `Présence Équipe, ${ladCount} personne${ladCount > 1 ? 's' : ''} en LAD aujourd’hui`);
   }
 
-  // Accessible depuis les écouteurs Firebase déclarés plus haut dans le fichier.
   window.updateLadPresenceCounter = updatePresenceTabCount;
 
-  // Recalcule aussi lors du retour dans l'application ou après minuit.
   let ladCounterDateKey = formatDateKeyStatic(new Date());
   function refreshLadCounterForCurrentDay() {
     const nextDateKey = formatDateKeyStatic(new Date());
@@ -6716,7 +6658,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   const presenceContainer = document.getElementById('presence-list-container');
   if (presenceContainer) presenceObserver.observe(presenceContainer, { childList: true, subtree: true });
 
-
   ['prev-month', 'next-month', 'btn-team-1m', 'btn-team-3m', 'btn-personal-1m', 'btn-personal-3m', 'btn-personal-annual']
     .forEach(id => document.getElementById(id)?.addEventListener('click', () => setTimeout(updateTodayShortcut, 0)));
 
@@ -6727,9 +6668,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
-
 <style id="login-pit-person-visual-parity">
-  
+
   #view-login #login-pit-filter {
     width: 100% !important;
     min-height: 38px !important;
@@ -6778,7 +6718,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-weight: 400;
   }
 
-  
   #view-login .login-name-trigger {
     border-radius: var(--ui-radius-sm, 8px) !important;
   }
@@ -7109,7 +7048,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
-
 <style id="application-version-indicator-styles">
   #app-version-indicator {
     position: fixed;
@@ -7147,7 +7085,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.2.79">v2.2.79</span>
+<span id="app-version-indicator" aria-label="Version 2.3.0">v2.3.0</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
@@ -7183,10 +7121,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
   }
 </style>
-
-
-
-
 
 <style id="alerts-and-update-controls-v220-styles">
   .consistency-alerts-card,
@@ -7314,128 +7248,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     document.getElementById('app-update-panel')?.remove();
   }
 
-  function getUpdateEnvironment() {
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    const isLocalFile = protocol === 'file:' || window.location.origin === 'null';
-    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
-    const isSecureSite = protocol === 'https:' || isLocalhost;
-    return { protocol, hostname, isLocalFile, isLocalhost, isSecureSite };
-  }
-
-  function setUpdateButtonAvailability(enabled, explanation = '') {
-    const button = document.getElementById('check-app-update');
-    if (!button) return;
-    button.disabled = !enabled;
-    button.setAttribute('aria-disabled', String(!enabled));
-    button.title = enabled ? 'Rechercher une nouvelle version de l’application' : explanation;
-  }
-
-  async function refreshUpdateDiagnostics() {
-    const status = document.getElementById('service-worker-status');
-    const mode = document.getElementById('app-display-mode');
-    const message = document.getElementById('app-update-message');
-    const environment = getUpdateEnvironment();
-
-    if (mode) {
-      if (environment.isLocalFile) mode.textContent = 'Fichier local';
-      else mode.textContent = window.matchMedia('(display-mode: standalone)').matches
-        ? 'Application installée'
-        : environment.isLocalhost ? 'Serveur local' : 'Navigateur web';
-    }
-
-    if (environment.isLocalFile) {
-      if (status) status.textContent = 'Indisponible en local';
-      if (message) message.textContent = 'Le fichier est ouvert directement depuis le disque. Pour vérifier la PWA, ouvrez la version HTTPS publiée ou utilisez localhost.';
-      setUpdateButtonAvailability(false, 'La vérification PWA nécessite HTTPS ou localhost.');
-      return;
-    }
-
-    if (!environment.isSecureSite) {
-      if (status) status.textContent = 'Connexion non sécurisée';
-      if (message) message.textContent = 'La vérification PWA nécessite une page HTTPS ou localhost.';
-      setUpdateButtonAvailability(false, 'La vérification PWA nécessite HTTPS ou localhost.');
-      return;
-    }
-
-    if (!('serviceWorker' in navigator)) {
-      if (status) status.textContent = 'Non pris en charge';
-      if (message) message.textContent = 'Ce navigateur ne permet pas la vérification du service worker.';
-      setUpdateButtonAvailability(false, 'Service worker non pris en charge par ce navigateur.');
-      return;
-    }
-
-    setUpdateButtonAvailability(true);
-    try {
-      const registration = await navigator.serviceWorker.getRegistration(new URL('./', window.location.href).href);
-      if (status) {
-        status.textContent = registration
-          ? navigator.serviceWorker.controller ? 'Actif' : 'Installé, non contrôleur'
-          : 'Non installé';
-      }
-      if (message && !registration) {
-        message.textContent = 'Aucun service worker ne contrôle encore cette page. Utilisez « Vérifier les mises à jour » pour lancer le contrôle.';
-      }
-    } catch (error) {
-      if (status) status.textContent = 'Diagnostic indisponible';
-      if (message) message.textContent = `Diagnostic impossible : ${error.message}`;
-    }
-  }
-
-  async function checkApplicationUpdate() {
-    const message = document.getElementById('app-update-message');
-    const checked = document.getElementById('last-update-check');
-    const status = document.getElementById('service-worker-status');
-    const environment = getUpdateEnvironment();
-
-    if (environment.isLocalFile) {
-      if (message) message.textContent = 'Vérification non disponible depuis un fichier local. Testez depuis la version HTTPS publiée ou depuis localhost.';
-      if (status) status.textContent = 'Indisponible en local';
-      return;
-    }
-    if (!environment.isSecureSite || !('serviceWorker' in navigator)) {
-      if (message) message.textContent = 'La vérification nécessite HTTPS ou localhost avec un navigateur compatible service worker.';
-      return;
-    }
-
-    if (message) message.textContent = 'Recherche d’une mise à jour…';
-    try {
-      const scopeUrl = new URL('./', window.location.href).href;
-      let registration = await navigator.serviceWorker.getRegistration(scopeUrl);
-      if (!registration) {
-        registration = await navigator.serviceWorker.register('./service-worker.js', {
-          scope: './',
-          updateViaCache: 'none'
-        });
-        await navigator.serviceWorker.ready;
-      }
-
-      await registration.update();
-      const nowLabel = new Intl.DateTimeFormat('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      }).format(new Date());
-      if (checked) checked.textContent = nowLabel;
-
-      if (registration.waiting) {
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-        if (status) status.textContent = 'Mise à jour prête';
-        if (message) message.textContent = 'Une nouvelle version est prête. L’application se rechargera après son activation.';
-      } else if (registration.installing) {
-        if (status) status.textContent = 'Installation en cours';
-        if (message) message.textContent = 'Une nouvelle version est en cours d’installation.';
-      } else {
-        if (status) status.textContent = navigator.serviceWorker.controller ? 'Actif' : 'Installé';
-        if (message) message.textContent = 'Vérification terminée. Aucune nouvelle version en attente.';
-      }
-      await refreshUpdateDiagnostics();
-    } catch (error) {
-      if (status) status.textContent = 'Erreur de vérification';
-      if (message) message.textContent = `Vérification impossible : ${error.message}`;
-    }
-  }
-
   const originalSave = window.savePlanningAndSecondaryData;
   window.savePlanningAndSecondaryData = function () {
     const result = originalSave.apply(this, arguments);
@@ -7462,7 +7274,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
-
 <style id="update-diagnostic-environment-fix">
   #check-app-update:disabled {
     cursor: not-allowed !important;
@@ -7474,7 +7285,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <script id="dynamic-copyright-year-script">
 (function () {
   const yearElement = document.getElementById('copyright-current-year');
@@ -7482,9 +7292,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
-
 <style id="login-arrows-and-team-row-height-v222">
-  
+
   #view-login #login-pit-filter {
     background-image: none !important;
     padding-right: 38px !important;
@@ -7529,7 +7338,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     line-height: 1;
   }
 
-  
   #team-table-container tbody tr {
     height: 46px !important;
     min-height: 46px !important;
@@ -7564,10 +7372,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
-
 <style id="team-member-wide-and-release-notes-clean-v223">
-  
+
   #team-table-container thead .member-col,
   #team-table-container tbody .member-col {
     width: 240px !important;
@@ -7583,7 +7389,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     white-space: nowrap !important;
   }
 
-  
   #release-notes-modal .release-notes-list-no-icons li {
     display: block !important;
     grid-template-columns: none !important;
@@ -7595,7 +7400,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     min-width: 0;
   }
 </style>
-
 
 <style id="role-administration-editor-v225">
   #view-settings .security-current-roles {
@@ -7643,7 +7447,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   #view-settings .security-role-checkboxes small { margin-top: 2px; color: var(--text-muted); font-size: .56rem; line-height: 1.3; }
   #view-settings .security-role-checkboxes input:disabled { cursor: not-allowed; opacity: .55; }
 </style>
-
 
 <style id="settings-submenus-unified-v2211">
   #view-settings .form-box {
@@ -7734,7 +7537,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="settings-team-to-security-gap-v2212">
   #view-settings #manager-team-deletion-section {
     margin-bottom: 10px !important;
@@ -7744,7 +7546,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: 0 !important;
   }
 </style>
-
 
 <style id="annual-report-modern-v2213">
   #view-annual { padding-bottom: 24px; }
@@ -7777,7 +7578,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   @media(max-width:820px){#view-annual > .form-box{grid-template-columns:1fr !important;padding:10px !important;gap:10px !important}#view-annual .team-table-wrapper,#view-annual #annual-destination-chart-box,#view-annual #annual-secondary-chart-box{grid-column:1 !important}#view-annual .team-subnav{grid-template-columns:1fr 1fr !important}#view-annual .team-subnav>span{display:none}#view-annual .team-subnav button{grid-column:1/-1}#view-annual > .form-box > div[style*="grid-template-columns: repeat(4"]{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
   @media(max-width:480px){#view-annual > .form-box > div[style*="grid-template-columns: repeat(4"]{grid-template-columns:1fr 1fr !important}#view-annual > .form-box > h2{padding:13px;font-size:.88rem !important}#view-annual .team-table-wrapper th,#view-annual .team-table-wrapper td{padding:7px 5px !important}}
 </style>
-
 
 <style id="annual-filters-app-style-v2214">
   #view-annual .team-subnav select,
@@ -7824,9 +7624,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="global-selects-unified-v2215">
-  
+
   select,
   #view-team select,
   #view-annual select,
@@ -7862,7 +7661,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-size: .72rem;
   }
 
-  
   #view-team .team-subnav select,
   #view-team .sticky-header-section select {
     min-height: 34px !important;
@@ -7870,7 +7668,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-family: inherit !important;
   }
 
-  
   #view-annual .sticky-header-section {
     border: 0 !important;
     box-shadow: none !important;
@@ -7890,7 +7687,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     font-weight: 700 !important;
   }
 
-  
   #view-annual #annual-person {
     width: auto !important;
     min-width: 13ch !important;
@@ -7949,9 +7745,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
-
 <style id="annual-filters-frame-v2216">
-  
+
   #view-annual .sticky-header-section {
     padding: 10px 12px !important;
     border: 0 !important;
@@ -7983,14 +7778,12 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="global-block-spacing-v2217">
   :root {
     --app-block-gap: 12px;
     --app-section-gap: 16px;
   }
 
-  
   .view.active {
     padding-bottom: var(--app-section-gap);
   }
@@ -8006,12 +7799,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: var(--app-block-gap) !important;
   }
 
-  
   .view > :last-child {
     margin-bottom: 0 !important;
   }
 
-  
   .form-box > .settings-submenu-tile,
   .form-box > .security-panel,
   .form-box > .app-update-panel,
@@ -8028,7 +7819,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: 0 !important;
   }
 
-  
   #view-kpi .kpi-grid,
   #view-kpi [class*="kpi-grid"],
   #view-kpi [style*="display: grid"] {
@@ -8042,7 +7832,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: var(--app-block-gap) !important;
   }
 
-  
   #view-annual > .form-box {
     gap: var(--app-block-gap) !important;
   }
@@ -8055,7 +7844,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: 0 !important;
   }
 
-  
   #view-settings .settings-submenu-tile,
   #view-settings .security-panel,
   #view-settings .app-update-panel,
@@ -8070,7 +7858,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: 0 !important;
   }
 
-  
   #view-team .sticky-header-section,
   #view-personal .sticky-header-section,
   #view-presence .sticky-header-section {
@@ -8085,23 +7872,19 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="page-vertical-rhythm-v2218">
   :root {
     --page-block-space: 14px;
   }
 
-  
   #main-tabs {
     margin-bottom: var(--page-block-space) !important;
   }
 
-  
   .view.active {
     padding-top: 0 !important;
   }
 
-  
   .view.active > .sticky-header-section {
     margin-top: 0 !important;
     margin-bottom: var(--page-block-space) !important;
@@ -8115,7 +7898,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-top: 0 !important;
   }
 
-  
   .view.active > .form-box,
   .view.active > .team-table-wrapper,
   .view.active > .kpi-budget-summary,
@@ -8127,7 +7909,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: var(--page-block-space) !important;
   }
 
-  
   #view-annual .sticky-header-section {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
@@ -8144,7 +7925,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin: 0 !important;
   }
 
-  
   #view-annual > .form-box > h2 + div[style*="grid-template-columns: repeat(4"] {
     margin-top: 0 !important;
   }
@@ -8156,13 +7936,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="annual-exact-visible-gaps-v2219">
   :root {
     --annual-visible-gap: 14px;
   }
 
-  
   #main-tabs {
     margin-bottom: var(--annual-visible-gap) !important;
   }
@@ -8176,20 +7954,17 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     padding: 0 !important;
   }
 
-  
   #view-annual > .form-box {
     margin: 0 auto !important;
     padding: 0 !important;
     gap: var(--annual-visible-gap) !important;
   }
 
-  
   #view-annual > .form-box > h2,
   #view-annual > .form-box > div[style*="grid-template-columns: repeat(4"] {
     margin: 0 !important;
   }
 
-  
   #view-annual > .sticky-header-section + .form-box,
   #view-annual > .form-box > h2 + div[style*="grid-template-columns: repeat(4"] {
     margin-top: 0 !important;
@@ -8201,7 +7976,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
   }
 </style>
-
 
 <style id="bibendum-head-medallion-v2224">
   :root {
@@ -8219,7 +7993,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     overflow: visible !important;
   }
 
-  
   .storage-banner,
   #main-header {
     position: relative;
@@ -8232,7 +8005,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     border-radius: var(--bib-band-curve) 10px 10px var(--bib-band-curve) !important;
   }
 
-  
   .storage-banner {
     height: var(--bib-storage-height) !important;
     min-height: var(--bib-storage-height) !important;
@@ -8254,7 +8026,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     overflow: visible !important;
   }
 
-  
   .bibendum-head-medallion {
     position: absolute;
     left: calc(var(--bib-medallion-x) - var(--bib-band-left)) !important;
@@ -8279,7 +8050,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     transform: translateZ(0);
   }
 
-  
   .bibendum-head-medallion::before {
     content: '';
     position: absolute;
@@ -8367,9 +8137,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="mobile-month-navigation-alignment-v2228">
-  
+
   @media (max-width: 700px) {
     #main-header {
       display: grid !important;
@@ -8466,7 +8235,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="mobile-context-controls-safe-v2230">
   #team-mobile-month-nav { display:none; }
   @media (max-width:700px) {
@@ -8486,9 +8254,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="ios-standalone-viewport-fix-v2231">
-  /* Correctifs strictement limités à l'application iOS ajoutée à l'écran d'accueil. */
   html.ios-standalone {
     --ios-app-height: 100vh;
     width: 100%;
@@ -8516,7 +8282,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     ) !important;
   }
 
-  /* Le body gère déjà la zone sûre supérieure. Les éléments sticky ne la recompte pas. */
   html.ios-standalone header {
     top: 0 !important;
   }
@@ -8525,7 +8290,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     top: 52px !important;
   }
 
-  /* Les calques utilisent la hauteur stabilisée au lieu de 100dvh au démarrage. */
   html.ios-standalone .app-modal-card {
     max-height: calc(
       var(--ios-app-height)
@@ -8602,9 +8366,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 })();
 </script>
 
-
 <style id="ios-standalone-view-isolation-v2232">
-  /* Une seule page peut participer au flux vertical de l'application iOS. */
   html.ios-standalone #view-presence.view:not(.active),
   html.ios-standalone #view-personal.view:not(.active),
   html.ios-standalone #view-team.view:not(.active),
@@ -8642,7 +8404,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     box-sizing: border-box !important;
   }
 
-  /* Le conteneur n'empile plus les pages masquées et ne crée plus de hauteur artificielle. */
   html.ios-standalone body > .container {
     height: auto !important;
     min-height: 0 !important;
@@ -8655,7 +8416,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     overflow: visible !important;
   }
 
-  /* Calendrier : suppression des réserves verticales cumulées qui créaient le grand vide. */
   html.ios-standalone #view-personal.view.active {
     margin: 0 !important;
     padding: 0 !important;
@@ -8670,7 +8430,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     margin-bottom: 8px !important;
   }
 
-  /* Le haut de la vue active reste visible sous la zone sûre de l'iPhone. */
   html.ios-standalone .view.active {
     scroll-margin-top: 0 !important;
   }
@@ -8688,9 +8447,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-
 <style id="ios-standalone-banner-calendar-scope-v2233">
-  /* Synchronisation : surface opaque et nette sous la zone sûre iOS. */
   html.ios-standalone .storage-banner {
     position: relative !important;
     z-index: 260 !important;
@@ -8712,7 +8469,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     filter: none !important;
   }
 
-  /* Le sélecteur hebdomadaire appartient au Calendrier, même s'il est hors du div de la vue. */
   html.ios-standalone #mobile-day-toolbar {
     display: none !important;
     visibility: hidden !important;
@@ -8737,7 +8493,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     pointer-events: auto !important;
   }
 
-  /* Les composants secondaires Calendrier ne peuvent pas rester ouverts dans les autres pages. */
   html.ios-standalone body:not(:has(#view-personal.view.active)) #mobile-activity-backdrop,
   html.ios-standalone body:not(:has(#view-personal.view.active)) #mobile-activity-sheet,
   html.ios-standalone body:not(:has(#view-personal.view.active)) #mobile-tool-fab,
@@ -8756,7 +8511,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
   }
 </style>
-
 
 <style id="admin-lists-and-cost-centres-v2236">
   #view-settings .admin-config-panel { display:none !important; }
@@ -8795,7 +8549,7 @@ function normaliseConfig(value){
  const costs=(Array.isArray(value?.costCentres)?value.costCentres:DEFAULT_COSTS).map(String).map(x=>x.trim()).filter(Boolean);
  return {secondaryCodes:codes.length?codes:DEFAULT_CODES.slice(),costCentres:costs.length?costs:DEFAULT_COSTS.slice()};
 }
-function isAdmin(){return hasAdminAccess(ALL_MEMBERS.find(member=>member.firstName===currentUser))}
+function isAdmin(){return hasAdminAccess(getMemberByFirstName(currentUser))}
 function syncRuntimeCodes(){SECONDARY_CODES.splice(0,SECONDARY_CODES.length,...adminConfig.secondaryCodes.map(item=>item.code))}
 function syncAdminAccess(){document.querySelectorAll('#view-settings .admin-config-panel').forEach(panel=>{const allowed=isAdmin();panel.classList.toggle('admin-config-visible',allowed);panel.style.display=allowed?'block':'none';panel.setAttribute('aria-hidden',String(!allowed));panel.querySelectorAll('input,button,select').forEach(control=>{control.disabled=!allowed;control.tabIndex=allowed?0:-1})})}
 function saveConfig(){if(!isAdmin())return;writeLocal(CONFIG_KEY,adminConfig);if(configRef)configRef.set(adminConfig).catch(error=>console.error('[Configuration] Firebase',error));syncRuntimeCodes();renderAdminLists()}
@@ -8828,14 +8582,10 @@ const priorSwitch=window.switchTab;window.switchTab=function(view){const target=
 const priorSettings=window.renderSettingsView;window.renderSettingsView=function(){const result=priorSettings.apply(this,arguments);syncAdminAccess();renderAdminLists();return result};
 const priorLogin=window.loginSuccess;window.loginSuccess=function(){const result=priorLogin.apply(this,arguments);applyDisplayOptions();return result};
 function bindStorage(){costCentreData=readLocal('team_cost_centres',{});if(db){configRef=db.ref('app_config/secondary_and_cost_lists');configRef.on('value',snap=>{if(snap.val()){adminConfig=normaliseConfig(snap.val());writeLocal(CONFIG_KEY,adminConfig);syncRuntimeCodes();renderAdminLists()}});costDataRef=db.ref('cost_centres');costDataRef.on('value',snap=>{costCentreData=snap.val()||{};window.COST_CENTRE_DATA=costCentreData})}}
-// Favoris déplacement : le centre de coût reste obligatoire lors de la sélection.
 document.addEventListener('click',event=>{const chip=event.target.closest('.activity-favourite-chip');if(!chip)return;setTimeout(()=>{if(requiresSecondaryCode(selectedTool)){selectedCostCentre=null;openCostCentreModal(()=>{})}},0)},true);
 syncRuntimeCodes();bindStorage();applyDisplayOptions();renderAdminLists();window.addEventListener('load',()=>{applyDisplayOptions();renderAdminLists()});
 })();
 </script>
-
-
-
 
 <style id="personal-annual-mobile-fix-v2238">
   #mobile-day-toolbar[data-annual-hidden="true"] {
@@ -8903,7 +8653,6 @@ syncRuntimeCodes();bindStorage();applyDisplayOptions();renderAdminLists();window
 })();
 </script>
 
-
 <style id="kpi-hide-ca-jdr-safe-v2246">
   #view-kpi .chart-box:has(#kpi-jdr-chart),
   #view-kpi .chart-box:has(#kpi-ca-chart) {
@@ -8924,15 +8673,13 @@ let customTravelCosts={};
 let customCostRef=null;
 try{customTravelCosts=JSON.parse(localStorage.getItem('team_custom_travel_costs')||'{}')||{}}catch(_){customTravelCosts={}}
 window.CUSTOM_TRAVEL_COSTS=customTravelCosts;
-function showCostModal(callback){pendingOtherActivation=callback;const modal=document.getElementById('other-travel-cost-modal');const input=document.getElementById('other-travel-cost-input');const secondary=document.getElementById('other-travel-secondary-code');const centre=document.getElementById('other-travel-cost-centre');secondary.innerHTML='';adminConfig.secondaryCodes.forEach(item=>{const option=document.createElement('option');option.value=item.code;option.textContent=`${item.code} - ${item.label}`;secondary.appendChild(option)});centre.innerHTML='';adminConfig.costCentres.forEach(label=>{const option=document.createElement('option');option.value=label;option.textContent=label;centre.appendChild(option)});document.getElementById('other-travel-cost-error').textContent='';input.value=activeOtherDailyCost??'';modal.classList.add('visible');document.body.style.overflow='hidden';setTimeout(()=>input.focus(),30)}
+function showCostModal(callback){pendingOtherActivation=callback;const modal=document.getElementById('other-travel-cost-modal');const input=document.getElementById('other-travel-cost-input');const secondary=document.getElementById('other-travel-secondary-code');const centre=document.getElementById('other-travel-cost-centre');secondary.innerHTML='';adminConfig.secondaryCodes.forEach(item=>{const option=document.createElement('option');option.value=item.code;option.textContent=`${item.code} - ${item.label}`;secondary.appendChild(option)});centre.innerHTML='';adminConfig.costCentres.forEach(label=>{const option=document.createElement('option');option.value=label;option.textContent=label;centre.appendChild(option)});document.getElementById('other-travel-cost-error').textContent='';input.value='';document.querySelectorAll('input[name="other-travel-transport"]').forEach(radio=>radio.checked=false);window.selectedTransportChoice=null;modal.classList.add('visible');document.body.style.overflow='hidden';setTimeout(()=>input.focus(),30)}
 function hideCostModal(){document.getElementById('other-travel-cost-modal').classList.remove('visible');document.body.style.overflow=''}
 window.openOtherDayModal=function(callback){showCostModal(callback)};
-window.confirmOtherTravelCost=function(){const input=document.getElementById('other-travel-cost-input');const value=Number(String(input.value).replace(',','.'));const secondary=document.getElementById('other-travel-secondary-code').value;const centre=document.getElementById('other-travel-cost-centre').value;if(!Number.isFinite(value)||value<0){document.getElementById('other-travel-cost-error').textContent='Saisissez un coût valide supérieur ou égal à 0 €.';input.focus();return}if(!secondary||!centre){document.getElementById('other-travel-cost-error').textContent='Sélectionnez un code secondaire et un centre de coût.';return}activeOtherDailyCost=value;DISPLACEMENT_COSTS.Autres=value;selectedSecondaryCode=secondary;selectedCostCentre=centre;window.__otherTravelDetailsReady=true;hideCostModal();const callback=pendingOtherActivation;pendingOtherActivation=null;if(callback)callback()};
+window.confirmOtherTravelCost=function(){const input=document.getElementById('other-travel-cost-input');const value=Number(String(input.value).replace(',','.'));const secondary=document.getElementById('other-travel-secondary-code').value;const centre=document.getElementById('other-travel-cost-centre').value;const transport=document.querySelector('input[name="other-travel-transport"]:checked')?.value;if(input.value.trim()===''||!Number.isFinite(value)||value<0){document.getElementById('other-travel-cost-error').textContent='Saisissez manuellement un coût journalier valide en euros.';input.focus();return}if(!secondary||!centre||!transport){document.getElementById('other-travel-cost-error').textContent='Sélectionnez un code secondaire, un centre de coût et un moyen de transport.';return}window.selectedTransportChoice=transport;activeOtherDailyCost=value;DISPLACEMENT_COSTS.Autres=value;selectedSecondaryCode=secondary;selectedCostCentre=centre;window.__otherTravelDetailsReady=false;hideCostModal();const callback=pendingOtherActivation;pendingOtherActivation=null;if(callback)callback()};
 window.cancelOtherTravelCost=function(){hideCostModal();pendingOtherActivation=null;activeOtherDailyCost=null;DISPLACEMENT_COSTS.Autres=0};
 document.getElementById('other-travel-cost-input')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();confirmOtherTravelCost()}if(event.key==='Escape')cancelOtherTravelCost()});
-// Interception avant le gestionnaire historique : Autres demande d'abord le coût.
 document.addEventListener('click',event=>{const button=event.target.closest('.tool-btn[data-status]');if(!button||button.dataset.status==='Autres')return;activeOtherDailyCost=null;DISPLACEMENT_COSTS.Autres=0},true);
-// Mobile : affiche la même fenêtre dès le choix Autres. La valeur reste active jusqu'au prochain type.
 document.addEventListener('click',event=>{const button=event.target.closest('[data-mobile-status]');if(!button||button.dataset.mobileStatus==='Autres')return;activeOtherDailyCost=null;DISPLACEMENT_COSTS.Autres=0},true);
 function setCustomEntry(dateKey,user,status,slot){if(!customTravelCosts[dateKey])customTravelCosts[dateKey]={};if(status!=='Autres'){const old=customTravelCosts[dateKey][user];if(slot&&old&&typeof old==='object'){delete old[slot];if(!old.am&&!old.pm)delete customTravelCosts[dateKey][user]}else if(!slot)delete customTravelCosts[dateKey][user]}else if(slot){const old=customTravelCosts[dateKey][user];const value=old&&typeof old==='object'?{...old}:{};value[slot]=activeOtherDailyCost;customTravelCosts[dateKey][user]=value}else customTravelCosts[dateKey][user]=activeOtherDailyCost;if(customTravelCosts[dateKey]&&!Object.keys(customTravelCosts[dateKey]).length)delete customTravelCosts[dateKey];window.CUSTOM_TRAVEL_COSTS=customTravelCosts}
 const priorSetSecondary=window.setSecondaryCode;window.setSecondaryCode=function(dateKey,user,status,slot,code){const result=priorSetSecondary.apply(this,arguments);setCustomEntry(dateKey,user,status,slot);return result};
@@ -8970,7 +8717,6 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
 </script>
 
 <style id="team-calendar-compact-v2255">
-  /* Vue Equipe plus compacte, sans modifier les donnees ni la navigation. */
   #view-team .sticky-header-section {
     margin-bottom: 8px !important;
   }
@@ -9118,7 +8864,7 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
   }
   function allowedUser(user){
     const pit=document.getElementById('kpi-pit-filter')?.value||'ALL', person=document.getElementById('kpi-person-filter')?.value||'ALL';
-    const member=ALL_MEMBERS.find(m=>m.firstName===user);return (pit==='ALL'||member?.pit===pit)&&(person==='ALL'||user===person);
+    const member=getMemberByFirstName(user);return (pit==='ALL'||member?.pit===pit)&&(person==='ALL'||user===person);
   }
   window.renderKPICostCentreMonthlyChart=function(){
     populate();const canvas=document.getElementById('kpi-cost-centre-monthly-chart');if(!canvas||typeof Chart==='undefined')return;
@@ -9176,11 +8922,12 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
   }
 </style>
 
-<style id="remove-autres-selector-v2268">
+<style id="restore-autres-selector-v2280">
   .tool-btn[data-status="Autres"],
   [data-mobile-status="Autres"],
   #mobile-activity-options .tool-Autres {
-    display: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
   }
 </style>
 
@@ -9228,7 +8975,6 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
 </script>
 
 <style id="settings-compact-two-columns-v2270">
-/* Parametres compacts et affichage web en deux colonnes */
 @media (min-width: 901px) {
   #view-settings > .form-box {
     max-width: 1120px !important;
@@ -9265,7 +9011,6 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
   }
 }
 
-/* Police et espacements plus compacts dans tout l'onglet Parametres */
 #view-settings .settings-submenu-tile {
   padding: 12px !important;
 }
@@ -9354,7 +9099,6 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
 </style>
 
 <style id="travel-cost-cards-app-style-v2271">
-  /* Harmonisation des cases de coûts avec les autres blocs de Paramètres */
   #view-settings .travel-cost-row {
     border: 1px solid var(--border-soft) !important;
     background: var(--input-bg) !important;
@@ -9393,7 +9137,6 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
 </style>
 
 <style id="settings-masonry-no-gaps-v2272">
-  /* Empilement naturel des panneaux pour supprimer les trous entre les blocs. */
   @media (min-width: 901px) {
     #view-settings > .form-box {
       display: block !important;
@@ -9437,7 +9180,6 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
 </style>
 
 <style id="personal-annual-four-months-v2273">
-  /* Mon Calendrier, vue annuelle : 4 mois par ligne comme la maquette. */
   #view-personal .personal-multi-container.months-12 {
     display: grid !important;
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
@@ -9573,7 +9315,7 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
 'use strict';
 const TRANSPORT_STORAGE_KEY='planning_transport_costs_v1';
 const TRANSPORT_DATA_KEY='team_transport_choices_v1';
-const TRANSPORT_CODES=['ARA','ALE','CGR','HBG','LVL','NKE','SPA','UCH','VLD','WAT','ZAL','CTX','COM'];
+const TRANSPORT_CODES=['ARA','ALE','CGR','HBG','LVL','NKE','SPA','UCH','VLD','WAT','ZAL','CTX','COM','Autres'];
 const TRANSPORT_TYPES=['Voiture','Avion','MAS'];
 const TRANSPORT_DEFAULTS=Object.fromEntries(TRANSPORT_CODES.map(code=>[code,{Voiture:0,Avion:0,MAS:0}]));
 let transportCosts={};
@@ -9594,7 +9336,7 @@ function addTransportChoices(){const field=document.querySelector('#secondary-co
 function ensureSettingsPanel(){if(document.getElementById('transport-costs-panel'))return;const daily=document.getElementById('travel-costs-panel');if(!daily)return;const panel=document.createElement('div');panel.id='transport-costs-panel';panel.className='settings-submenu-tile admin-config-panel';panel.style.display='none';panel.innerHTML='<h3>Coût des moyens de transport</h3><p>Ajoutez le coût du trajet au coût journalier, selon la destination et le moyen choisi. Le MAS reste gratuit.</p><div id="transport-cost-settings-body" class="transport-costs-settings-list"></div><div class="travel-costs-actions"><button type="button" class="btn-secondary" onclick="resetTransportCostsSettings()">Valeurs par défaut</button><button type="button" class="btn-primary" onclick="saveTransportCostsSettings()">Enregistrer les coûts</button></div><p id="transport-cost-settings-message" class="travel-costs-settings-message" aria-live="polite"></p>';daily.insertAdjacentElement('afterend',panel)}
 function renderCosts(values=transportCosts){const body=document.getElementById('transport-cost-settings-body');if(!body)return;body.innerHTML=TRANSPORT_CODES.map(code=>`<div class="transport-cost-row"><strong>${code}</strong><div class="transport-cost-fields"><div class="transport-cost-field"><label>Voiture</label><input type="number" min="0" step="1" inputmode="decimal" data-transport-cost-code="${code}" data-transport-type="Voiture" value="${Number(values?.[code]?.Voiture||0)}"><span>€</span></div><div class="transport-cost-field"><label>Avion</label><input type="number" min="0" step="1" inputmode="decimal" data-transport-cost-code="${code}" data-transport-type="Avion" value="${Number(values?.[code]?.Avion||0)}"><span>€</span></div><div class="transport-cost-field mas"><label>MAS</label><strong>N/A</strong><span></span></div></div></div>`).join('')}
 function message(text,error=false){const el=document.getElementById('transport-cost-settings-message');if(el){el.textContent=text;el.style.color=error?'var(--danger)':'#10b981'}}
-window.saveTransportCostsSettings=function(){const member=ALL_MEMBERS.find(item=>item.firstName===currentUser);if(!hasAdminAccess(member))return;const next=normaliseCosts(transportCosts);let valid=true;document.querySelectorAll('[data-transport-cost-code]').forEach(input=>{const value=Number(String(input.value).replace(',','.'));if(!Number.isFinite(value)||value<0){valid=false;input.focus();return}next[input.dataset.transportCostCode][input.dataset.transportType]=value});if(!valid){message('Tous les coûts doivent être supérieurs ou égaux à 0 €.',true);return}transportCosts=normaliseCosts(next);window.TRANSPORT_COSTS=transportCosts;persist();message('Coûts de transport enregistrés. Ils sont maintenant ajoutés aux KPI.');if(document.getElementById('view-kpi')?.classList.contains('active'))renderKPICharts()};
+window.saveTransportCostsSettings=function(){const member=getMemberByFirstName(currentUser);if(!hasAdminAccess(member))return;const next=normaliseCosts(transportCosts);let valid=true;document.querySelectorAll('[data-transport-cost-code]').forEach(input=>{const value=Number(String(input.value).replace(',','.'));if(!Number.isFinite(value)||value<0){valid=false;input.focus();return}next[input.dataset.transportCostCode][input.dataset.transportType]=value});if(!valid){message('Tous les coûts doivent être supérieurs ou égaux à 0 €.',true);return}transportCosts=normaliseCosts(next);window.TRANSPORT_COSTS=transportCosts;persist();message('Coûts de transport enregistrés. Ils sont maintenant ajoutés aux KPI.');if(document.getElementById('view-kpi')?.classList.contains('active'))renderKPICharts()};
 window.resetTransportCostsSettings=function(){renderCosts(TRANSPORT_DEFAULTS);message('Valeurs par défaut chargées. Cliquez sur Enregistrer les coûts pour les appliquer.')};
 addTransportChoices();ensureSettingsPanel();renderCosts();
 const originalOpen=window.openSecondaryCodeModal;window.openSecondaryCodeModal=function(destination,callback){addTransportChoices();window.selectedTransportChoice=null;const result=originalOpen.apply(this,arguments);const first=document.querySelector('input[name="travel-transport"]');if(first)first.checked=true;return result};
@@ -9602,15 +9344,13 @@ const originalConfirm=window.confirmSecondaryAndCostCentre;window.confirmSeconda
 const originalSetSecondary=window.setSecondaryCode;window.setSecondaryCode=function(dateKey,user,status,slot,code){const result=originalSetSecondary.apply(this,arguments);setTransportEntry(dateKey,user,status,slot);return result};
 const originalSave=window.savePlanningAndSecondaryData;window.savePlanningAndSecondaryData=function(){const result=originalSave.apply(this,arguments);persist();return result};
 document.addEventListener('click',event=>{const button=event.target.closest('.tool-btn[data-status], [data-mobile-status]');if(!button)return;const status=button.dataset.status||button.dataset.mobileStatus;if(!requiresSecondaryCode(status))window.selectedTransportChoice=null},true);
-const priorSettings=window.renderSettingsView;window.renderSettingsView=function(){const result=priorSettings.apply(this,arguments);ensureSettingsPanel();renderCosts();const member=ALL_MEMBERS.find(item=>item.firstName===currentUser);const panel=document.getElementById('transport-costs-panel');const allowed=hasAdminAccess(member);if(panel){panel.classList.toggle('admin-config-visible',allowed);panel.style.display=allowed?'block':'none';panel.querySelectorAll('input,button').forEach(el=>el.disabled=!allowed)}return result};
+const priorSettings=window.renderSettingsView;window.renderSettingsView=function(){const result=priorSettings.apply(this,arguments);ensureSettingsPanel();renderCosts();const member=getMemberByFirstName(currentUser);const panel=document.getElementById('transport-costs-panel');const allowed=hasAdminAccess(member);if(panel){panel.classList.toggle('admin-config-visible',allowed);panel.style.display=allowed?'block':'none';panel.querySelectorAll('input,button').forEach(el=>el.disabled=!allowed)}return result};
 if(db){transportCostsRef=db.ref('app_config/transport_costs');transportCostsRef.on('value',snap=>{if(snap.val()){transportCosts=normaliseCosts(snap.val());window.TRANSPORT_COSTS=transportCosts;localWrite(TRANSPORT_STORAGE_KEY,transportCosts);renderCosts()}});transportDataRef=db.ref('transport_choices');transportDataRef.on('value',snap=>{transportData=snap.val()||{};window.TRANSPORT_DATA=transportData;localWrite(TRANSPORT_DATA_KEY,transportData)})}
 window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();renderCosts()});
 })();
 </script>
 
-
 <style id="settings-balanced-panels-v2276">
-  /* Remplace l'ancien column-count par deux vraies colonnes équilibrées. */
   @media (min-width: 901px) {
     #view-settings > .form-box {
       column-count: initial !important;
@@ -9729,7 +9469,6 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
 })();
 </script>
 
-
 <style id="settings-strict-role-visibility-v2277">
   #view-settings .settings-role-hidden {
     display: none !important;
@@ -9753,7 +9492,7 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
     });
   }
   function accessLevel(){
-    const member=ALL_MEMBERS.find(item=>item.firstName===currentUser);
+    const member=getMemberByFirstName(currentUser);
     if(hasAdminAccess(member)) return 'admin';
     if(member?.isManager) return 'manager';
     return 'user';
@@ -9812,7 +9551,6 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
 })();
 </script>
 
-
 <style id="settings-role-layout-v2278">
   @media (min-width: 901px) {
     #view-settings > .form-box {
@@ -9850,7 +9588,7 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
 (function(){
   'use strict';
   function roleLevel(){
-    const member=ALL_MEMBERS.find(item=>item.firstName===currentUser);
+    const member=getMemberByFirstName(currentUser);
     if(hasAdminAccess(member)) return 'admin';
     if(member?.isManager) return 'manager';
     return 'user';
@@ -9918,6 +9656,485 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
   window.addEventListener('resize',()=>{
     if(document.getElementById('view-settings')?.classList.contains('active')) optimiseSettingsPlacement();
   });
+})();
+</script>
+
+<style id="settings-fixed-order-v2287-style">
+  #view-settings > .form-box {
+    display: block !important;
+    column-count: initial !important;
+    max-width: 1180px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  #view-settings .settings-fixed-order-list {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    width: 100% !important;
+    align-items: start !important;
+  }
+  #view-settings .settings-fixed-order-list > * {
+    width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+  #view-settings .settings-balanced-column { display: contents !important; }
+  @media (max-width: 900px) {
+    #view-settings .settings-fixed-order-list {
+      grid-template-columns: 1fr !important;
+      gap: 10px !important;
+    }
+  }
+</style>
+<script id="settings-fixed-order-v2287-script">
+(function(){
+  'use strict';
+  const FIXED_ORDER=[
+    'Modifier mon Code PIN',
+    'Supprimer mon compte',
+    'Export des données',
+    'Gestion des comptes de mon équipe',
+    '🔑 Sécurité de tous les comptes',
+    '📱 Session sur cet appareil',
+    'Coût journalier par type de déplacement',
+    'Coût des moyens de transport',
+    'Codes secondaires et centres de coût',
+    'Administration des rôles'
+  ];
+  function panelTitle(panel){
+    return (panel?.querySelector('h3')?.textContent||'').replace(/\s+/g,' ').trim();
+  }
+  function matches(panel,wanted){
+    const title=panelTitle(panel);
+    if(wanted==='Gestion des comptes de mon équipe') return title.startsWith(wanted);
+    if(wanted==='🔑 Sécurité de tous les comptes') return title==='🔑 Sécurité de tous les comptes'||title==='🔑 Sécurité des comptes de mon équipe';
+    if(wanted==='📱 Session sur cet appareil') return title==='📱 Session sur cet appareil';
+    return title===wanted;
+  }
+  function fixSettingsOrder(){
+    const form=document.querySelector('#view-settings > .form-box');
+    if(!form) return;
+    form.querySelectorAll(':scope > .settings-balanced-column, :scope > .settings-fixed-order-list').forEach(wrapper=>{
+      Array.from(wrapper.children).forEach(child=>form.appendChild(child));
+      wrapper.remove();
+    });
+    const source=document.getElementById('manager-team-deletion-section');
+    if(source) Array.from(source.children).forEach(child=>form.appendChild(child));
+    const panels=Array.from(form.children).filter(element=>
+      element.tagName!=='H2' && element.id!=='manager-team-deletion-section' &&
+      (element.classList.contains('settings-submenu-tile') || element.classList.contains('security-panel') || element.classList.contains('remember-device-panel') || element.classList.contains('app-update-panel'))
+    );
+    const list=document.createElement('div');
+    list.className='settings-fixed-order-list';
+    form.appendChild(list);
+    const used=new Set();
+    FIXED_ORDER.forEach(wanted=>{
+      const panel=panels.find(item=>!used.has(item)&&matches(item,wanted));
+      if(panel){ list.appendChild(panel); used.add(panel); }
+    });
+    panels.filter(panel=>!used.has(panel)).forEach(panel=>list.appendChild(panel));
+  }
+  window.fixSettingsOrder=fixSettingsOrder;
+  window.arrangeSettingsPanels=fixSettingsOrder;
+  window.optimiseSettingsPlacement=fixSettingsOrder;
+  const previousApply=window.applyStrictSettingsVisibility;
+  window.applyStrictSettingsVisibility=function(){
+    const result=previousApply.apply(this,arguments);
+    requestAnimationFrame(()=>requestAnimationFrame(fixSettingsOrder));
+    return result;
+  };
+  const previousRender=window.renderSettingsView;
+  window.renderSettingsView=function(){
+    const result=previousRender.apply(this,arguments);
+    requestAnimationFrame(()=>requestAnimationFrame(fixSettingsOrder));
+    return result;
+  };
+  window.addEventListener('load',()=>requestAnimationFrame(fixSettingsOrder));
+})();
+</script>
+
+<style id="settings-title-gap-equal-rows-v2289">
+  #view-settings > .form-box > h2 {
+    margin: 0 0 22px !important;
+  }
+  #view-settings .settings-fixed-order-list {
+    align-items: stretch !important;
+    grid-auto-rows: auto !important;
+  }
+  #view-settings .settings-fixed-order-list > .settings-submenu-tile,
+  #view-settings .settings-fixed-order-list > .security-panel,
+  #view-settings .settings-fixed-order-list > .remember-device-panel,
+  #view-settings .settings-fixed-order-list > .app-update-panel {
+    align-self: stretch !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  @media (max-width: 900px) {
+    #view-settings > .form-box > h2 {
+      margin-bottom: 16px !important;
+    }
+    #view-settings .settings-fixed-order-list > .settings-submenu-tile,
+    #view-settings .settings-fixed-order-list > .security-panel,
+    #view-settings .settings-fixed-order-list > .remember-device-panel,
+    #view-settings .settings-fixed-order-list > .app-update-panel {
+      height: auto !important;
+      min-height: 0 !important;
+    }
+  }
+</style>
+
+<style id="transport-costs-one-line-v2290">
+  #view-settings #transport-costs-panel .transport-costs-settings-list {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-row {
+    grid-template-columns: 46px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-height: 42px !important;
+    padding: 5px 7px !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-row > strong {
+    padding-top: 0 !important;
+    font-size: .69rem !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-fields {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(72px, .72fr) !important;
+    align-items: center !important;
+    gap: 7px !important;
+    min-width: 0 !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field {
+    grid-template-columns: auto minmax(46px, 1fr) 12px !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field label {
+    font-size: .56rem !important;
+    white-space: nowrap !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field input {
+    height: 30px !important;
+    min-width: 0 !important;
+    padding: 3px 6px !important;
+    font-size: .7rem !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field span {
+    font-size: .56rem !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field.mas {
+    grid-template-columns: auto minmax(34px, 1fr) !important;
+    min-height: 30px !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field.mas strong {
+    font-size: .65rem !important;
+    text-align: center !important;
+  }
+  @media (max-width: 700px) {
+    #view-settings #transport-costs-panel .transport-cost-row {
+      grid-template-columns: 42px minmax(0, 1fr) !important;
+    }
+    #view-settings #transport-costs-panel .transport-cost-fields {
+      grid-template-columns: 1fr !important;
+      gap: 5px !important;
+    }
+    #view-settings #transport-costs-panel .transport-cost-field {
+      grid-template-columns: 58px minmax(0, 1fr) 18px !important;
+    }
+    #view-settings #transport-costs-panel .transport-cost-field.mas {
+      grid-template-columns: 58px minmax(0, 1fr) 18px !important;
+    }
+    #view-settings #transport-costs-panel .transport-cost-field input {
+      font-size: 16px !important;
+    }
+  }
+</style>
+
+<style id="transport-costs-perfect-alignment-v2291">
+  #view-settings #transport-costs-panel .transport-cost-row {
+    grid-template-columns: 58px minmax(0,1fr) !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-fields {
+    grid-template-columns: minmax(175px,1fr) minmax(175px,1fr) minmax(112px,.7fr) !important;
+    column-gap: 10px !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field,
+  #view-settings #transport-costs-panel .transport-cost-field.mas {
+    display: grid !important;
+    grid-template-columns: 58px minmax(72px,1fr) 14px !important;
+    align-items: center !important;
+    gap: 5px !important;
+    min-height: 32px !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field label {
+    display: flex !important;
+    align-items: center !important;
+    height: 30px !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field input {
+    height: 32px !important;
+    margin: 0 !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field > span {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 30px !important;
+    line-height: 1 !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field.mas strong {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 32px !important;
+    margin: 0 !important;
+    padding: 0 6px !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+  }
+  @media (max-width: 700px) {
+    #view-settings #transport-costs-panel .transport-cost-fields {
+      grid-template-columns: 1fr !important;
+    }
+    #view-settings #transport-costs-panel .transport-cost-field,
+    #view-settings #transport-costs-panel .transport-cost-field.mas {
+      grid-template-columns: 58px minmax(0,1fr) 18px !important;
+    }
+  }
+</style>
+
+<style id="transport-costs-contained-v2292">
+  #view-settings #transport-costs-panel,
+  #view-settings #transport-costs-panel * {
+    box-sizing: border-box !important;
+  }
+  #view-settings #transport-costs-panel {
+    overflow: hidden !important;
+    min-width: 0 !important;
+  }
+  #view-settings #transport-costs-panel .transport-costs-settings-list,
+  #view-settings #transport-costs-panel .transport-cost-row,
+  #view-settings #transport-costs-panel .transport-cost-fields,
+  #view-settings #transport-costs-panel .transport-cost-field {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-row {
+    grid-template-columns: 42px minmax(0,1fr) !important;
+    gap: 6px !important;
+    overflow: hidden !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-fields {
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,.68fr) !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field,
+  #view-settings #transport-costs-panel .transport-cost-field.mas {
+    grid-template-columns: 46px minmax(0,1fr) 10px !important;
+    gap: 3px !important;
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field.mas {
+    grid-template-columns: 34px minmax(0,1fr) !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field input {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field.mas strong {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 0 2px !important;
+  }
+  @media (max-width: 700px) {
+    #view-settings #transport-costs-panel { overflow: visible !important; }
+    #view-settings #transport-costs-panel .transport-cost-fields {
+      grid-template-columns: 1fr !important;
+    }
+    #view-settings #transport-costs-panel .transport-cost-field,
+    #view-settings #transport-costs-panel .transport-cost-field.mas {
+      grid-template-columns: 58px minmax(0,1fr) 18px !important;
+    }
+  }
+</style>
+
+<style id="transport-costs-aligned-contained-v2293">
+  #view-settings #transport-costs-panel,
+  #view-settings #transport-costs-panel * {
+    box-sizing: border-box !important;
+  }
+  #view-settings #transport-costs-panel {
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-row {
+    display: grid !important;
+    grid-template-columns: 44px minmax(0,1fr) !important;
+    align-items: center !important;
+    gap: 7px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 6px 8px !important;
+    overflow: hidden !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-row > strong {
+    align-self: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 32px !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-fields {
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,.72fr) !important;
+    align-items: center !important;
+    gap: 7px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field,
+  #view-settings #transport-costs-panel .transport-cost-field.mas {
+    display: grid !important;
+    grid-template-columns: 45px minmax(0,1fr) 10px !important;
+    align-items: center !important;
+    gap: 4px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    min-height: 32px !important;
+    overflow: hidden !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field.mas {
+    grid-template-columns: 45px minmax(0,1fr) 10px !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field label {
+    display: flex !important;
+    align-items: center !important;
+    height: 32px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field input,
+  #view-settings #transport-costs-panel .transport-cost-field.mas strong {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 32px !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+    line-height: 1 !important;
+    box-sizing: border-box !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field.mas strong {
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  #view-settings #transport-costs-panel .transport-cost-field > span {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 10px !important;
+    height: 32px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+  }
+  @media (max-width: 700px) {
+    #view-settings #transport-costs-panel { overflow: visible !important; }
+    #view-settings #transport-costs-panel .transport-cost-fields {
+      grid-template-columns: 1fr !important;
+      gap: 5px !important;
+    }
+    #view-settings #transport-costs-panel .transport-cost-field,
+    #view-settings #transport-costs-panel .transport-cost-field.mas {
+      grid-template-columns: 58px minmax(0,1fr) 18px !important;
+    }
+    #view-settings #transport-costs-panel .transport-cost-field > span {
+      width: 18px !important;
+    }
+  }
+</style>
+
+<style id="settings-auto-height-v2294">
+  #view-settings,
+  #view-settings.active,
+  #view-settings > .form-box,
+  #view-settings .settings-fixed-order-list {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+  #view-settings {
+    overflow: visible !important;
+    padding-bottom: 18px !important;
+  }
+  #view-settings > .form-box {
+    overflow: visible !important;
+  }
+  #view-settings .settings-fixed-order-list {
+    grid-auto-rows: auto !important;
+    align-content: start !important;
+    overflow: visible !important;
+  }
+  #view-settings .settings-fixed-order-list > .settings-role-hidden,
+  #view-settings .settings-fixed-order-list > [aria-hidden="true"] {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  #view-settings .settings-fixed-order-list > .settings-submenu-tile,
+  #view-settings .settings-fixed-order-list > .security-panel,
+  #view-settings .settings-fixed-order-list > .remember-device-panel,
+  #view-settings .settings-fixed-order-list > .app-update-panel {
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+</style>
+<script id="settings-auto-height-v2294-script">
+(function(){
+  'use strict';
+  function refreshSettingsHeight(){
+    const view=document.getElementById('view-settings');
+    const form=view?.querySelector(':scope > .form-box');
+    const list=form?.querySelector('.settings-fixed-order-list');
+    if(!view||!form||!list) return;
+    view.style.height='auto';
+    view.style.minHeight='0';
+    form.style.height='auto';
+    form.style.minHeight='0';
+    list.style.height='auto';
+    list.style.minHeight='0';
+  }
+  window.refreshSettingsHeight=refreshSettingsHeight;
+  const previousFix=window.fixSettingsOrder;
+  window.fixSettingsOrder=function(){
+    const result=previousFix.apply(this,arguments);
+    requestAnimationFrame(refreshSettingsHeight);
+    return result;
+  };
+  window.addEventListener('resize',refreshSettingsHeight);
+  window.addEventListener('load',()=>requestAnimationFrame(refreshSettingsHeight));
 })();
 </script>
 
