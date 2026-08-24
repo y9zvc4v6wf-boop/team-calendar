@@ -2,12 +2,17 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.15">
+  <meta name="application-version" content="2.3.16">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Suivi des déplacements</title>
+  <meta name="application-name" content="Suivi des déplacements">
+  <meta name="description" content="Suivi des déplacements, des coûts et du planning des équipes">
+  <meta property="og:title" content="Suivi des déplacements">
+  <meta property="og:description" content="Suivi des déplacements, des coûts et du planning des équipes">
+  <meta property="og:type" content="website">
 
   <script>
     (function () {
@@ -972,7 +977,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Planning Équipe">
+  <meta name="apple-mobile-web-app-title" content="Suivi des déplacements">
   <meta name="format-detection" content="telephone=no">
   <link rel="manifest" href="manifest.webmanifest">
 
@@ -4755,7 +4760,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         <div id="unified-modal-icon" class="app-modal-icon">ℹ️</div>
         <div>
           <h2 id="unified-modal-title" class="app-modal-title">Information</h2>
-          <p id="unified-modal-subtitle" class="app-modal-subtitle">Planning Équipe</p>
+          <p id="unified-modal-subtitle" class="app-modal-subtitle">Suivi des déplacements</p>
         </div>
       </div>
       <p id="unified-modal-message" class="app-modal-message"></p>
@@ -4801,7 +4806,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     mode = kind;
     previousFocus = document.activeElement;
     title.textContent = options.title || (kind === 'confirm' ? 'Confirmation' : kind === 'prompt' ? 'Saisie requise' : 'Information');
-    subtitle.textContent = options.subtitle || 'Planning Équipe';
+    subtitle.textContent = options.subtitle || 'Suivi des déplacements';
     icon.textContent = options.icon || (options.danger ? '⚠️' : kind === 'confirm' ? '❓' : kind === 'prompt' ? '🔐' : 'ℹ️');
     message.textContent = String(text ?? '');
     cancelButton.style.display = kind === 'alert' ? 'none' : 'inline-flex';
@@ -6809,7 +6814,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.15">v2.3.15</span>
+<span id="app-version-indicator" aria-label="Version 2.3.16">v2.3.16</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
