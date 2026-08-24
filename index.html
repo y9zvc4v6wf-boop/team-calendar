@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.13">
+  <meta name="application-version" content="2.3.14">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -76,10 +76,7 @@
       --color-ZAL: #ED6DA1;
       --color-CTX: #00838F;
       --color-COM: #AD1457;
-      --color-ZAM: #5B6BC0;
-      --color-FRA: #2E8B57;
-      --color-ZAO: #B56A2D;
-      --color-EUR: #7C4DFF;
+      --color-ZAM:#5B6BC0;--color-FRA:#2E8B57;--color-ZAO:#B56A2D;--color-EUR:#7C4DFF;
       --color-Autres: #2E7D32;
 
       --pit-archi: #00F0FF;
@@ -133,10 +130,7 @@
       --color-ZAL: #E8D0FF;
       --color-CTX: #B2EBF2;
       --color-COM: #F8BBD0;
-      --color-ZAM: #C5CAE9;
-      --color-FRA: #B9F6CA;
-      --color-ZAO: #FFCCBC;
-      --color-EUR: #D1C4E9;
+      --color-ZAM:#C5CAE9;--color-FRA:#B9F6CA;--color-ZAO:#FFCCBC;--color-EUR:#D1C4E9;
       --color-Autres: #C8E6C9;
 
       --pit-archi: #0ea5e9;
@@ -6781,7 +6775,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.13">v2.3.13</span>
+<span id="app-version-indicator" aria-label="Version 2.3.14">v2.3.14</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
@@ -8277,7 +8271,7 @@ bindOption('option-disable-presence','disablePresence');bindOption('option-disab
 const priorSwitch=window.switchTab;window.switchTab=function(view){const target=displayOptions.disablePresence&&view==='view-presence'?(currentUser?'view-personal':'view-team'):view;const result=priorSwitch(target);applyDisplayOptions();return result};
 const priorSettings=window.renderSettingsView;window.renderSettingsView=function(){const result=priorSettings.apply(this,arguments);syncAdminAccess();renderAdminLists();return result};
 const priorLogin=window.loginSuccess;window.loginSuccess=function(){const result=priorLogin.apply(this,arguments);applyDisplayOptions();return result};
-function bindStorage(){costCentreData=readLocal('team_cost_centres',{});if(db){optionsRef=db.ref('app_config/display_options');optionsRef.on('value',snap=>{const shared=snap.val();if(shared&&typeof shared==='object'){displayOptions={disablePresence:!!shared.disablePresence,disableClermontSites:!!shared.disableClermontSites,disableAbsenceTypes:!!shared.disableAbsenceTypes,disableFormation:!!shared.disableFormation,disableHalfDays:!!shared.disableHalfDays};writeLocal(OPTIONS_KEY,displayOptions);applyDisplayOptions()}else if(isAdmin()){optionsRef.set(displayOptions).catch(error=>console.error('[Options globales] Initialisation Firebase',error))}});configRef=db.ref('app_config/secondary_and_cost_lists');configRef.on('value',snap=>{if(snap.val()){adminConfig=normaliseConfig(snap.val());writeLocal(CONFIG_KEY,adminConfig);syncRuntimeCodes();renderAdminLists()}});costDataRef=db.ref('cost_centres');costDataRef.on('value',snap=>{costCentreData=snap.val()||{};window.COST_CENTRE_DATA=costCentreData})}}
+function bindStorage(){costCentreData=readLocal('team_cost_centres',{});if(db){optionsRef=db.ref('app_config/display_options');optionsRef.on('value',snap=>{const shared=snap.val();if(shared&&typeof shared==='object'){displayOptions={disablePresence:!!shared.disablePresence,disableClermontSites:!!shared.disableClermontSites,disableAbsenceTypes:!!shared.disableAbsenceTypes,disableFormation:!!shared.disableFormation,disableHalfDays:!!shared.disableHalfDays};writeLocal(OPTIONS_KEY,displayOptions);applyDisplayOptions()}else if(isAdmin()){optionsRef.set(displayOptions)}});configRef=db.ref('app_config/secondary_and_cost_lists');configRef.on('value',snap=>{if(snap.val()){adminConfig=normaliseConfig(snap.val());writeLocal(CONFIG_KEY,adminConfig);syncRuntimeCodes();renderAdminLists()}});costDataRef=db.ref('cost_centres');costDataRef.on('value',snap=>{costCentreData=snap.val()||{};window.COST_CENTRE_DATA=costCentreData})}}
 document.addEventListener('click',event=>{const chip=event.target.closest('.activity-favourite-chip');if(!chip)return;setTimeout(()=>{if(requiresSecondaryCode(selectedTool)){selectedCostCentre=null;openCostCentreModal(()=>{})}},0)},true);
 syncRuntimeCodes();bindStorage();applyDisplayOptions();renderAdminLists();window.addEventListener('load',()=>{applyDisplayOptions();renderAdminLists()});
 })();
@@ -8619,7 +8613,14 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
   }
 </style>
 
-
+<style id="restore-autres-selector-v2280">
+  .tool-btn[data-status="Autres"],
+  [data-mobile-status="Autres"],
+  #mobile-activity-options .tool-Autres {
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+</style>
 
 <style id="travel-cost-settings-v2269">
   .travel-costs-settings-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
@@ -9904,7 +9905,13 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
 </script>
 
 
-
+<style id="autres-button-v235-style">
+  #view-personal .toolbar .tool-Autres {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+</style>
 
 
 
@@ -9942,5 +9949,8 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
 })();
 </script>
 
+<script id="global-status-cleanup-v2314-script">
+(function(){'use strict';const TARGET=new Set(['CA','JDR','TT','LAD','CAR','Formation']),MARKER='app_config/cleanup_v2314_absence_presence_records';let running=false;function cleanPlanning(source){const next=source&&typeof source==='object'?structuredClone(source):{},removed=[];Object.entries(next).forEach(([dateKey,day])=>{if(!day||typeof day!=='object')return;Object.entries(day).forEach(([user,value])=>{if(typeof value==='string'){if(TARGET.has(value)){delete day[user];removed.push({dateKey,user,slot:null})}}else if(value&&typeof value==='object'){['am','pm'].forEach(slot=>{if(TARGET.has(value[slot])){delete value[slot];removed.push({dateKey,user,slot})}});if(!value.am&&!value.pm)delete day[user]}});if(!Object.keys(day).length)delete next[dateKey]});return{next,removed}}function cleanTree(source,removed){const next=source&&typeof source==='object'?structuredClone(source):{};removed.forEach(({dateKey,user,slot})=>{const day=next[dateKey];if(!day||!Object.prototype.hasOwnProperty.call(day,user))return;if(!slot)delete day[user];else{const value=day[user];if(value&&typeof value==='object'){delete value[slot];if(!value.am&&!value.pm)delete day[user]}else delete day[user]}if(!Object.keys(day).length)delete next[dateKey]});return next}async function run(){if(running||!hasAdminAccess(getMemberByFirstName(currentUser)))return;running=true;try{if(!db)return;const marker=await db.ref(MARKER).once('value');if(marker.val()?.completed)return;const [p,s,c,t,o]=await Promise.all(['planning','secondary_codes','cost_centres','transport_choices','custom_travel_costs'].map(path=>db.ref(path).once('value')));const cleaned=cleanPlanning(p.val()||{}),updates={planning:cleaned.next,secondary_codes:cleanTree(s.val()||{},cleaned.removed),cost_centres:cleanTree(c.val()||{},cleaned.removed),transport_choices:cleanTree(t.val()||{},cleaned.removed),custom_travel_costs:cleanTree(o.val()||{},cleaned.removed)};updates[MARKER]={completed:true,removedEntries:cleaned.removed.length,completedAt:firebase.database.ServerValue.TIMESTAMP,completedBy:currentUser};await db.ref().update(updates);calendarData=updates.planning;secondaryCodesData=updates.secondary_codes;window.COST_CENTRE_DATA=updates.cost_centres;window.TRANSPORT_DATA=updates.transport_choices;window.CUSTOM_TRAVEL_COSTS=updates.custom_travel_costs;renderViews();alert(`${cleaned.removed.length} enregistrement${cleaned.removed.length>1?'s':''} supprimé${cleaned.removed.length>1?'s':''} pour tous les utilisateurs.`)}catch(error){console.error('[Nettoyage v2.3.14]',error);alert('Le nettoyage global n’a pas pu être terminé.')}finally{running=false}}const prior=window.loginSuccess;window.loginSuccess=function(){const result=prior.apply(this,arguments);setTimeout(run,0);return result}})();
+</script>
 </body>
 </html>
