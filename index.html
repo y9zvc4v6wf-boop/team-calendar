@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.11">
+  <meta name="application-version" content="2.3.13">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -76,6 +76,10 @@
       --color-ZAL: #ED6DA1;
       --color-CTX: #00838F;
       --color-COM: #AD1457;
+      --color-ZAM: #5B6BC0;
+      --color-FRA: #2E8B57;
+      --color-ZAO: #B56A2D;
+      --color-EUR: #7C4DFF;
       --color-Autres: #2E7D32;
 
       --pit-archi: #00F0FF;
@@ -129,6 +133,10 @@
       --color-ZAL: #E8D0FF;
       --color-CTX: #B2EBF2;
       --color-COM: #F8BBD0;
+      --color-ZAM: #C5CAE9;
+      --color-FRA: #B9F6CA;
+      --color-ZAO: #FFCCBC;
+      --color-EUR: #D1C4E9;
       --color-Autres: #C8E6C9;
 
       --pit-archi: #0ea5e9;
@@ -344,6 +352,10 @@
     .tool-ZAL, .bg-ZAL, .day-half.bg-ZAL { background: var(--color-ZAL) !important; color: var(--status-text-color); }
     .tool-CTX, .bg-CTX, .day-half.bg-CTX { background: var(--color-CTX) !important; color: var(--status-text-color); }
     .tool-COM, .bg-COM, .day-half.bg-COM { background: var(--color-COM) !important; color: var(--status-text-color); }
+    .tool-ZAM, .bg-ZAM, .day-half.bg-ZAM { background: var(--color-ZAM) !important; color: var(--status-text-color); }
+    .tool-FRA, .bg-FRA, .day-half.bg-FRA { background: var(--color-FRA) !important; color: var(--status-text-color); }
+    .tool-ZAO, .bg-ZAO, .day-half.bg-ZAO { background: var(--color-ZAO) !important; color: var(--status-text-color); }
+    .tool-EUR, .bg-EUR, .day-half.bg-EUR { background: var(--color-EUR) !important; color: var(--status-text-color); }
     .tool-Autres, .bg-Autres, .day-half.bg-Autres { background: var(--color-Autres) !important; color: var(--status-text-color); }
     .tool-PRESENT { background: var(--badge-neutral-bg); color: var(--badge-neutral-text) !important; border: 1px solid var(--border); }
 
@@ -1236,7 +1248,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           <button class="tool-btn tool-ZAL" data-status="ZAL">ZAL</button>
           <button class="tool-btn tool-CTX" data-status="CTX">CTX</button>
           <button class="tool-btn tool-COM" data-status="COM">COM</button>
-                    <button class="tool-btn tool-PRESENT active" data-status="PRESENT">🗑️ Effacer (Bureau)</button>
+          <button class="tool-btn tool-ZAM" data-status="ZAM">ZAM</button>
+          <button class="tool-btn tool-FRA" data-status="FRA">FRA</button>
+          <button class="tool-btn tool-ZAO" data-status="ZAO">ZAO</button>
+          <button class="tool-btn tool-EUR" data-status="EUR">EUR</button>
+                    <button class="tool-btn tool-PRESENT active" data-status="PRESENT">🗑️ Effacer</button>
         </div>
       </div>
       <div id="personal-grids-container"></div>
@@ -1668,7 +1684,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   const DISPLACEMENT_COSTS = {
     ALE: 220, ARA: 210, CGR: 250, HBG: 225, LVL: 200, NKE: 279, SPA: 365,
-    UCH: 249, VLD: 210, WAT: 306, ZAL: 200, CTX: 210, COM: 220, Autres: 0
+    UCH: 249, VLD: 210, WAT: 306, ZAL: 200, CTX: 210, COM: 220, ZAM: 0, FRA: 0, ZAO: 0, EUR: 0, Autres: 0
   };
   const DISPLACEMENT_CODES = Object.keys(DISPLACEMENT_COSTS);
 
@@ -1819,7 +1835,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
            dateObj.getDate() === todayDate;
   }
 
-  const SECONDARY_CODE_DESTINATIONS = ['ARA', 'ALE', 'SPA', 'CGR', 'NKE', 'WAT', 'LVL', 'LLV', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM', 'Autres'];
+  const SECONDARY_CODE_DESTINATIONS = ['ARA', 'ALE', 'SPA', 'CGR', 'NKE', 'WAT', 'LVL', 'LLV', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM', 'ZAM', 'FRA', 'ZAO', 'EUR', 'Autres'];
   const SECONDARY_CODES = ['VSM', 'WKS', 'PRJ', 'SPU', 'FOR', 'VFO', 'VMA', 'RSX'];
 
   function requiresSecondaryCode(status) { return SECONDARY_CODE_DESTINATIONS.includes(status); }
@@ -2540,7 +2556,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     target.classList.add('brush-painted-preview');
     brushHasChanges = true;
 
-    if (['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM', 'Autres'].includes(selectedTool)) {
+    if (['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM', 'ZAM', 'FRA', 'ZAO', 'EUR', 'Autres'].includes(selectedTool)) {
       brushLastTravelContext = { dateKey, destination: selectedTool, slot };
     }
   }
@@ -3201,7 +3217,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   });
 
   function notifySameDestination(dateKey, destination, currentUserName, slot = null) {
-    const travelCodes = ['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM', 'Autres'];
+    const travelCodes = ['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM', 'ZAM', 'FRA', 'ZAO', 'EUR', 'Autres'];
     if (!travelCodes.includes(destination)) return;
     const colleagues = getColleaguesAtSameDestination(dateKey, destination, currentUserName, slot);
     if (colleagues.length === 0) return;
@@ -5171,7 +5187,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   const mq=window.matchMedia('(max-width:700px) and (orientation:portrait)');
   const previousRender=window.renderPersonalCalendar;
   let selectedMobileDate=new Date();
-  const categories={presence:['TT','LAD','CAR'],absence:['CA','JDR','Formation'],travel:['ALE','ARA','CGR','SPA','NKE','WAT','LVL','HBG','VLD','UCH','ZAL','CTX','COM','Autres']};
+  const categories={presence:['TT','LAD','CAR'],absence:['CA','JDR','Formation'],travel:['ALE','ARA','CGR','SPA','NKE','WAT','LVL','HBG','VLD','UCH','ZAL','CTX','COM','ZAM','FRA','ZAO','EUR','Autres']};
   const labels={presence:'Présence',absence:'Absences',travel:'Déplacements'};
   function active(){return mq.matches;}
   function monday(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d;}
@@ -6765,7 +6781,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.11">v2.3.11</span>
+<span id="app-version-indicator" aria-label="Version 2.3.13">v2.3.13</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
@@ -8603,14 +8619,7 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
   }
 </style>
 
-<style id="restore-autres-selector-v2280">
-  .tool-btn[data-status="Autres"],
-  [data-mobile-status="Autres"],
-  #mobile-activity-options .tool-Autres {
-    display: inline-flex !important;
-    align-items: center !important;
-  }
-</style>
+
 
 <style id="travel-cost-settings-v2269">
   .travel-costs-settings-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
@@ -8629,8 +8638,8 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
 (function(){
   'use strict';
   const STORAGE_KEY='planning_travel_costs_v1';
-  const CODES=['ARA','ALE','CGR','HBG','LVL','NKE','SPA','UCH','VLD','WAT','ZAL','CTX','COM'];
-  const DEFAULTS={ARA:210,ALE:220,CGR:250,HBG:225,LVL:200,NKE:279,SPA:365,UCH:249,VLD:210,WAT:306,ZAL:200,CTX:210,COM:220};
+  const CODES=['ARA','ALE','CGR','HBG','LVL','NKE','SPA','UCH','VLD','WAT','ZAL','CTX','COM','ZAM','FRA','ZAO','EUR'];
+  const DEFAULTS={ARA:210,ALE:220,CGR:250,HBG:225,LVL:200,NKE:279,SPA:365,UCH:249,VLD:210,WAT:306,ZAL:200,CTX:210,COM:220,ZAM:0,FRA:0,ZAO:0,EUR:0};
   function read(){try{const value=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');return value&&typeof value==='object'?value:{}}catch(_){return {}}}
   function apply(values){CODES.forEach(code=>{const value=Number(values[code]);DISPLACEMENT_COSTS[code]=Number.isFinite(value)&&value>=0?value:DEFAULTS[code]})}
   function render(values){
@@ -8996,7 +9005,7 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
 'use strict';
 const TRANSPORT_STORAGE_KEY='planning_transport_costs_v1';
 const TRANSPORT_DATA_KEY='team_transport_choices_v1';
-const TRANSPORT_CODES=['ARA','ALE','CGR','HBG','LVL','NKE','SPA','UCH','VLD','WAT','ZAL','CTX','COM','Autres'];
+const TRANSPORT_CODES=['ARA','ALE','CGR','HBG','LVL','NKE','SPA','UCH','VLD','WAT','ZAL','CTX','COM','ZAM','FRA','ZAO','EUR'];
 const TRANSPORT_TYPES=['Voiture','Avion','MAS'];
 const TRANSPORT_DEFAULTS=Object.fromEntries(TRANSPORT_CODES.map(code=>[code,{Voiture:0,Avion:0,MAS:0}]));
 let transportCosts={};
@@ -9895,13 +9904,7 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
 </script>
 
 
-<style id="autres-button-v235-style">
-  #view-personal .toolbar .tool-Autres {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-</style>
+
 
 
 
