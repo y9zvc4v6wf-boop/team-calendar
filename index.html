@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.10">
+  <meta name="application-version" content="2.3.11">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -6765,7 +6765,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.10">v2.3.10</span>
+<span id="app-version-indicator" aria-label="Version 2.3.11">v2.3.11</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
@@ -8220,7 +8220,7 @@ const DEFAULT_COSTS=['Marche courante','Projet'];
 let displayOptions=readLocal(OPTIONS_KEY,{disablePresence:false,disableClermontSites:false,disableAbsenceTypes:false,disableFormation:false,disableHalfDays:false});
 let adminConfig=normaliseConfig(readLocal(CONFIG_KEY,{secondaryCodes:DEFAULT_CODES,costCentres:DEFAULT_COSTS}));
 let pendingSecondaryCode=null,pendingDestination=null,pendingCostCallback=null;
-let configRef=null,costDataRef=null;window.COST_CENTRE_DATA=costCentreData;
+let configRef=null,costDataRef=null,optionsRef=null;window.COST_CENTRE_DATA=costCentreData;
 function readLocal(key,fallback){try{return JSON.parse(localStorage.getItem(key))||fallback}catch(_){return fallback}}
 function writeLocal(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(error){console.error('[Configuration] Sauvegarde locale impossible',error)}}
 function normaliseConfig(value){
@@ -8255,12 +8255,13 @@ function setCostCentreEntry(dateKey,user,status,slot){window.COST_CENTRE_DATA=co
 const originalSetSecondary=window.setSecondaryCode;window.setSecondaryCode=function(dateKey,user,status,slot,code){const result=originalSetSecondary.apply(this,arguments);setCostCentreEntry(dateKey,user,status,slot);return result};
 const originalSavePlanning=window.savePlanningAndSecondaryData;window.savePlanningAndSecondaryData=function(){const result=originalSavePlanning.apply(this,arguments);writeLocal('team_cost_centres',costCentreData);if(costDataRef)costDataRef.set(costCentreData).catch(error=>console.error('[Centres de coût] Firebase',error));return result};
 function applyDisplayOptions(){const root=document.documentElement;root.classList.toggle('option-presence-disabled',!!displayOptions.disablePresence);root.classList.toggle('option-clermont-sites-disabled',!!displayOptions.disableClermontSites);root.classList.toggle('option-absence-types-disabled',!!displayOptions.disableAbsenceTypes);root.classList.toggle('option-formation-disabled',!!displayOptions.disableFormation);root.classList.toggle('option-half-days-disabled',!!displayOptions.disableHalfDays);['option-disable-presence','option-disable-clermont-sites','option-disable-absence-types','option-disable-formation','option-disable-half-days'].forEach((id,index)=>{const el=document.getElementById(id);if(el)el.checked=!!displayOptions[['disablePresence','disableClermontSites','disableAbsenceTypes','disableFormation','disableHalfDays'][index]]});if(displayOptions.disableFormation&&selectedTool==='Formation'){selectedTool='PRESENT';selectedSecondaryCode=null;document.querySelectorAll('.tool-btn').forEach(button=>button.classList.toggle('active',button.dataset.status==='PRESENT'))}syncAdminAccess();if(displayOptions.disablePresence&&document.getElementById('view-presence')?.classList.contains('active'))switchTab(currentUser?'view-personal':'view-team');if(document.getElementById('view-personal')?.classList.contains('active'))renderPersonalCalendar(currentDate.getFullYear(),currentDate.getMonth())}
-function bindOption(id,key){document.getElementById(id)?.addEventListener('change',event=>{if(!isAdmin()){applyDisplayOptions();return}displayOptions[key]=event.target.checked;writeLocal(OPTIONS_KEY,displayOptions);applyDisplayOptions()})}
+function saveDisplayOptions(){writeLocal(OPTIONS_KEY,displayOptions);if(optionsRef)optionsRef.set(displayOptions).catch(error=>console.error('[Options globales] Firebase',error))}
+function bindOption(id,key){document.getElementById(id)?.addEventListener('change',event=>{if(!isAdmin()){applyDisplayOptions();return}displayOptions[key]=event.target.checked;saveDisplayOptions();applyDisplayOptions()})}
 bindOption('option-disable-presence','disablePresence');bindOption('option-disable-clermont-sites','disableClermontSites');bindOption('option-disable-absence-types','disableAbsenceTypes');bindOption('option-disable-formation','disableFormation');bindOption('option-disable-half-days','disableHalfDays');
 const priorSwitch=window.switchTab;window.switchTab=function(view){const target=displayOptions.disablePresence&&view==='view-presence'?(currentUser?'view-personal':'view-team'):view;const result=priorSwitch(target);applyDisplayOptions();return result};
 const priorSettings=window.renderSettingsView;window.renderSettingsView=function(){const result=priorSettings.apply(this,arguments);syncAdminAccess();renderAdminLists();return result};
 const priorLogin=window.loginSuccess;window.loginSuccess=function(){const result=priorLogin.apply(this,arguments);applyDisplayOptions();return result};
-function bindStorage(){costCentreData=readLocal('team_cost_centres',{});if(db){configRef=db.ref('app_config/secondary_and_cost_lists');configRef.on('value',snap=>{if(snap.val()){adminConfig=normaliseConfig(snap.val());writeLocal(CONFIG_KEY,adminConfig);syncRuntimeCodes();renderAdminLists()}});costDataRef=db.ref('cost_centres');costDataRef.on('value',snap=>{costCentreData=snap.val()||{};window.COST_CENTRE_DATA=costCentreData})}}
+function bindStorage(){costCentreData=readLocal('team_cost_centres',{});if(db){optionsRef=db.ref('app_config/display_options');optionsRef.on('value',snap=>{const shared=snap.val();if(shared&&typeof shared==='object'){displayOptions={disablePresence:!!shared.disablePresence,disableClermontSites:!!shared.disableClermontSites,disableAbsenceTypes:!!shared.disableAbsenceTypes,disableFormation:!!shared.disableFormation,disableHalfDays:!!shared.disableHalfDays};writeLocal(OPTIONS_KEY,displayOptions);applyDisplayOptions()}else if(isAdmin()){optionsRef.set(displayOptions).catch(error=>console.error('[Options globales] Initialisation Firebase',error))}});configRef=db.ref('app_config/secondary_and_cost_lists');configRef.on('value',snap=>{if(snap.val()){adminConfig=normaliseConfig(snap.val());writeLocal(CONFIG_KEY,adminConfig);syncRuntimeCodes();renderAdminLists()}});costDataRef=db.ref('cost_centres');costDataRef.on('value',snap=>{costCentreData=snap.val()||{};window.COST_CENTRE_DATA=costCentreData})}}
 document.addEventListener('click',event=>{const chip=event.target.closest('.activity-favourite-chip');if(!chip)return;setTimeout(()=>{if(requiresSecondaryCode(selectedTool)){selectedCostCentre=null;openCostCentreModal(()=>{})}},0)},true);
 syncRuntimeCodes();bindStorage();applyDisplayOptions();renderAdminLists();window.addEventListener('load',()=>{applyDisplayOptions();renderAdminLists()});
 })();
