@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.14">
+  <meta name="application-version" content="2.3.15">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -2636,6 +2636,40 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       alert("La bibliothèque d'export Excel n'est pas disponible. Vérifiez votre connexion internet puis réessayez.");
       return;
     }
+    const exportValueAt = (source, slot) => {
+      if (!source) return '';
+      if (typeof source === 'string') return source;
+      if (slot) return source[slot] || '';
+      return source.am && source.am === source.pm ? source.am : '';
+    };
+    const buildExportRow = (base, dateKey, firstName, status, slot, creneau) => {
+      const multiplier = slot ? 0.5 : 1;
+      const secondaryCode = exportValueAt(secondaryCodesData?.[dateKey]?.[firstName], slot);
+      const costCentre = exportValueAt(window.COST_CENTRE_DATA?.[dateKey]?.[firstName], slot);
+      const transport = typeof window.getTransportChoice === 'function'
+        ? (window.getTransportChoice(dateKey, firstName, slot) || '')
+        : exportValueAt(window.TRANSPORT_DATA?.[dateKey]?.[firstName], slot);
+      const customCost = exportValueAt(window.CUSTOM_TRAVEL_COSTS?.[dateKey]?.[firstName], slot);
+      const dailyUnit = status === 'Autres' && Number.isFinite(Number(customCost))
+        ? Number(customCost)
+        : Number(DISPLACEMENT_COSTS[status] || 0);
+      const dailyCost = DISPLACEMENT_CODES.includes(status) ? dailyUnit * multiplier : 0;
+      const transportCost = DISPLACEMENT_CODES.includes(status) && typeof getTransportCost === 'function'
+        ? Number(getTransportCost(dateKey, firstName, status, slot) || 0) * multiplier
+        : 0;
+      return {
+        ...base,
+        Creneau: creneau,
+        Statut: status,
+        Code_secondaire: secondaryCode,
+        Centre_de_cout: costCentre,
+        Moyen_de_transport: transport,
+        Cout_journalier_unitaire_EUR: dailyUnit,
+        Cout_journalier_applique_EUR: dailyCost,
+        Cout_transport_EUR: transportCost,
+        Cout_total_EUR: dailyCost + transportCost
+      };
+    };
     const rows = [];
     Object.keys(calendarData).sort().forEach(dateKey => {
       const dayData = calendarData[dateKey] || {};
@@ -2650,10 +2684,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           Manager: member && member.isManager ? 'Oui' : 'Non'
         };
         if (typeof value === 'string') {
-          rows.push({ ...base, Creneau: 'Journee', Statut: value });
+          rows.push(buildExportRow(base, dateKey, firstName, value, null, 'Journee'));
         } else if (value && typeof value === 'object') {
-          if (value.am && value.am !== 'PRESENT') rows.push({ ...base, Creneau: 'Matin', Statut: value.am });
-          if (value.pm && value.pm !== 'PRESENT') rows.push({ ...base, Creneau: 'Apres-midi', Statut: value.pm });
+          if (value.am && value.am !== 'PRESENT') rows.push(buildExportRow(base, dateKey, firstName, value.am, 'am', 'Matin'));
+          if (value.pm && value.pm !== 'PRESENT') rows.push(buildExportRow(base, dateKey, firstName, value.pm, 'pm', 'Apres-midi'));
         }
       });
     });
@@ -2661,12 +2695,12 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       alert("Aucune donnée de planning à exporter.");
       return;
     }
-    const headers = ['Date', 'Prenom', 'Nom', 'PIT', 'Manager', 'Creneau', 'Statut'];
+    const headers = ['Date','Prenom','Nom','PIT','Manager','Creneau','Statut','Code_secondaire','Centre_de_cout','Moyen_de_transport','Cout_journalier_unitaire_EUR','Cout_journalier_applique_EUR','Cout_transport_EUR','Cout_total_EUR'];
     const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
-    worksheet['!autofilter'] = { ref: `A1:G${rows.length + 1}` };
+    worksheet['!autofilter'] = { ref: `A1:N${rows.length + 1}` };
     worksheet['!cols'] = [
-      { wch: 12 }, { wch: 16 }, { wch: 20 }, { wch: 16 },
-      { wch: 10 }, { wch: 14 }, { wch: 14 }
+      {wch:12},{wch:16},{wch:20},{wch:16},{wch:10},{wch:14},{wch:14},
+      {wch:18},{wch:20},{wch:20},{wch:28},{wch:27},{wch:22},{wch:18}
     ];
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Planning');
@@ -6775,7 +6809,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.14">v2.3.14</span>
+<span id="app-version-indicator" aria-label="Version 2.3.15">v2.3.15</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
