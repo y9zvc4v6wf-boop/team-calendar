@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.16">
+  <meta name="application-version" content="2.3.17">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -2896,8 +2896,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       monthlyData[dMonthInt].ca += caCount;
       monthlyData[dMonthInt].form += formCount;
       monthlyData[dMonthInt].disp += dispCount;
-      const europeCodes = ['ARA','ALE','ZAL','LLV','LVL','HBG','VLD'];
-      const interCodes = ['SPA','NKE','WAT','UCH','CGR'];
+      const europeCodes = ['ARA','ALE','ZAL','LLV','LVL','HBG','VLD','EUR','FRA'];
+      const interCodes = ['SPA','NKE','WAT','UCH','CGR','ZAM','ZAO'];
       const addGroup = value => { if (europeCodes.includes(value)) monthlyData[dMonthInt].europe += 0.5; if (interCodes.includes(value)) monthlyData[dMonthInt].inter += 0.5; };
       if (typeof status === 'string') { if (europeCodes.includes(status)) monthlyData[dMonthInt].europe += 1; if (interCodes.includes(status)) monthlyData[dMonthInt].inter += 1; }
       else if (status && typeof status === 'object') { addGroup(status.am); addGroup(status.pm); }
@@ -6814,7 +6814,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.16">v2.3.16</span>
+<span id="app-version-indicator" aria-label="Version 2.3.17">v2.3.17</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
