@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.17">
+  <meta name="application-version" content="2.3.18">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -31,6 +31,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1726,12 +1727,58 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   } catch (e) {}
   applyTheme(savedTheme);
 
+  let firebaseAuthReady = false;
+  let firebaseDataSyncStarted = false;
   try {
     firebase.initializeApp(firebaseConfig);
     db = firebase.database();
-    banner.innerHTML = "🟢 <strong>Mode Équipe Cloud (Firebase) :</strong> Connecté.";
+    banner.innerHTML = "🟠 <strong>Firebase :</strong> Authentification sécurisée en cours…";
   } catch (e) {
+    db = null;
     banner.innerHTML = "🟡 <strong>Mode Local :</strong> Sauvegarde navigateur (Firebase hors ligne).";
+  }
+  function startFirebaseDataSyncOnce() {
+    if (firebaseDataSyncStarted) return;
+    firebaseDataSyncStarted = true;
+    syncData();
+  }
+  async function initialiseFirebaseAuthentication() {
+    if (!db || !window.firebase?.auth) {
+      startFirebaseDataSyncOnce();
+      return;
+    }
+    try {
+      const auth = firebase.auth();
+      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      await new Promise((resolve, reject) => {
+        let settled = false;
+        const unsubscribe = auth.onAuthStateChanged(async user => {
+          if (settled) return;
+          try {
+            if (!user) {
+              await auth.signInAnonymously();
+              return;
+            }
+            settled = true;
+            unsubscribe();
+            firebaseAuthReady = true;
+            window.FIREBASE_AUTH_UID = user.uid;
+            banner.innerHTML = "🟢 <strong>Firebase sécurisé :</strong> session authentifiée.";
+            resolve(user);
+          } catch (error) {
+            settled = true;
+            unsubscribe();
+            reject(error);
+          }
+        }, reject);
+      });
+      startFirebaseDataSyncOnce();
+    } catch (error) {
+      console.error('[Firebase Auth] Initialisation impossible', error);
+      db = null;
+      banner.innerHTML = "🔴 <strong>Firebase :</strong> authentification indisponible. Activez le fournisseur Anonyme dans Firebase Authentication.";
+      startFirebaseDataSyncOnce();
+    }
   }
 
   function syncData() {
@@ -3617,7 +3664,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     }
   }
 
-  syncData();
+  initialiseFirebaseAuthentication();
 
 </script>
 <style>
@@ -6814,7 +6861,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.17">v2.3.17</span>
+<span id="app-version-indicator" aria-label="Version 2.3.18">v2.3.18</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
@@ -9990,6 +10037,16 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
 
 <script id="global-status-cleanup-v2314-script">
 (function(){'use strict';const TARGET=new Set(['CA','JDR','TT','LAD','CAR','Formation']),MARKER='app_config/cleanup_v2314_absence_presence_records';let running=false;function cleanPlanning(source){const next=source&&typeof source==='object'?structuredClone(source):{},removed=[];Object.entries(next).forEach(([dateKey,day])=>{if(!day||typeof day!=='object')return;Object.entries(day).forEach(([user,value])=>{if(typeof value==='string'){if(TARGET.has(value)){delete day[user];removed.push({dateKey,user,slot:null})}}else if(value&&typeof value==='object'){['am','pm'].forEach(slot=>{if(TARGET.has(value[slot])){delete value[slot];removed.push({dateKey,user,slot})}});if(!value.am&&!value.pm)delete day[user]}});if(!Object.keys(day).length)delete next[dateKey]});return{next,removed}}function cleanTree(source,removed){const next=source&&typeof source==='object'?structuredClone(source):{};removed.forEach(({dateKey,user,slot})=>{const day=next[dateKey];if(!day||!Object.prototype.hasOwnProperty.call(day,user))return;if(!slot)delete day[user];else{const value=day[user];if(value&&typeof value==='object'){delete value[slot];if(!value.am&&!value.pm)delete day[user]}else delete day[user]}if(!Object.keys(day).length)delete next[dateKey]});return next}async function run(){if(running||!hasAdminAccess(getMemberByFirstName(currentUser)))return;running=true;try{if(!db)return;const marker=await db.ref(MARKER).once('value');if(marker.val()?.completed)return;const [p,s,c,t,o]=await Promise.all(['planning','secondary_codes','cost_centres','transport_choices','custom_travel_costs'].map(path=>db.ref(path).once('value')));const cleaned=cleanPlanning(p.val()||{}),updates={planning:cleaned.next,secondary_codes:cleanTree(s.val()||{},cleaned.removed),cost_centres:cleanTree(c.val()||{},cleaned.removed),transport_choices:cleanTree(t.val()||{},cleaned.removed),custom_travel_costs:cleanTree(o.val()||{},cleaned.removed)};updates[MARKER]={completed:true,removedEntries:cleaned.removed.length,completedAt:firebase.database.ServerValue.TIMESTAMP,completedBy:currentUser};await db.ref().update(updates);calendarData=updates.planning;secondaryCodesData=updates.secondary_codes;window.COST_CENTRE_DATA=updates.cost_centres;window.TRANSPORT_DATA=updates.transport_choices;window.CUSTOM_TRAVEL_COSTS=updates.custom_travel_costs;renderViews();alert(`${cleaned.removed.length} enregistrement${cleaned.removed.length>1?'s':''} supprimé${cleaned.removed.length>1?'s':''} pour tous les utilisateurs.`)}catch(error){console.error('[Nettoyage v2.3.14]',error);alert('Le nettoyage global n’a pas pu être terminé.')}finally{running=false}}const prior=window.loginSuccess;window.loginSuccess=function(){const result=prior.apply(this,arguments);setTimeout(run,0);return result}})();
+</script>
+
+<script id="firebase-auth-security-v2318">
+(function(){
+  'use strict';
+  window.getFirebaseAuthenticationStatus=function(){
+    const user=window.firebase?.auth?.().currentUser;
+    return {authenticated:Boolean(user),anonymous:Boolean(user?.isAnonymous),uid:user?.uid||null};
+  };
+})();
 </script>
 </body>
 </html>
