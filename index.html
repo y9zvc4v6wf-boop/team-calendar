@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.19">
+  <meta name="application-version" content="2.3.20">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -6870,7 +6870,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.19">v2.3.19</span>
+<span id="app-version-indicator" aria-label="Version 2.3.20">v2.3.20</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
@@ -8737,33 +8737,59 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
   @media(max-width:700px){.travel-costs-settings-list{grid-template-columns:1fr}.travel-costs-actions{grid-template-columns:1fr}.travel-cost-row{grid-template-columns:64px minmax(0,1fr)}.travel-cost-input-wrap input{font-size:16px}}
 </style>
 
-<script id="travel-cost-settings-v2269-script">
+<script id="travel-cost-settings-v2320-script">
 (function(){
   'use strict';
   const STORAGE_KEY='planning_travel_costs_v1';
+  const FIREBASE_PATH='app_config/travel_costs';
   const CODES=['ARA','ALE','CGR','HBG','LVL','NKE','SPA','UCH','VLD','WAT','ZAL','CTX','COM','ZAM','FRA','ZAO','EUR'];
   const DEFAULTS={ARA:210,ALE:220,CGR:250,HBG:225,LVL:200,NKE:279,SPA:365,UCH:249,VLD:210,WAT:306,ZAL:200,CTX:210,COM:220,ZAM:0,FRA:0,ZAO:0,EUR:0};
-  function read(){try{const value=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');return value&&typeof value==='object'?value:{}}catch(_){return {}}}
-  function apply(values){CODES.forEach(code=>{const value=Number(values[code]);DISPLACEMENT_COSTS[code]=Number.isFinite(value)&&value>=0?value:DEFAULTS[code]})}
-  function render(values){
-    const root=document.getElementById('travel-costs-settings-list');if(!root)return;root.innerHTML='';
-    CODES.forEach(code=>{const row=document.createElement('label');row.className='travel-cost-row';row.innerHTML=`<strong>${code}</strong><span class="travel-cost-input-wrap"><input type="number" min="0" step="1" inputmode="decimal" data-travel-cost-code="${code}" value="${Number(values[code]??DISPLACEMENT_COSTS[code]??DEFAULTS[code])}"><span>€ / jour</span></span>`;root.appendChild(row)});
-  }
-  function showMessage(text,error){const target=document.getElementById('travel-costs-settings-message');if(!target)return;target.textContent=text;target.style.color=error?'var(--danger)':'var(--success)'}
-  const stored=read();apply({...DEFAULTS,...stored});
-  window.saveTravelCostsSettings=function(){
-    if(typeof isAdmin==='function'&&!isAdmin())return;
+  let travelCostsRef=null;
+  let sharedCostsReady=false;
+  function readLocal(){try{const value=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');return value&&typeof value==='object'?value:{}}catch(_){return {}}}
+  function writeLocal(values){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(values))}catch(error){console.error('[Coûts journaliers] Sauvegarde locale impossible',error)}}
+  function normalise(values){const result={};CODES.forEach(code=>{const value=Number(values?.[code]);result[code]=Number.isFinite(value)&&value>=0?value:DEFAULTS[code]});return result}
+  function apply(values){const resolved=normalise(values);CODES.forEach(code=>{DISPLACEMENT_COSTS[code]=resolved[code]});window.TRAVEL_DAILY_COSTS=resolved;return resolved}
+  function render(values){const root=document.getElementById('travel-costs-settings-list');if(!root)return;const resolved=normalise(values);root.innerHTML='';CODES.forEach(code=>{const row=document.createElement('label');row.className='travel-cost-row';row.innerHTML=`<strong>${code}</strong><span class="travel-cost-input-wrap"><input type="number" min="0" step="1" inputmode="decimal" data-travel-cost-code="${code}" value="${resolved[code]}"><span>€ / jour</span></span>`;root.appendChild(row)})}
+  function showMessage(text,error=false){const target=document.getElementById('travel-costs-settings-message');if(!target)return;target.textContent=text;target.style.color=error?'var(--danger)':'var(--success)'}
+  function refreshKpis(){if(document.getElementById('view-kpi')?.classList.contains('active')&&typeof renderKPICharts==='function')renderKPICharts();if(typeof renderKPICostCentreMonthlyChart==='function')renderKPICostCentreMonthlyChart()}
+  function useCosts(values,{renderForm=true,refresh=true}={}){const resolved=apply(values);writeLocal(resolved);if(renderForm)render(resolved);if(refresh)refreshKpis();return resolved}
+  window.saveTravelCostsSettings=async function(){
+    if(typeof hasAdminAccess==='function'&&!hasAdminAccess(getMemberByFirstName(currentUser)))return;
     const values={};let valid=true;
     document.querySelectorAll('[data-travel-cost-code]').forEach(input=>{const value=Number(String(input.value).replace(',','.'));if(!Number.isFinite(value)||value<0){valid=false;input.focus();return}values[input.dataset.travelCostCode]=value});
     if(!valid){showMessage('Tous les coûts doivent être supérieurs ou égaux à 0 €.',true);return}
-    try{localStorage.setItem(STORAGE_KEY,JSON.stringify(values))}catch(error){showMessage('Sauvegarde impossible sur cet appareil.',true);return}
-    apply(values);showMessage('Base de coûts enregistrée. Les KPI utilisent maintenant ces montants.',false);
-    if(document.getElementById('view-kpi')?.classList.contains('active')&&typeof renderKPICharts==='function')renderKPICharts();
-    if(typeof renderKPICostCentreMonthlyChart==='function')renderKPICostCentreMonthlyChart();
+    const resolved=useCosts(values,{renderForm:true,refresh:false});
+    if(travelCostsRef){
+      try{await travelCostsRef.set(resolved);showMessage('Coûts journaliers enregistrés dans Firebase et partagés avec tous les utilisateurs.');}
+      catch(error){console.error('[Coûts journaliers] Firebase',error);showMessage('Les coûts sont enregistrés localement, mais la synchronisation Firebase a échoué.',true);return}
+    }else showMessage('Coûts enregistrés localement. Firebase est indisponible.',true);
+    refreshKpis();
   };
-  window.resetTravelCostsSettings=function(){render(DEFAULTS);showMessage('Valeurs par défaut chargées. Cliquez sur Enregistrer les coûts pour les appliquer.',false)};
-  function initialise(){render({...DEFAULTS,...read()});apply({...DEFAULTS,...read()})}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialise,{once:true});else initialise();
+  window.resetTravelCostsSettings=function(){render(DEFAULTS);showMessage('Valeurs par défaut chargées. Cliquez sur Enregistrer les coûts pour les partager.',false)};
+  function bindFirebase(){
+    if(!db){useCosts({...DEFAULTS,...readLocal()},{refresh:false});return}
+    travelCostsRef=db.ref(FIREBASE_PATH);
+    travelCostsRef.on('value',snap=>{
+      const shared=snap.val();
+      if(shared&&typeof shared==='object'){
+        sharedCostsReady=true;
+        useCosts(shared);
+        showMessage('Coûts journaliers synchronisés avec Firebase.');
+        return;
+      }
+      if(!sharedCostsReady){
+        const seed=normalise({...DEFAULTS,...readLocal()});
+        apply(seed);render(seed);writeLocal(seed);
+        if(hasAdminAccess(getMemberByFirstName(currentUser)))travelCostsRef.set(seed).catch(error=>console.error('[Coûts journaliers] Initialisation Firebase',error));
+      }
+    },error=>{console.error('[Coûts journaliers] Lecture Firebase',error);useCosts({...DEFAULTS,...readLocal()},{refresh:false});showMessage('Synchronisation Firebase indisponible. Valeurs locales utilisées.',true)});
+  }
+  const initial=normalise({...DEFAULTS,...readLocal()});apply(initial);render(initial);
+  bindFirebase();
+  const previousLogin=window.loginSuccess;
+  window.loginSuccess=function(){const result=previousLogin.apply(this,arguments);if(travelCostsRef&&!sharedCostsReady)travelCostsRef.once('value').then(snap=>{if(!snap.exists()&&hasAdminAccess(getMemberByFirstName(currentUser)))return travelCostsRef.set(normalise({...DEFAULTS,...readLocal()}))}).catch(error=>console.error('[Coûts journaliers] Initialisation après connexion',error));return result};
+  window.addEventListener('load',()=>render(window.TRAVEL_DAILY_COSTS||initial));
 })();
 </script>
 
