@@ -1057,6 +1057,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     </header>
 
     <div class="tabs" id="main-tabs" style="display: none;">
+      <button class="tab-btn" id="tab-presence" onclick="switchTab('view-presence')" style="display: none;">👥 Présence Équipe</button>
       <button class="tab-btn" id="tab-personal" onclick="switchTab('view-personal')">Mon Calendrier</button>
       <button class="tab-btn" id="tab-team" onclick="switchTab('view-team')">Vue Équipe</button>
       <button class="tab-btn" id="tab-annual" onclick="switchTab('view-annual')">📅 Bilan Annuel</button>
@@ -1141,6 +1142,17 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <div id="view-settings" class="view">
       <div class="form-box" style="max-width: 480px;">
         <h2>⚙️ Paramètres</h2>
+        <div class="settings-submenu-tile settings-options-tile admin-config-panel" id="planning-options-panel" style="display:none;">
+          <h3>Options</h3>
+          <p>Options générales d’affichage de l’application.</p>
+          <div class="planning-options-list">
+            <label class="planning-option-row"><input type="checkbox" id="option-disable-presence"><span><strong>Désactiver la page « Présence Équipe »</strong><small>Masque ou réaffiche la page dans les navigations ordinateur et mobile.</small></span></label>
+            <label class="planning-option-row"><input type="checkbox" id="option-disable-clermont-sites"><span><strong>Désactiver les sites Clermontois</strong><small>Masque CAR, LAD, COM et CTX dans Mon Calendrier.</small></span></label>
+            <label class="planning-option-row"><input type="checkbox" id="option-disable-absence-types"><span><strong>Désactiver CA/JDR/TT</strong><small>Masque CA, JDR et TT dans Mon Calendrier.</small></span></label>
+            <label class="planning-option-row"><input type="checkbox" id="option-disable-formation"><span><strong>Désactiver Formation</strong><small>Masque Formation dans Mon Calendrier.</small></span></label>
+            <label class="planning-option-row"><input type="checkbox" id="option-disable-half-days"><span><strong>Désactiver les demi-journées</strong><small>Affiche des journées entières dans Mon Calendrier et Vue Équipe pour la semaine actuelle et la suivante.</small></span></label>
+          </div>
+        </div>
         <div class="settings-submenu-tile admin-config-panel" id="travel-costs-panel" style="display:none;">
           <h3>Coût journalier par type de déplacement</h3>
           <p>Définissez la base de coût utilisée dans les KPI pour une journée complète. Une demi-journée utilise automatiquement 50 % du montant.</p>
@@ -1196,6 +1208,15 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         </div>
       </div>
     </div>
+
+    <div id="view-presence" class="view">
+      <div class="form-box" style="max-width: 1100px; text-align: left;">
+        <h2>👥 Présence aujourd'hui et demain - Équipe</h2>
+        <p style="color: var(--text-muted); margin-bottom: 12px;">État des présences pour aujourd'hui et demain.</p>
+        <div id="presence-list-container"></div>
+      </div>
+    </div>
+
     <div id="view-personal" class="view">
       <div class="sticky-header-section">
         <div class="team-subnav" style="margin-bottom: 6px;">
@@ -1208,6 +1229,12 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         <div class="toolbar">
           <span>Sélectionner le type de jour à appliquer :</span>
           <button type="button" id="brush-mode-toggle" class="brush-mode-toggle active" onclick="toggleBrushMode()" aria-pressed="true" title="Maintenir le clic et glisser pour remplir plusieurs cases">🖌️ Pinceau : ON</button>
+          <button class="tool-btn tool-CA" data-status="CA">CA</button>
+          <button class="tool-btn tool-JDR" data-status="JDR">JDR</button>
+          <button class="tool-btn tool-Formation" data-status="Formation">Formation</button>
+          <button class="tool-btn tool-TT" data-status="TT">TT</button>
+          <button class="tool-btn tool-LAD" data-status="LAD">LAD</button>
+          <button class="tool-btn tool-CAR" data-status="CAR">CAR</button>
           <button class="tool-btn tool-ALE" data-status="ALE">ALE</button>
           <button class="tool-btn tool-ARA" data-status="ARA">ARA</button>
           <button class="tool-btn tool-CGR" data-status="CGR">CGR</button>
@@ -1219,6 +1246,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           <button class="tool-btn tool-VLD" data-status="VLD">VLD</button>
           <button class="tool-btn tool-UCH" data-status="UCH">UCH</button>
           <button class="tool-btn tool-ZAL" data-status="ZAL">ZAL</button>
+          <button class="tool-btn tool-CTX" data-status="CTX">CTX</button>
+          <button class="tool-btn tool-COM" data-status="COM">COM</button>
           <button class="tool-btn tool-ZAM" data-status="ZAM">ZAM</button>
           <button class="tool-btn tool-FRA" data-status="FRA">FRA</button>
           <button class="tool-btn tool-ZAO" data-status="ZAO">ZAO</button>
@@ -1758,13 +1787,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         calendarData = snap.val() || {};
         if (migrateLegacyPlanningKeys()) db.ref('planning').set(calendarData);
         window.updateLadPresenceCounter?.();
-        if(currentUser || document.getElementById('view-team').classList.contains('active') || document.getElementById('view-kpi').classList.contains('active') || false || document.getElementById('view-annual').classList.contains('active')) {
+        if(currentUser || document.getElementById('view-team').classList.contains('active') || document.getElementById('view-kpi').classList.contains('active') || document.getElementById('view-presence').classList.contains('active') || document.getElementById('view-annual').classList.contains('active')) {
           renderViews();
         }
       });
       db.ref('secondary_codes').on('value', (snap) => {
         secondaryCodesData = snap.val() || {};
-        if (currentUser || document.getElementById('view-team').classList.contains('active') || false) {
+        if (currentUser || document.getElementById('view-team').classList.contains('active') || document.getElementById('view-presence').classList.contains('active')) {
           renderViews();
         }
       });
@@ -1826,7 +1855,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     if (profilesChangedByOverride) saveCustomUsers();
     ALL_MEMBERS = [...BASE_TEAM_MEMBERS, ...customMembers];
     populateDropdowns();
-    if(currentUser || document.getElementById('view-team').classList.contains('active') || document.getElementById('view-kpi').classList.contains('active') || false || document.getElementById('view-annual').classList.contains('active')) {
+    if(currentUser || document.getElementById('view-team').classList.contains('active') || document.getElementById('view-kpi').classList.contains('active') || document.getElementById('view-presence').classList.contains('active') || document.getElementById('view-annual').classList.contains('active')) {
       renderViews();
     }
   }
@@ -1852,7 +1881,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
            dateObj.getDate() === todayDate;
   }
 
-  const SECONDARY_CODE_DESTINATIONS = ['ARA', 'ALE', 'SPA', 'CGR', 'NKE', 'WAT', 'LVL', 'LLV', 'HBG', 'VLD', 'UCH', 'ZAL', 'ZAM', 'FRA', 'ZAO', 'EUR', 'Autres'];
+  const SECONDARY_CODE_DESTINATIONS = ['ARA', 'ALE', 'SPA', 'CGR', 'NKE', 'WAT', 'LVL', 'LLV', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM', 'ZAM', 'FRA', 'ZAO', 'EUR', 'Autres'];
   const SECONDARY_CODES = ['VSM', 'WKS', 'PRJ', 'SPU', 'FOR', 'VFO', 'VMA', 'RSX'];
 
   function requiresSecondaryCode(status) { return SECONDARY_CODE_DESTINATIONS.includes(status); }
@@ -1925,20 +1954,27 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   function handleSecondaryCodeOverlay(event) { if (event.target.id === 'secondary-code-modal') cancelSecondaryCodeSelection(); }
 
   function getStatus(dateKey, user, slot = null) {
-    const removedStatuses = new Set(['CA','JDR','TT','LAD','CAR','COM','CTX','Formation']);
     const dayVal = calendarData[dateKey] && calendarData[dateKey][user];
     if (!dayVal) return 'PRESENT';
-    if (typeof dayVal === 'string') return removedStatuses.has(dayVal) ? 'PRESENT' : dayVal;
+    if (typeof dayVal === 'string') return dayVal;
     if (typeof dayVal === 'object') {
-      if (slot) { const value = dayVal[slot] || 'PRESENT'; return removedStatuses.has(value) ? 'PRESENT' : value; }
-      const value = dayVal.am || dayVal.pm || 'PRESENT'; return removedStatuses.has(value) ? 'PRESENT' : value;
+      if (slot) return dayVal[slot] || 'PRESENT';
+      return dayVal.am || dayVal.pm || 'PRESENT';
     }
     return 'PRESENT';
   }
 
   function setStatus(dateKey, user, tool, slot = null) {
-    if (['CA','JDR','TT','LAD','CAR','COM','CTX','Formation'].includes(tool)) tool = 'PRESENT';
-    if (requiresSecondaryCode(tool) && !selectedSecondaryCode) return false;
+    if (requiresSecondaryCode(tool)) {
+      const missing = [];
+      if (!selectedSecondaryCode) missing.push('un code secondaire');
+      if (!selectedCostCentre) missing.push('un centre de coût');
+      if (!window.selectedTransportChoice) missing.push('un moyen de transport');
+      if (missing.length) {
+        alert(`Impossible d’enregistrer ce déplacement : sélectionnez ${missing.join(', ')}.`);
+        return false;
+      }
+    }
     if (!calendarData[dateKey]) calendarData[dateKey] = {};
     let current = calendarData[dateKey][user];
 
@@ -2210,12 +2246,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     document.getElementById('tab-annual').style.display = 'block';
     populateDropdowns();
 
+    document.getElementById('tab-presence').style.display = 'block';
     if (hasManagerAccess(userObj)) {
       document.getElementById('tab-kpi').style.display = 'block';
     } else {
       document.getElementById('tab-kpi').style.display = 'none';
     }
-    switchTab('view-personal');
+    switchTab('view-presence');
   }
 
   function showCreateProfile() { switchTab('view-create-profile'); }
@@ -2317,6 +2354,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
     document.getElementById('tab-personal').style.display = 'none';
     document.getElementById('tab-settings').style.display = 'none';
+    document.getElementById('tab-presence').style.display = 'none';
     document.getElementById('tab-kpi').style.display = 'none';
     document.getElementById('tab-team').style.display = 'block';
     document.getElementById('tab-annual').style.display = 'block';
@@ -2417,12 +2455,14 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     if(viewId === 'view-team') document.getElementById('tab-team').classList.add('active');
     if(viewId === 'view-annual') document.getElementById('tab-annual').classList.add('active');
     if(viewId === 'view-kpi') document.getElementById('tab-kpi').classList.add('active');
+    if(viewId === 'view-presence') document.getElementById('tab-presence').classList.add('active');
     if(viewId === 'view-settings') document.getElementById('tab-settings').classList.add('active');
 
     const showNav = (viewId === 'view-personal' || viewId === 'view-team');
     document.getElementById('month-nav').style.display = showNav ? 'flex' : 'none';
 
     if (showNav || viewId === 'view-kpi') renderViews();
+    if (viewId === 'view-presence') renderTeamPresence();
     if (viewId === 'view-settings') renderSettingsView();
     if (viewId === 'view-annual') renderAnnualReport();
 
@@ -2571,7 +2611,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     target.classList.add('brush-painted-preview');
     brushHasChanges = true;
 
-    if (['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'ZAM', 'FRA', 'ZAO', 'EUR', 'Autres'].includes(selectedTool)) {
+    if (['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM', 'ZAM', 'FRA', 'ZAO', 'EUR', 'Autres'].includes(selectedTool)) {
       brushLastTravelContext = { dateKey, destination: selectedTool, slot };
     }
   }
@@ -3220,6 +3260,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     else if (activeView.id === 'view-team') renderTeamCalendar(currentDate.getFullYear(), currentDate.getMonth());
     else if (activeView.id === 'view-kpi') renderKPICharts();
     else if (activeView.id === 'view-annual') renderAnnualReport();
+    else if (activeView.id === 'view-presence') renderTeamPresence();
   }
 
   function getColleaguesAtSameDestination(dateKey, destination, currentUserName, slot = null) {
@@ -3265,7 +3306,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   });
 
   function notifySameDestination(dateKey, destination, currentUserName, slot = null) {
-    const travelCodes = ['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'ZAM', 'FRA', 'ZAO', 'EUR', 'Autres'];
+    const travelCodes = ['ALE', 'ARA', 'CGR', 'SPA', 'NKE', 'WAT', 'LVL', 'HBG', 'VLD', 'UCH', 'ZAL', 'CTX', 'COM', 'ZAM', 'FRA', 'ZAO', 'EUR', 'Autres'];
     if (!travelCodes.includes(destination)) return;
     const colleagues = getColleaguesAtSameDestination(dateKey, destination, currentUserName, slot);
     if (colleagues.length === 0) return;
@@ -3397,7 +3438,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           cell.appendChild(numDiv);
 
           {
-            const useHalves = false; // Demi-journées supprimées définitivement
+            const useHalves = isCurrentOrNextWeek(dayDate) && !document.documentElement.classList.contains('option-half-days-disabled');
             if (useHalves) {
               const halvesCont = document.createElement('div');
               halvesCont.className = 'halves-container';
@@ -3576,7 +3617,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           if (isTodayDate) td.classList.add('today-cell');
 
           if (!isWeekend) {
-            const useHalves = false; // Demi-journées supprimées définitivement
+            const useHalves = isCurrentOrNextWeek(dayDate) && !document.documentElement.classList.contains('option-half-days-disabled');
 
             if (useHalves) {
               const halvesCont = document.createElement('div');
@@ -4977,6 +5018,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 </script>
 
 <nav id="mobile-bottom-nav" aria-label="Navigation mobile">
+  <button type="button" data-mobile-view="view-presence" onclick="mobileNavigate('view-presence')" aria-label="Présence Équipe">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <small>Présence</small>
+  </button>
   <button type="button" data-mobile-view="view-personal" onclick="mobileNavigate('view-personal')" aria-label="Mon calendrier">
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
     <small>Calendrier</small>
@@ -5010,7 +5055,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     #main-header { margin-bottom:6px; padding:8px 10px; }
     #main-header .user-greeting { font-size:.82rem; }
     #mobile-bottom-nav {
-      position:fixed; display:grid; grid-template-columns:1fr; left:0; right:0; bottom:0; z-index:8000;
+      position:fixed; display:grid; grid-template-columns:repeat(4,1fr); left:0; right:0; bottom:0; z-index:8000;
       padding:6px max(8px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
       background:color-mix(in srgb,var(--card) 94%,transparent); border-top:1px solid var(--border); box-shadow:0 -10px 28px rgba(0,0,0,.2); backdrop-filter:blur(14px);
     }
@@ -5155,7 +5200,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     <button type="button" onclick="closeMobileActivitySheet()" aria-label="Fermer">×</button>
   </div>
   <div class="mobile-activity-categories" role="tablist">
-    <button type="button" data-category="travel" class="active">Déplacements</button>
+    <button type="button" data-category="presence" class="active">Présence</button>
+    <button type="button" data-category="absence">Absences</button>
+    <button type="button" data-category="travel">Déplacements</button>
   </div>
   <div id="mobile-activity-options"></div>
   <button type="button" class="mobile-clear-day" data-mobile-status="PRESENT">🗑️ Remettre au bureau</button>
@@ -5229,7 +5276,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   const mq=window.matchMedia('(max-width:700px) and (orientation:portrait)');
   const previousRender=window.renderPersonalCalendar;
   let selectedMobileDate=new Date();
-  const categories={travel:['ALE','ARA','CGR','SPA','NKE','WAT','LVL','HBG','VLD','UCH','ZAL','ZAM','FRA','ZAO','EUR','Autres']};
+  const categories={presence:['TT','LAD','CAR'],absence:['CA','JDR','Formation'],travel:['ALE','ARA','CGR','SPA','NKE','WAT','LVL','HBG','VLD','UCH','ZAL','CTX','COM','ZAM','FRA','ZAO','EUR','Autres']};
   const labels={presence:'Présence',absence:'Absences',travel:'Déplacements'};
   function active(){return mq.matches;}
   function monday(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d;}
@@ -5266,8 +5313,9 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     const fullDate=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long'}).format(selectedMobileDate);
     card.innerHTML=`<header class="mobile-focus-date"><div><h2>${fullDate}</h2><p>${holidays.has(key)?'Jour férié':'Votre planning de la journée'}</p></div>${isToday(selectedMobileDate)?'<span class="mobile-focus-date-badge">Aujourd’hui</span>':''}</header><div class="mobile-focus-slots"></div>`;
     const slots=card.querySelector('.mobile-focus-slots');
-    const status=typeof value==='string'?value:value&&typeof value==='object'?(value.am||value.pm||'PRESENT'):'PRESENT';
-    slots.appendChild(makeSlot(key,status,null,'Journée'));
+    if(document.documentElement.classList.contains('option-half-days-disabled')){const status=typeof value==='string'?value:value&&typeof value==='object'?(value.am||value.pm||'PRESENT'):'PRESENT';slots.appendChild(makeSlot(key,status,null,'Journée'));}
+    else if(value&&typeof value==='object'){slots.appendChild(makeSlot(key,value.am,'am','Matin'));slots.appendChild(makeSlot(key,value.pm,'pm','Après-midi'));}
+    else {const status=typeof value==='string'?value:'PRESENT';slots.appendChild(makeSlot(key,status,'am','Matin'));slots.appendChild(makeSlot(key,status,'pm','Après-midi'));}
     container.appendChild(card);updateActivityLabels();
   }
   window.renderPersonalCalendar=function(y,m){
@@ -5285,7 +5333,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   document.getElementById('mobile-go-today').onclick=()=>{selectedMobileDate=new Date();currentDate=new Date();renderFocus();};
   function renderCategory(category){document.querySelectorAll('.mobile-activity-categories button').forEach(b=>b.classList.toggle('active',b.dataset.category===category));const root=document.getElementById('mobile-activity-options');root.innerHTML='';categories[category].filter(status=>status!=='Autres'&&!(status==='Formation'&&document.documentElement.classList.contains('option-formation-disabled'))).forEach(status=>{const original=document.querySelector(`.tool-btn[data-status="${status}"]`);const button=document.createElement('button');button.type='button';button.dataset.mobileStatus=status;button.className=`tool-${status}`;button.textContent=status==='Formation'?'Formation':status;button.classList.toggle('active',selectedTool===status);button.onclick=()=>selectMobileStatus(status,original);root.appendChild(button);});}
   function selectMobileStatus(status,original){if(status==='Autres'){selectedTool='Autres';selectedSecondaryCode=null;selectedCostCentre=null;document.querySelectorAll('.tool-btn').forEach(button=>button.classList.remove('active'));original?.classList.add('active');updateActivityLabels();openOtherDayModal(()=>{selectedTool='Autres';original?.classList.add('active');updateActivityLabels();closeMobileActivitySheet();});}else if(requiresSecondaryCode(status)){openSecondaryCodeModal(status,code=>{original?.click();selectedTool=status;selectedSecondaryCode=code;updateActivityLabels();closeMobileActivitySheet();});}else{original?.click();selectedTool=status;selectedSecondaryCode=null;updateActivityLabels();closeMobileActivitySheet();}}
-  window.openMobileActivitySheet=function(){document.getElementById('mobile-activity-sheet').classList.add('visible');document.getElementById('mobile-activity-backdrop').classList.add('visible');document.getElementById('mobile-activity-button').setAttribute('aria-expanded','true');renderCategory('travel');};
+  window.openMobileActivitySheet=function(){document.getElementById('mobile-activity-sheet').classList.add('visible');document.getElementById('mobile-activity-backdrop').classList.add('visible');document.getElementById('mobile-activity-button').setAttribute('aria-expanded','true');renderCategory(requiresSecondaryCode(selectedTool)?'travel':['CA','JDR','Formation'].includes(selectedTool)?'absence':'presence');};
   window.closeMobileActivitySheet=function(){document.getElementById('mobile-activity-sheet').classList.remove('visible');document.getElementById('mobile-activity-backdrop').classList.remove('visible');document.getElementById('mobile-activity-button').setAttribute('aria-expanded','false');};
   document.querySelectorAll('.mobile-activity-categories button').forEach(button=>button.onclick=()=>renderCategory(button.dataset.category));
   document.querySelector('.mobile-clear-day').onclick=()=>selectMobileStatus('PRESENT',document.querySelector('.tool-btn[data-status="PRESENT"]'));
@@ -5340,7 +5388,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       width: 100% !important;
       max-width: 100% !important;
       height: calc(68px + env(safe-area-inset-bottom));
-      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
       gap: 3px;
       padding: 6px max(7px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left)) !important;
       border-radius: 18px 18px 0 0;
@@ -6649,7 +6697,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   function updatePresenceTabCount() {
     const tab = document.getElementById('tab-presence');
-    if (!tab) return;
+    if (!tab || typeof currentUser === 'undefined' || !currentUser) return;
 
     let badge = tab.querySelector('.presence-tab-count');
     if (!badge) {
@@ -6963,6 +7011,13 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         destinations.add(status);
         if (!getSecondaryCode(key, currentUser, slot)) {
           alerts.push(`${new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'short'}).format(date)} : ${status} sans code secondaire (${slot === 'am' ? 'matin' : 'après-midi'}).`);
+        }
+        const storedValue = (source, requestedSlot) => !source ? null : (typeof source === 'object' ? source[requestedSlot] : source);
+        if (!storedValue(window.COST_CENTRE_DATA?.[key]?.[currentUser], slot)) {
+          alerts.push(`${new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'short'}).format(date)} : ${status} sans centre de coût (${slot === 'am' ? 'matin' : 'après-midi'}).`);
+        }
+        if (!storedValue(window.TRANSPORT_DATA?.[key]?.[currentUser], slot)) {
+          alerts.push(`${new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'short'}).format(date)} : ${status} sans moyen de transport (${slot === 'am' ? 'matin' : 'après-midi'}).`);
         }
       });
       if (destinations.size > 1) {
@@ -8274,7 +8329,7 @@ const OPTIONS_KEY='planning_display_options_v1';
 const CONFIG_KEY='planning_admin_lists_v1';
 const DEFAULT_CODES=[{code:'VSM',label:'Value Stream Mapping'},{code:'WKS',label:'Workshop'},{code:'PRJ',label:'Projet'},{code:'SPU',label:'Support usine'},{code:'FOR',label:'Formation'},{code:'VFO',label:'Visite fournisseur'},{code:'VMA',label:'Visite managers'},{code:'RSX',label:'Réseaux'}];
 const DEFAULT_COSTS=['Marche courante','Projet'];
-let displayOptions={disablePresence:true,disableClermontSites:true,disableAbsenceTypes:true,disableFormation:true,disableHalfDays:true};
+let displayOptions=readLocal(OPTIONS_KEY,{disablePresence:false,disableClermontSites:false,disableAbsenceTypes:false,disableFormation:false,disableHalfDays:false});
 let adminConfig=normaliseConfig(readLocal(CONFIG_KEY,{secondaryCodes:DEFAULT_CODES,costCentres:DEFAULT_COSTS}));
 let pendingSecondaryCode=null,pendingDestination=null,pendingCostCallback=null;
 let configRef=null,costDataRef=null,optionsRef=null;window.COST_CENTRE_DATA=costCentreData;
@@ -8305,8 +8360,8 @@ window.chooseCostCentre=function(label){if(!adminConfig.costCentres.includes(lab
 window.cancelCostCentreSelection=function(){document.getElementById('cost-centre-modal').classList.remove('visible');document.body.style.overflow='';pendingCostCallback=null;pendingSecondaryCode=null;selectedCostCentre=null};
 window.handleCostCentreOverlay=function(event){if(event.target.id==='cost-centre-modal')cancelCostCentreSelection()};
 window.openSecondaryCodeModal=function(destination,callback){if(destination==='Autres'&&window.__otherTravelDetailsReady){window.__otherTravelDetailsReady=false;if(callback)callback(selectedSecondaryCode);return}secondaryCodeSelectionCallback=callback;pendingDestination=destination;pendingSecondaryCode=null;selectedCostCentre=null;document.getElementById('secondary-code-modal-subtitle').textContent=`Sélectionnez le code secondaire et le centre de coût associés à ${destination}`;renderSecondaryChoices();const select=document.getElementById('secondary-code-cost-centre');select.innerHTML='';adminConfig.costCentres.forEach(label=>{const option=document.createElement('option');option.value=label;option.textContent=label;select.appendChild(option)});document.getElementById('secondary-code-combined-error').textContent='';document.getElementById('secondary-code-modal').classList.add('visible');document.body.style.overflow='hidden'};
-window.chooseSecondaryCode=function(code){if(!adminConfig.secondaryCodes.some(item=>item.code===code))return;pendingSecondaryCode=code;document.querySelectorAll('#secondary-code-modal .secondary-code-options button').forEach(button=>button.classList.toggle('selected',button.querySelector('strong')?.textContent===code));document.getElementById('secondary-code-combined-error').textContent=''};window.confirmSecondaryAndCostCentre=function(){const centre=document.getElementById('secondary-code-cost-centre').value;if(!pendingSecondaryCode||!centre){document.getElementById('secondary-code-combined-error').textContent='Sélectionnez un code secondaire et un centre de coût.';return}selectedSecondaryCode=pendingSecondaryCode;selectedCostCentre=centre;document.getElementById('secondary-code-modal').classList.remove('visible');document.body.style.overflow='';const callback=secondaryCodeSelectionCallback;secondaryCodeSelectionCallback=null;const selected=pendingSecondaryCode;pendingSecondaryCode=null;if(callback)callback(selected)};
-const originalCancelSecondary=window.cancelSecondaryCodeSelection;window.cancelSecondaryCodeSelection=function(){pendingSecondaryCode=null;selectedCostCentre=null;return originalCancelSecondary.apply(this,arguments)};
+window.chooseSecondaryCode=function(code){if(!adminConfig.secondaryCodes.some(item=>item.code===code))return;pendingSecondaryCode=code;document.querySelectorAll('#secondary-code-modal .secondary-code-options button').forEach(button=>button.classList.toggle('selected',button.querySelector('strong')?.textContent===code));document.getElementById('secondary-code-combined-error').textContent=''};window.confirmSecondaryAndCostCentre=function(){const centre=document.getElementById('secondary-code-cost-centre').value;const transport=document.querySelector('input[name="travel-transport"]:checked')?.value;if(!pendingSecondaryCode||!centre||!transport){document.getElementById('secondary-code-combined-error').textContent='Sélectionnez un code secondaire, un centre de coût et un moyen de transport.';return}selectedSecondaryCode=pendingSecondaryCode;selectedCostCentre=centre;window.selectedTransportChoice=transport;document.getElementById('secondary-code-modal').classList.remove('visible');document.body.style.overflow='';const callback=secondaryCodeSelectionCallback;secondaryCodeSelectionCallback=null;const selected=pendingSecondaryCode;pendingSecondaryCode=null;if(callback)callback(selected)};
+const originalCancelSecondary=window.cancelSecondaryCodeSelection;window.cancelSecondaryCodeSelection=function(){pendingSecondaryCode=null;selectedCostCentre=null;window.selectedTransportChoice=null;return originalCancelSecondary.apply(this,arguments)};
 function getCostEntry(dateKey,user){return costCentreData[dateKey]?.[user]}
 function setCostCentreEntry(dateKey,user,status,slot){window.COST_CENTRE_DATA=costCentreData;if(!costCentreData[dateKey])costCentreData[dateKey]={};if(!requiresSecondaryCode(status)){const current=getCostEntry(dateKey,user);if(slot&&current&&typeof current==='object'){delete current[slot];if(!current.am&&!current.pm)delete costCentreData[dateKey][user]}else if(!slot)delete costCentreData[dateKey][user]}else if(slot){const current=getCostEntry(dateKey,user);const obj=current&&typeof current==='object'?{...current}:{};obj[slot]=selectedCostCentre;costCentreData[dateKey][user]=obj}else costCentreData[dateKey][user]=selectedCostCentre;if(costCentreData[dateKey]&&!Object.keys(costCentreData[dateKey]).length)delete costCentreData[dateKey]}
 const originalSetSecondary=window.setSecondaryCode;window.setSecondaryCode=function(dateKey,user,status,slot,code){const result=originalSetSecondary.apply(this,arguments);setCostCentreEntry(dateKey,user,status,slot);return result};
@@ -8318,7 +8373,7 @@ bindOption('option-disable-presence','disablePresence');bindOption('option-disab
 const priorSwitch=window.switchTab;window.switchTab=function(view){const target=displayOptions.disablePresence&&view==='view-presence'?(currentUser?'view-personal':'view-team'):view;const result=priorSwitch(target);applyDisplayOptions();return result};
 const priorSettings=window.renderSettingsView;window.renderSettingsView=function(){const result=priorSettings.apply(this,arguments);syncAdminAccess();renderAdminLists();return result};
 const priorLogin=window.loginSuccess;window.loginSuccess=function(){const result=priorLogin.apply(this,arguments);applyDisplayOptions();return result};
-function bindStorage(){costCentreData=readLocal('team_cost_centres',{});if(db){optionsRef=db.ref('app_config/display_options');optionsRef.on('value',snap=>{const shared=snap.val();if(shared&&typeof shared==='object'){displayOptions={disablePresence:true,disableClermontSites:true,disableAbsenceTypes:true,disableFormation:true,disableHalfDays:true};writeLocal(OPTIONS_KEY,displayOptions);applyDisplayOptions()}else if(isAdmin()){optionsRef.set(displayOptions)}});configRef=db.ref('app_config/secondary_and_cost_lists');configRef.on('value',snap=>{if(snap.val()){adminConfig=normaliseConfig(snap.val());writeLocal(CONFIG_KEY,adminConfig);syncRuntimeCodes();renderAdminLists()}});costDataRef=db.ref('cost_centres');costDataRef.on('value',snap=>{costCentreData=snap.val()||{};window.COST_CENTRE_DATA=costCentreData})}}
+function bindStorage(){costCentreData=readLocal('team_cost_centres',{});if(db){optionsRef=db.ref('app_config/display_options');optionsRef.on('value',snap=>{const shared=snap.val();if(shared&&typeof shared==='object'){displayOptions={disablePresence:!!shared.disablePresence,disableClermontSites:!!shared.disableClermontSites,disableAbsenceTypes:!!shared.disableAbsenceTypes,disableFormation:!!shared.disableFormation,disableHalfDays:!!shared.disableHalfDays};writeLocal(OPTIONS_KEY,displayOptions);applyDisplayOptions()}else if(isAdmin()){optionsRef.set(displayOptions)}});configRef=db.ref('app_config/secondary_and_cost_lists');configRef.on('value',snap=>{if(snap.val()){adminConfig=normaliseConfig(snap.val());writeLocal(CONFIG_KEY,adminConfig);syncRuntimeCodes();renderAdminLists()}});costDataRef=db.ref('cost_centres');costDataRef.on('value',snap=>{costCentreData=snap.val()||{};window.COST_CENTRE_DATA=costCentreData})}}
 document.addEventListener('click',event=>{const chip=event.target.closest('.activity-favourite-chip');if(!chip)return;setTimeout(()=>{if(requiresSecondaryCode(selectedTool)){selectedCostCentre=null;openCostCentreModal(()=>{})}},0)},true);
 syncRuntimeCodes();bindStorage();applyDisplayOptions();renderAdminLists();window.addEventListener('load',()=>{applyDisplayOptions();renderAdminLists()});
 })();
@@ -8920,7 +8975,7 @@ if(db){customCostRef=db.ref('custom_travel_costs');customCostRef.on('value',snap
 <style id="personal-annual-four-months-v2273">
   #view-personal .personal-multi-container.months-12 {
     display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
     gap: 8px !important;
     align-items: stretch !important;
   }
@@ -9104,15 +9159,15 @@ window.getTransportCost=function(dateKey,user,destination,slot=null){
 };
 function setTransportEntry(dateKey,user,status,slot){if(!transportData[dateKey])transportData[dateKey]={};if(!requiresSecondaryCode(status)){const old=transportData[dateKey][user];if(slot&&old&&typeof old==='object'){delete old[slot];if(!old.am&&!old.pm)delete transportData[dateKey][user]}else if(!slot)delete transportData[dateKey][user]}else if(slot){const old=transportData[dateKey][user];const obj=old&&typeof old==='object'?{...old}:{};obj[slot]=window.selectedTransportChoice;transportData[dateKey][user]=obj}else transportData[dateKey][user]=window.selectedTransportChoice;if(transportData[dateKey]&&!Object.keys(transportData[dateKey]).length)delete transportData[dateKey];window.TRANSPORT_DATA=transportData}
 function persist(){localWrite(TRANSPORT_DATA_KEY,transportData);localWrite(TRANSPORT_STORAGE_KEY,transportCosts);if(transportDataRef)transportDataRef.set(transportData).catch(error=>console.error('[Transports] Données Firebase',error));if(transportCostsRef)transportCostsRef.set(transportCosts).catch(error=>console.error('[Transports] Coûts Firebase',error))}
-function addTransportChoices(){const field=document.querySelector('#secondary-code-modal .travel-combined-field');if(!field||document.getElementById('transport-choice-group'))return;const group=document.createElement('div');group.id='transport-choice-group';group.className='transport-choice-group';group.innerHTML='<span>Moyen de transport</span><div class="transport-choice-grid">'+TRANSPORT_TYPES.map((type,index)=>`<label class="transport-choice-card"><input type="radio" name="travel-transport" value="${type}" ${index===0?'checked':''}><span>${type==='Avion'?'✈️':type==='Voiture'?'🚗':'🚆'} ${type}</span></label>`).join('')+'</div>';field.insertAdjacentElement('afterend',group)}
+function addTransportChoices(){const field=document.querySelector('#secondary-code-modal .travel-combined-field');if(!field||document.getElementById('transport-choice-group'))return;const group=document.createElement('div');group.id='transport-choice-group';group.className='transport-choice-group';group.innerHTML='<span>Moyen de transport</span><div class="transport-choice-grid">'+TRANSPORT_TYPES.map((type,index)=>`<label class="transport-choice-card"><input type="radio" name="travel-transport" value="${type}" ><span>${type==='Avion'?'✈️':type==='Voiture'?'🚗':'🚆'} ${type}</span></label>`).join('')+'</div>';field.insertAdjacentElement('afterend',group)}
 function ensureSettingsPanel(){if(document.getElementById('transport-costs-panel'))return;const daily=document.getElementById('travel-costs-panel');if(!daily)return;const panel=document.createElement('div');panel.id='transport-costs-panel';panel.className='settings-submenu-tile admin-config-panel';panel.style.display='none';panel.innerHTML='<h3>Coût des moyens de transport</h3><p>Ajoutez le coût du trajet au coût journalier, selon la destination et le moyen choisi. Le MAS reste gratuit.</p><div id="transport-cost-settings-body" class="transport-costs-settings-list"></div><div class="travel-costs-actions"><button type="button" class="btn-secondary" onclick="resetTransportCostsSettings()">Valeurs par défaut</button><button type="button" class="btn-primary" onclick="saveTransportCostsSettings()">Enregistrer les coûts</button></div><p id="transport-cost-settings-message" class="travel-costs-settings-message" aria-live="polite"></p>';daily.insertAdjacentElement('afterend',panel)}
 function renderCosts(values=transportCosts){const body=document.getElementById('transport-cost-settings-body');if(!body)return;body.innerHTML=TRANSPORT_CODES.map(code=>`<div class="transport-cost-row"><strong>${code}</strong><div class="transport-cost-fields"><div class="transport-cost-field"><label>Voiture</label><input type="number" min="0" step="1" inputmode="decimal" data-transport-cost-code="${code}" data-transport-type="Voiture" value="${Number(values?.[code]?.Voiture||0)}"><span>€</span></div><div class="transport-cost-field"><label>Avion</label><input type="number" min="0" step="1" inputmode="decimal" data-transport-cost-code="${code}" data-transport-type="Avion" value="${Number(values?.[code]?.Avion||0)}"><span>€</span></div><div class="transport-cost-field mas"><label>MAS</label><strong>N/A</strong><span></span></div></div></div>`).join('')}
 function message(text,error=false){const el=document.getElementById('transport-cost-settings-message');if(el){el.textContent=text;el.style.color=error?'var(--danger)':'#10b981'}}
 window.saveTransportCostsSettings=function(){const member=getMemberByFirstName(currentUser);if(!hasAdminAccess(member))return;const next=normaliseCosts(transportCosts);let valid=true;document.querySelectorAll('[data-transport-cost-code]').forEach(input=>{const value=Number(String(input.value).replace(',','.'));if(!Number.isFinite(value)||value<0){valid=false;input.focus();return}next[input.dataset.transportCostCode][input.dataset.transportType]=value});if(!valid){message('Tous les coûts doivent être supérieurs ou égaux à 0 €.',true);return}transportCosts=normaliseCosts(next);window.TRANSPORT_COSTS=transportCosts;persist();message('Coûts de transport enregistrés. Ils sont maintenant ajoutés aux KPI.');if(document.getElementById('view-kpi')?.classList.contains('active'))renderKPICharts()};
 window.resetTransportCostsSettings=function(){renderCosts(TRANSPORT_DEFAULTS);message('Valeurs par défaut chargées. Cliquez sur Enregistrer les coûts pour les appliquer.')};
 addTransportChoices();ensureSettingsPanel();renderCosts();
-const originalOpen=window.openSecondaryCodeModal;window.openSecondaryCodeModal=function(destination,callback){addTransportChoices();window.selectedTransportChoice=null;const result=originalOpen.apply(this,arguments);const first=document.querySelector('input[name="travel-transport"]');if(first)first.checked=true;return result};
-const originalConfirm=window.confirmSecondaryAndCostCentre;window.confirmSecondaryAndCostCentre=function(){const selected=document.querySelector('input[name="travel-transport"]:checked')?.value;if(!TRANSPORT_TYPES.includes(selected)){document.getElementById('secondary-code-combined-error').textContent='Sélectionnez aussi un moyen de transport.';return}window.selectedTransportChoice=selected;return originalConfirm.apply(this,arguments)};
+const originalOpen=window.openSecondaryCodeModal;window.openSecondaryCodeModal=function(destination,callback){addTransportChoices();window.selectedTransportChoice=null;selectedCostCentre=null;const result=originalOpen.apply(this,arguments);document.querySelectorAll('input[name="travel-transport"]').forEach(radio=>radio.checked=false);return result};
+
 const originalSetSecondary=window.setSecondaryCode;window.setSecondaryCode=function(dateKey,user,status,slot,code){const result=originalSetSecondary.apply(this,arguments);setTransportEntry(dateKey,user,status,slot);return result};
 const originalSave=window.savePlanningAndSecondaryData;window.savePlanningAndSecondaryData=function(){const result=originalSave.apply(this,arguments);persist();return result};
 document.addEventListener('click',event=>{const button=event.target.closest('.tool-btn[data-status], [data-mobile-status]');if(!button)return;const status=button.dataset.status||button.dataset.mobileStatus;if(!requiresSecondaryCode(status))window.selectedTransportChoice=null},true);
@@ -10007,20 +10062,6 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
     const user=window.firebase?.auth?.().currentUser;
     return {authenticated:Boolean(user),anonymous:Boolean(user?.isAnonymous),uid:user?.uid||null};
   };
-})();
-</script>
-
-<script id="permanent-feature-removal-v2319">
-(function(){
-  'use strict';
-  const removedStatuses=new Set(['CA','JDR','TT','LAD','CAR','COM','CTX','Formation']);
-  try { localStorage.removeItem('planning_display_options_v1'); } catch (_) {}
-  document.documentElement.classList.add('option-presence-disabled','option-clermont-sites-disabled','option-absence-types-disabled','option-formation-disabled','option-half-days-disabled');
-  document.addEventListener('DOMContentLoaded',function(){
-    ['planning-options-panel','tab-presence','view-presence'].forEach(id=>document.getElementById(id)?.remove());
-    document.querySelectorAll('[data-status="CA"],[data-status="JDR"],[data-status="TT"],[data-status="LAD"],[data-status="CAR"],[data-status="COM"],[data-status="CTX"],[data-status="Formation"],[data-mobile-status="CA"],[data-mobile-status="JDR"],[data-mobile-status="TT"],[data-mobile-status="LAD"],[data-mobile-status="CAR"],[data-mobile-status="COM"],[data-mobile-status="CTX"],[data-mobile-status="Formation"],[data-mobile-view="view-presence"],[data-category="presence"],[data-category="absence"]').forEach(node=>node.remove());
-  },{once:true});
-  window.DISABLED_LEGACY_STATUSES=removedStatuses;
 })();
 </script>
 </body>
