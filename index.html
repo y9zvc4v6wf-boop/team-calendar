@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.25">
+  <meta name="application-version" content="2.3.29">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -6872,7 +6872,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.25">v2.3.25</span>
+<span id="app-version-indicator" aria-label="Version 2.3.29">v2.3.29</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
@@ -10231,6 +10231,17 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
   });
   window.addEventListener('load',()=>setTimeout(renderWithoutProjectTotal,0));
 })();
+</script>
+
+
+<style id="calendar-zone-groups-v2328-style">
+#view-personal .toolbar .calendar-zone-group{display:inline-flex;align-items:center;gap:5px;min-height:40px;padding:5px 7px;border:2px solid color-mix(in srgb,var(--accent) 72%,#84cc16 28%);border-radius:10px;background:color-mix(in srgb,var(--accent-soft) 24%,var(--input-bg));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 16%,transparent),var(--shadow-sm)}
+#view-personal .toolbar .calendar-zone-label{display:inline-flex;width:auto;align-items:center;min-height:28px;margin:0 2px 0 0;padding:4px 8px;border:1px solid color-mix(in srgb,var(--accent) 32%,var(--border));border-radius:7px;background:var(--card);color:color-mix(in srgb,var(--text) 72%,var(--text-muted));font-size:.54rem;font-weight:800;line-height:1;letter-spacing:.025em;text-transform:uppercase;white-space:nowrap}
+#view-personal .toolbar .calendar-zone-group .tool-btn{margin:0!important}
+@media(max-width:700px){#view-personal .toolbar .calendar-zone-group{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;padding:7px}#view-personal .toolbar .calendar-zone-label{grid-column:1/-1;margin:0}}
+</style>
+<script id="calendar-zone-groups-v2328-script">
+(function(){'use strict';const PRIMARY=['FRA','EUR','ZAM','ZAO'];const ZONES=[{code:'EUR',destinations:['ALE','ARA','HBG','LVL','STO','VLD','ZAL']},{code:'ZAM',destinations:['CGR','SPA','WAT']},{code:'ZAO',destinations:['NKE','UCH']}];const ORDERED=new Set([...PRIMARY,...ZONES.flatMap(z=>z.destinations)]);function label(code){const e=document.createElement('span');e.className='calendar-zone-label';e.textContent=code;return e}function reorder(){const toolbar=document.querySelector('#view-personal .toolbar');if(!toolbar)return;toolbar.querySelectorAll('.calendar-zone-group').forEach(group=>{[...group.querySelectorAll('.tool-btn')].forEach(button=>toolbar.appendChild(button));group.remove()});toolbar.querySelectorAll('.calendar-zone-label').forEach(e=>e.remove());const buttons=[...toolbar.querySelectorAll('.tool-btn[data-status]')],map=new Map(buttons.map(b=>[b.dataset.status,b])),clear=map.get('PRESENT'),brush=toolbar.querySelector('.brush-mode-toggle'),title=[...toolbar.children].find(e=>e.tagName==='SPAN');if(title)toolbar.appendChild(title);if(brush)toolbar.appendChild(brush);PRIMARY.forEach(c=>map.get(c)&&toolbar.appendChild(map.get(c)));ZONES.forEach(z=>{const group=document.createElement('div');group.className='calendar-zone-group';group.appendChild(label(z.code));z.destinations.forEach(c=>map.get(c)&&group.appendChild(map.get(c)));toolbar.appendChild(group)});buttons.filter(b=>b!==clear&&!ORDERED.has(b.dataset.status)).forEach(b=>toolbar.appendChild(b));if(clear)toolbar.appendChild(clear)}window.reorderCalendarToolbarByZone=reorder;document.readyState==='loading'?document.addEventListener('DOMContentLoaded',reorder,{once:true}):reorder();window.addEventListener('load',reorder,{once:true})})();
 </script>
 
 </body>
