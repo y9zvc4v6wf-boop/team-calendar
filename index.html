@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.21">
+  <meta name="application-version" content="2.3.25">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -1365,7 +1365,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
             <option value="ALL">Toutes les personnes</option>
           </select>
           <span style="font-weight: bold; font-size: 0.8rem; margin-left: 6px; color: var(--text-muted);">Centre de coût :</span>
-          <select id="kpi-cost-centre-filter" style="width: auto;" onchange="renderKPICostCentreMonthlyChart();">
+          <select id="kpi-cost-centre-filter" style="width: auto;">
             <option value="ALL">Tous les centres</option>
           </select>
           <button class="btn-primary" style="width: auto; margin-top: 0; padding: 5px 12px;" onclick="renderKPICharts()">Actualiser</button>
@@ -1391,7 +1391,10 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       <section id="kpi-forecast-section" class="kpi-forecast-section" aria-labelledby="kpi-forecast-title">
         <div class="kpi-forecast-heading">
           <div><h3 id="kpi-forecast-title">Prévisionnel de dépense par mois</h3><p>Ventilation selon les codes secondaires et centres de coût enregistrés.</p></div>
-          <strong id="kpi-forecast-total">0 €</strong>
+          <div class="kpi-heading-cost-totals">
+            <span><small>Coût total</small><strong id="kpi-forecast-total">0 €</strong></span>
+            <span class="kpi-heading-cost-without-project"><small>Coût sans Projet</small><strong id="kpi-forecast-without-project">0 €</strong></span>
+          </div>
         </div>
         <div class="kpi-forecast-table-wrap">
           <table class="kpi-forecast-table">
@@ -6869,7 +6872,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.21">v2.3.21</span>
+<span id="app-version-indicator" aria-label="Version 2.3.25">v2.3.25</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
@@ -10066,5 +10069,169 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
 })();
 </script>
 <style id="hide-secondary-code-badges-v2321">.secondary-code-initial{display:none!important}</style>
+
+<script id="kpi-cost-centre-effective-filter-v2324">
+(function(){
+  'use strict';
+  function centreAt(source, slot) {
+    if (source === undefined || source === null || source === '') return null;
+    if (typeof source !== 'object') return String(source).trim();
+    if (slot) return source[slot] ? String(source[slot]).trim() : null;
+    if (source.am && source.am === source.pm) return String(source.am).trim();
+    return source.am ? String(source.am).trim() : (source.pm ? String(source.pm).trim() : null);
+  }
+  function availableCentres() {
+    const set = new Set();
+    Object.values(window.COST_CENTRE_DATA || {}).forEach(day => {
+      Object.values(day || {}).forEach(value => {
+        if (typeof value === 'string' && value.trim()) set.add(value.trim());
+        else if (value && typeof value === 'object') {
+          ['am','pm'].forEach(slot => value[slot] && set.add(String(value[slot]).trim()));
+        }
+      });
+    });
+    return [...set].sort((a,b) => a.localeCompare(b,'fr',{sensitivity:'base'}));
+  }
+  function populateFilter() {
+    const select = document.getElementById('kpi-cost-centre-filter');
+    if (!select) return;
+    const selected = select.value || 'ALL';
+    const centres = availableCentres();
+    select.innerHTML = '';
+    select.add(new Option('Tous les centres','ALL'));
+    centres.forEach(value => select.add(new Option(value,value)));
+    select.value = centres.includes(selected) ? selected : 'ALL';
+    select.disabled = centres.length === 0;
+  }
+  function filteredCalendar(source, selectedCentre) {
+    if (selectedCentre === 'ALL') return source;
+    const result = {};
+    Object.entries(source || {}).forEach(([dateKey, day]) => {
+      Object.entries(day || {}).forEach(([user, status]) => {
+        const centres = window.COST_CENTRE_DATA?.[dateKey]?.[user];
+        if (typeof status === 'string') {
+          if (centreAt(centres, null) !== selectedCentre) return;
+          (result[dateKey] ||= {})[user] = status;
+          return;
+        }
+        if (!status || typeof status !== 'object') return;
+        const kept = {};
+        ['am','pm'].forEach(slot => {
+          if (status[slot] && centreAt(centres, slot) === selectedCentre) kept[slot] = status[slot];
+        });
+        if (kept.am || kept.pm) (result[dateKey] ||= {})[user] = kept;
+      });
+    });
+    return result;
+  }
+  const unfilteredRenderKPICharts = window.renderKPICharts;
+  window.renderKPICharts = function() {
+    populateFilter();
+    const selected = document.getElementById('kpi-cost-centre-filter')?.value || 'ALL';
+    if (selected === 'ALL') return unfilteredRenderKPICharts.apply(this, arguments);
+    const originalCalendar = calendarData;
+    calendarData = filteredCalendar(originalCalendar, selected);
+    try {
+      return unfilteredRenderKPICharts.apply(this, arguments);
+    } finally {
+      calendarData = originalCalendar;
+    }
+  };
+  const select = document.getElementById('kpi-cost-centre-filter');
+  if (select) select.addEventListener('change', () => window.renderKPICharts());
+  document.getElementById('tab-kpi')?.addEventListener('click', () => setTimeout(() => {
+    populateFilter();
+    window.renderKPICharts();
+  },0));
+  window.refreshKPICostCentreFilter = populateFilter;
+  let last=''; let stable=0;
+  const probe=setInterval(() => {
+    const signature=availableCentres().join('|');
+    stable=signature===last?stable+1:0; last=signature;
+    populateFilter();
+    if(stable>10) clearInterval(probe);
+  },400);
+  setTimeout(()=>clearInterval(probe),15000);
+  window.addEventListener('load',populateFilter);
+})();
+</script>
+
+
+<style id="kpi-two-totals-v2325-style">
+.kpi-heading-cost-totals{display:flex;align-items:stretch;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.kpi-heading-cost-totals>span{min-width:138px;padding:7px 10px;border:1px solid var(--border);border-radius:9px;background:var(--input-bg);text-align:right}
+.kpi-heading-cost-totals small{display:block;margin-bottom:3px;color:var(--text-muted);font-size:.56rem;font-weight:750}
+.kpi-heading-cost-totals strong{display:block;color:var(--accent);font-size:1.02rem;white-space:nowrap}
+.kpi-heading-cost-without-project{border-color:color-mix(in srgb,#10b981 45%,var(--border))!important}
+.kpi-heading-cost-without-project strong{color:#10b981!important}
+@media(max-width:700px){.kpi-heading-cost-totals{width:100%;justify-content:stretch}.kpi-heading-cost-totals>span{flex:1;min-width:125px;text-align:center}}
+</style>
+<script id="kpi-two-totals-v2325-script">
+(function(){
+  'use strict';
+  function valueAt(source,slot){
+    if(source===undefined||source===null||source==='')return null;
+    if(typeof source!=='object')return source;
+    if(slot)return source[slot]??null;
+    if(source.am===source.pm)return source.am??null;
+    return source.am??source.pm??null;
+  }
+  function isProject(value){
+    return String(value||'').trim().toLocaleLowerCase('fr-FR')==='projet';
+  }
+  function memberAllowed(user){
+    const member=getMemberByFirstName(user);
+    if(!member)return false;
+    const pit=document.getElementById('kpi-pit-filter')?.value||'ALL';
+    const person=document.getElementById('kpi-person-filter')?.value||'ALL';
+    return (pit==='ALL'||member.pit===pit)&&(person==='ALL'||user===person);
+  }
+  function segmentCost(dateKey,user,destination,slot,multiplier){
+    if(!DISPLACEMENT_CODES.includes(destination))return 0;
+    const custom=valueAt(window.CUSTOM_TRAVEL_COSTS?.[dateKey]?.[user],slot);
+    const daily=destination==='Autres'&&Number.isFinite(Number(custom))?Number(custom):Number(DISPLACEMENT_COSTS[destination]||0);
+    return (daily+Number(getTransportCost(dateKey,user,destination,slot)||0))*multiplier;
+  }
+  function renderWithoutProjectTotal(){
+    const target=document.getElementById('kpi-forecast-without-project');
+    if(!target)return;
+    const year=Number(document.getElementById('kpi-year')?.value||new Date().getFullYear());
+    const month=document.getElementById('kpi-month')?.value||'ALL';
+    const centreFilter=document.getElementById('kpi-cost-centre-filter')?.value||'ALL';
+    let total=0;
+    Object.entries(calendarData||{}).forEach(([dateKey,day])=>{
+      const [y,m]=dateKey.split('-').map(Number);
+      if(y!==year||(month!=='ALL'&&m-1!==Number(month)))return;
+      Object.entries(day||{}).forEach(([user,status])=>{
+        if(!memberAllowed(user))return;
+        const add=(destination,slot,multiplier)=>{
+          const centre=valueAt(window.COST_CENTRE_DATA?.[dateKey]?.[user],slot);
+          if(isProject(centre))return;
+          if(centreFilter!=='ALL'&&centre!==centreFilter)return;
+          total+=segmentCost(dateKey,user,destination,slot,multiplier);
+        };
+        if(typeof status==='string')add(status,null,1);
+        else if(status&&typeof status==='object'){
+          if(status.am)add(status.am,'am',.5);
+          if(status.pm)add(status.pm,'pm',.5);
+        }
+      });
+    });
+    target.textContent=formatEuroAmount(total);
+  }
+  const previous=window.renderKPICharts;
+  window.renderKPICharts=function(){
+    const result=previous.apply(this,arguments);
+    renderWithoutProjectTotal();
+    return result;
+  };
+  window.renderKPIWithoutProjectTotal=renderWithoutProjectTotal;
+  document.getElementById('view-kpi')?.addEventListener('change',event=>{
+    if(['kpi-year','kpi-month','kpi-pit-filter','kpi-person-filter','kpi-cost-centre-filter'].includes(event.target.id))requestAnimationFrame(renderWithoutProjectTotal);
+  });
+  window.addEventListener('load',()=>setTimeout(renderWithoutProjectTotal,0));
+})();
+</script>
+
 </body>
 </html>
