@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.31">
+  <meta name="application-version" content="2.3.32">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -2739,8 +2739,11 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       Object.keys(dayData).sort().forEach(firstName => {
         const member = getMemberByFirstName(firstName);
         const value = dayData[firstName];
+        const [exportYear, exportMonth] = dateKey.split('-').map(Number);
         const base = {
           Date: dateKey,
+          Mois: exportMonth,
+          Annee: exportYear,
           Prenom: firstName,
           Nom: member ? member.lastName : '',
           PIT: member ? member.pit : '',
@@ -2758,12 +2761,12 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       alert("Aucune donnée de planning à exporter.");
       return;
     }
-    const headers = ['Date','Prenom','Nom','PIT','Manager','Creneau','Statut','Code_secondaire','Centre_de_cout','Moyen_de_transport','Cout_journalier_unitaire_EUR','Cout_journalier_applique_EUR','Cout_transport_EUR','Cout_total_EUR'];
+    const headers = ['Date','Mois','Annee','Prenom','Nom','PIT','Manager','Creneau','Statut','Code_secondaire','Centre_de_cout','Moyen_de_transport','Cout_journalier_unitaire_EUR','Cout_journalier_applique_EUR','Cout_transport_EUR','Cout_total_EUR'];
     const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
-    worksheet['!autofilter'] = { ref: `A1:N${rows.length + 1}` };
+    worksheet['!autofilter'] = { ref: `A1:P${rows.length + 1}` };
     worksheet['!cols'] = [
-      {wch:12},{wch:16},{wch:20},{wch:16},{wch:10},{wch:14},{wch:14},
-      {wch:18},{wch:20},{wch:20},{wch:28},{wch:27},{wch:22},{wch:18}
+      {wch:12},{wch:8},{wch:10},{wch:16},{wch:20},{wch:16},{wch:10},{wch:14},
+      {wch:14},{wch:18},{wch:20},{wch:20},{wch:28},{wch:27},{wch:22},{wch:18}
     ];
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Planning');
@@ -6872,7 +6875,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.31">v2.3.31</span>
+<span id="app-version-indicator" aria-label="Version 2.3.32">v2.3.32</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
