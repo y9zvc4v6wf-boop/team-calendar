@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.32">
+  <meta name="application-version" content="2.3.33">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -2478,8 +2478,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   document.getElementById('prev-month').onclick = () => {
     if (personalViewMonths === 'ANNUAL' && document.getElementById('view-personal').classList.contains('active')) {
-      const currentYear = new Date().getFullYear();
-      if (personalAnnualSelectedYear <= currentYear) return;
       personalAnnualSelectedYear -= 1;
       currentDate = new Date(personalAnnualSelectedYear, 0, 1);
       document.getElementById('month-display').textContent = String(personalAnnualSelectedYear);
@@ -2488,8 +2486,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
       return;
     }
     const candidate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-    const currentMonthStart = new Date(todayYear, todayMonth, 1);
-    if (candidate < currentMonthStart) return;
     currentDate = candidate;
     renderViews();
   };
@@ -3327,6 +3323,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 
   function renderPersonalCalendar(year, month) {
+    const calendarUser = window.getCalendarEditingUser ? window.getCalendarEditingUser() : currentUser;
     const container = document.getElementById('personal-grids-container');
     container.innerHTML = '';
 
@@ -3339,8 +3336,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     } else if (personalViewMonths === 'ANNUAL') {
       year = personalAnnualSelectedYear;
       const today = new Date();
-      month = year === today.getFullYear() ? today.getMonth() : 0;
-      monthsToRender = 12 - month;
+      month = 0;
+      monthsToRender = 12;
       document.getElementById('month-display').textContent = String(personalAnnualSelectedYear);
       containerClass = 'personal-multi-container months-12';
     }
@@ -3391,12 +3388,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
         weekEndDate.setHours(23, 59, 59, 999);
         const todayWeekLimit = new Date(todayYear, todayMonth, todayDate);
         todayWeekLimit.setHours(0, 0, 0, 0);
-        if (weekEndDate < todayWeekLimit) {
-          for (let skippedColumn = 0; skippedColumn < 7; skippedColumn++) {
-            if (!((r === 0 && skippedColumn < startDayOfWeek) || currentDayCount > totalDays)) currentDayCount++;
-          }
-          continue;
-        }
         const wkCell = document.createElement('div');
         wkCell.className = 'week-number-cell';
         wkCell.textContent = `S${getWeekNumber(sampleRowDate)}`;
@@ -3416,13 +3407,6 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           const dateKey = formatDateKeyStatic(dayDate);
           const todayStart = new Date(todayYear, todayMonth, todayDate);
           todayStart.setHours(0, 0, 0, 0);
-          if (dayDate < todayStart) {
-            cell.style.visibility = 'hidden';
-            cell.setAttribute('aria-hidden', 'true');
-            grid.appendChild(cell);
-            currentDayCount++;
-            continue;
-          }
           const isWeekend = (c >= 5);
           const isHoliday = holidays.has(dateKey);
           const isTodayDate = isToday(dayDate);
@@ -3455,44 +3439,44 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
                 halfDiv.dataset.brushSlot = slot;
                 halfDiv.dataset.calendarTooltip = 'true';
                 halfDiv.dataset.tooltipDate = dateKey;
-                halfDiv.dataset.tooltipUser = currentUser;
+                halfDiv.dataset.tooltipUser = calendarUser;
                 halfDiv.dataset.tooltipSlot = slot;
-                const st = getStatus(dateKey, currentUser, slot);
+                const st = getStatus(dateKey, calendarUser, slot);
                 if (st !== 'PRESENT') {
                   halfDiv.classList.add(`bg-${st}`);
-                  renderStatusWithSecondary(halfDiv, st, dateKey, currentUser, slot);
+                  renderStatusWithSecondary(halfDiv, st, dateKey, calendarUser, slot);
                 } else {
                   halfDiv.textContent = slot === 'am' ? 'M' : 'A';
                 }
 
                 halfDiv.onclick = (e) => {
                   e.stopPropagation();
-                  if (!setStatus(dateKey, currentUser, selectedTool, slot)) return;
+                  if (!setStatus(dateKey, calendarUser, selectedTool, slot)) return;
                   savePlanningAndSecondaryData();
-                  notifySameDestination(dateKey, selectedTool, currentUser, slot);
+                  notifySameDestination(dateKey, selectedTool, calendarUser, slot);
                   renderPersonalCalendar(year, month);
                 };
                 halvesCont.appendChild(halfDiv);
               });
               cell.appendChild(halvesCont);
             } else {
-              const st = getStatus(dateKey, currentUser);
+              const st = getStatus(dateKey, calendarUser);
               if (st !== 'PRESENT') {
                 cell.classList.add(`bg-${st}`);
                 const badge = document.createElement('div');
                 badge.className = 'status-badge';
-                renderStatusWithSecondary(badge, st, dateKey, currentUser);
+                renderStatusWithSecondary(badge, st, dateKey, calendarUser);
                 cell.appendChild(badge);
               }
               cell.dataset.brushDate = dateKey;
               cell.dataset.calendarTooltip = 'true';
               cell.dataset.tooltipDate = dateKey;
-              cell.dataset.tooltipUser = currentUser;
+              cell.dataset.tooltipUser = calendarUser;
               cell.dataset.tooltipSlot = '';
               cell.onclick = () => {
-                if (!setStatus(dateKey, currentUser, selectedTool)) return;
+                if (!setStatus(dateKey, calendarUser, selectedTool)) return;
                 savePlanningAndSecondaryData();
-                notifySameDestination(dateKey, selectedTool, currentUser);
+                notifySameDestination(dateKey, selectedTool, calendarUser);
                 renderPersonalCalendar(year, month);
               };
             }
@@ -5291,29 +5275,29 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   function updateActivityLabels(){document.getElementById('mobile-current-activity').textContent=activityLabel();document.getElementById('mobile-sheet-selection').textContent=activityLabel();}
   function weekText(start){const end=new Date(start);end.setDate(start.getDate()+6);const f=new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short'});return `${f.format(start)} – ${f.format(end)}`;}
   function makeSlot(key,status,slot,label){
-    const box=document.createElement('div');box.className='mobile-focus-slot';box.dataset.brushDate=key;if(slot)box.dataset.brushSlot=slot;box.dataset.calendarTooltip='true';box.dataset.tooltipDate=key;box.dataset.tooltipUser=currentUser;box.dataset.tooltipSlot=slot||'';
+    const box=document.createElement('div');box.className='mobile-focus-slot';box.dataset.brushDate=key;if(slot)box.dataset.brushSlot=slot;box.dataset.calendarTooltip='true';box.dataset.tooltipDate=key;box.dataset.tooltipUser=(window.getCalendarEditingUser ? window.getCalendarEditingUser() : currentUser);box.dataset.tooltipSlot=slot||'';
     const top=document.createElement('div');top.className='mobile-focus-slot-label';top.textContent=label;box.appendChild(top);
     const value=document.createElement('div');value.className='mobile-focus-slot-value';const resolved=status||'PRESENT';
-    if(resolved==='PRESENT') value.textContent='Bureau'; else {box.classList.add(`bg-${resolved}`);renderStatusWithSecondary(value,resolved,key,currentUser,slot);}
+    if(resolved==='PRESENT') value.textContent='Bureau'; else {box.classList.add(`bg-${resolved}`);renderStatusWithSecondary(value,resolved,key,(window.getCalendarEditingUser ? window.getCalendarEditingUser() : currentUser),slot);}
     box.appendChild(value);const hint=document.createElement('div');hint.className='mobile-focus-hint';hint.textContent='Toucher pour appliquer le type sélectionné';box.appendChild(hint);
     box.onclick=()=>applyMobileStatus(key,slot);return box;
   }
   function applyMobileStatus(key,slot){
-    const apply=()=>{if(!setStatus(key,currentUser,selectedTool,slot))return;savePlanningAndSecondaryData();notifySameDestination(key,selectedTool,currentUser,slot);renderFocus();};
+    const apply=()=>{if(!setStatus(key,(window.getCalendarEditingUser ? window.getCalendarEditingUser() : currentUser),selectedTool,slot))return;savePlanningAndSecondaryData();notifySameDestination(key,selectedTool,(window.getCalendarEditingUser ? window.getCalendarEditingUser() : currentUser),slot);renderFocus();};
     if(requiresSecondaryCode(selectedTool)&&!selectedSecondaryCode){openSecondaryCodeModal(selectedTool,code=>{selectedSecondaryCode=code;updateActivityLabels();apply();});return;}apply();
   }
   function renderStrip(start){
     const strip=document.getElementById('mobile-week-strip');strip.innerHTML='';const names=['L','M','M','J','V','S','D'];
     let visibleDayCount=0;
     const mobileToday=new Date();mobileToday.setHours(0,0,0,0);
-    for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);d.setHours(0,0,0,0);if(d<mobileToday)continue;visibleDayCount++;const key=dateKey(d);const button=document.createElement('button');button.type='button';button.className='mobile-day-chip';if(sameDate(d,selectedMobileDate))button.classList.add('selected');if(isToday(d))button.classList.add('today');if(calendarData[key]?.[currentUser])button.classList.add('has-data');button.innerHTML=`<span>${names[i]}</span><strong>${d.getDate()}</strong><i></i>`;button.onclick=()=>{selectedMobileDate=d;currentDate=new Date(d);renderFocus();};strip.appendChild(button);}
+    for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);d.setHours(0,0,0,0);visibleDayCount++;const key=dateKey(d);const button=document.createElement('button');button.type='button';button.className='mobile-day-chip';if(sameDate(d,selectedMobileDate))button.classList.add('selected');if(isToday(d))button.classList.add('today');if(calendarData[key]?.[(window.getCalendarEditingUser ? window.getCalendarEditingUser() : currentUser)])button.classList.add('has-data');button.innerHTML=`<span>${names[i]}</span><strong>${d.getDate()}</strong><i></i>`;button.onclick=()=>{selectedMobileDate=d;currentDate=new Date(d);renderFocus();};strip.appendChild(button);}
     strip.style.gridTemplateColumns=`repeat(${Math.max(visibleDayCount,1)},minmax(0,1fr))`;
   }
   function renderFocus(){
     if(!active())return previousRender(currentDate.getFullYear(),currentDate.getMonth());
     const container=document.getElementById('personal-grids-container');container.innerHTML='';container.className='mobile-focus-view';
     const start=monday(selectedMobileDate);document.getElementById('mobile-week-label').textContent=weekText(start);renderStrip(start);
-    const key=dateKey(selectedMobileDate),value=calendarData[key]?.[currentUser],holidays=getFrenchPublicHolidays(selectedMobileDate.getFullYear());
+    const key=dateKey(selectedMobileDate),value=calendarData[key]?.[(window.getCalendarEditingUser ? window.getCalendarEditingUser() : currentUser)],holidays=getFrenchPublicHolidays(selectedMobileDate.getFullYear());
     const card=document.createElement('section');card.className='mobile-focus-card';if([0,6].includes(selectedMobileDate.getDay()))card.classList.add('weekend');if(holidays.has(key))card.classList.add('holiday');
     const fullDate=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long'}).format(selectedMobileDate);
     card.innerHTML=`<header class="mobile-focus-date"><div><h2>${fullDate}</h2><p>${holidays.has(key)?'Jour férié':'Votre planning de la journée'}</p></div>${isToday(selectedMobileDate)?'<span class="mobile-focus-date-badge">Aujourd’hui</span>':''}</header><div class="mobile-focus-slots"></div>`;
@@ -5330,8 +5314,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   };
   document.getElementById('mobile-prev-week').onclick=()=>{
     const candidate=new Date(selectedMobileDate);candidate.setDate(candidate.getDate()-7);
-    const today=new Date();today.setHours(0,0,0,0);
-    if(candidate<today)selectedMobileDate=today;else selectedMobileDate=candidate;
+    selectedMobileDate=candidate;
     currentDate=new Date(selectedMobileDate);renderFocus();
   };
   document.getElementById('mobile-next-week').onclick=()=>{selectedMobileDate.setDate(selectedMobileDate.getDate()+7);currentDate=new Date(selectedMobileDate);renderFocus();};
@@ -6875,7 +6858,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.32">v2.3.32</span>
+<span id="app-version-indicator" aria-label="Version 2.3.33">v2.3.33</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
@@ -10297,6 +10280,86 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
 
   const annualView = document.getElementById('view-annual');
   if (annualView) annualView.addEventListener('change', refreshAnnualFromFilters, true);
+})();
+</script>
+
+
+<style id="admin-calendar-edit-v2333-style">
+  #calendar-edit-user-wrap { display:none; align-items:center; gap:6px; margin-left:auto; }
+  #calendar-edit-user-wrap.visible { display:flex; }
+  #calendar-edit-user-wrap label { color:var(--text-muted); font-size:.7rem; font-weight:800; white-space:nowrap; }
+  #calendar-edit-user { width:auto !important; min-width:190px; }
+  #calendar-edit-banner { display:none; margin:0 0 10px; padding:8px 10px; border:1px solid color-mix(in srgb,var(--accent) 55%,var(--border)); border-radius:9px; background:var(--accent-soft); color:var(--text); font-size:.72rem; font-weight:750; }
+  #calendar-edit-banner.visible { display:block; }
+  @media(max-width:700px){
+    #calendar-edit-user-wrap.visible { display:grid; grid-template-columns:auto minmax(0,1fr); width:100%; margin-left:0; }
+    #calendar-edit-user { width:100% !important; min-width:0; }
+  }
+</style>
+<script id="admin-calendar-edit-v2333-script">
+(function(){
+  'use strict';
+  let calendarEditingUser = null;
+  window.getCalendarEditingUser = function(){
+    const actor = getMemberByFirstName(currentUser);
+    if (!hasAdminAccess(actor)) return currentUser;
+    return ALL_MEMBERS.some(member => member.firstName === calendarEditingUser) ? calendarEditingUser : currentUser;
+  };
+  function ensureSelector(){
+    const subnav=document.querySelector('#view-personal .team-subnav');
+    if(!subnav) return;
+    let wrap=document.getElementById('calendar-edit-user-wrap');
+    if(!wrap){
+      wrap=document.createElement('div');
+      wrap.id='calendar-edit-user-wrap';
+      wrap.innerHTML='<label for="calendar-edit-user">Calendrier de :</label><select id="calendar-edit-user" aria-label="Choisir la personne dont le calendrier doit être modifié"></select>';
+      subnav.appendChild(wrap);
+      wrap.querySelector('select').addEventListener('change',event=>{
+        calendarEditingUser=event.target.value;
+        updateEditorUi();
+        renderPersonalCalendar(currentDate.getFullYear(),currentDate.getMonth());
+      });
+    }
+    if(!document.getElementById('calendar-edit-banner')){
+      const banner=document.createElement('div');
+      banner.id='calendar-edit-banner';
+      document.getElementById('personal-grids-container')?.parentNode?.insertBefore(banner,document.getElementById('personal-grids-container'));
+    }
+  }
+  function updateEditorUi(){
+    ensureSelector();
+    const actor=getMemberByFirstName(currentUser);
+    const admin=hasAdminAccess(actor);
+    const wrap=document.getElementById('calendar-edit-user-wrap');
+    const select=document.getElementById('calendar-edit-user');
+    const banner=document.getElementById('calendar-edit-banner');
+    if(!wrap||!select||!banner) return;
+    wrap.classList.toggle('visible',admin);
+    if(!admin){calendarEditingUser=currentUser;banner.classList.remove('visible');return;}
+    const wanted=window.getCalendarEditingUser();
+    select.innerHTML='';
+    [...ALL_MEMBERS].sort((a,b)=>`${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`,'fr',{sensitivity:'base'})).forEach(member=>{
+      const option=document.createElement('option');
+      option.value=member.firstName;
+      option.textContent=`${member.firstName} ${member.lastName} (${member.pit})`;
+      select.appendChild(option);
+    });
+    calendarEditingUser=ALL_MEMBERS.some(member=>member.firstName===wanted)?wanted:currentUser;
+    select.value=calendarEditingUser;
+    const editingOther=calendarEditingUser&&calendarEditingUser!==currentUser;
+    const target=getMemberByFirstName(calendarEditingUser);
+    banner.classList.toggle('visible',editingOther);
+    banner.textContent=editingOther?`Mode Administrateur : vous modifiez le calendrier de ${target?target.firstName+' '+target.lastName:calendarEditingUser}.`:'';
+  }
+  const priorLogin=window.loginSuccess;
+  window.loginSuccess=function(name){calendarEditingUser=name;const result=priorLogin.apply(this,arguments);updateEditorUi();return result;};
+  const priorLogout=window.logout;
+  window.logout=function(){calendarEditingUser=null;return priorLogout.apply(this,arguments);};
+  const priorMembers=window.updateAllMembersList;
+  window.updateAllMembersList=function(){const result=priorMembers.apply(this,arguments);updateEditorUi();return result;};
+  const priorSwitch=window.switchTab;
+  window.switchTab=function(viewId){const result=priorSwitch.apply(this,arguments);if(viewId==='view-personal'){updateEditorUi();requestAnimationFrame(()=>renderPersonalCalendar(currentDate.getFullYear(),currentDate.getMonth()));}return result;};
+  window.addEventListener('load',()=>{ensureSelector();updateEditorUi();});
 })();
 </script>
 
