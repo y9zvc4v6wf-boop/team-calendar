@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.33">
+  <meta name="application-version" content="2.3.37">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -2593,19 +2593,28 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 
   function getBrushTarget(element) {
     if (!brushModeEnabled || !element) return null;
-    return element.closest('#view-personal [data-brush-date]');
+    const target = element.closest('#view-personal [data-brush-date]');
+    if (!target) return null;
+    const targetUser = window.getCalendarEditingUser ? window.getCalendarEditingUser() : currentUser;
+    const dateKey = target.dataset.brushDate;
+    const slot = target.dataset.brushSlot || null;
+    const existingStatus = dateKey && targetUser ? getStatus(dateKey, targetUser, slot) : 'PRESENT';
+    // A filled travel entry is edited through its dedicated popup, not repainted by the brush.
+    if (typeof DISPLACEMENT_CODES !== 'undefined' && DISPLACEMENT_CODES.includes(existingStatus)) return null;
+    return target;
   }
 
   function paintWithBrush(target) {
-    if (!target || !currentUser) return;
+    const targetUser = window.getCalendarEditingUser ? window.getCalendarEditingUser() : currentUser;
+    if (!target || !targetUser) return;
     const dateKey = target.dataset.brushDate;
     const slot = target.dataset.brushSlot || null;
-    const paintKey = `${dateKey}|${slot || 'day'}`;
+    const paintKey = `${targetUser}|${dateKey}|${slot || 'day'}`;
     if (brushTouchedCells.has(paintKey)) return;
 
     brushTouchedCells.add(paintKey);
     brushLastPaintKey = paintKey;
-    if (!setStatus(dateKey, currentUser, selectedTool, slot)) return;
+    if (!setStatus(dateKey, targetUser, selectedTool, slot)) return;
     target.classList.add('brush-painted-preview');
     brushHasChanges = true;
 
@@ -2634,7 +2643,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
     if (hadChanges) {
       renderPersonalCalendar(currentDate.getFullYear(), currentDate.getMonth());
       if (travelContext) {
-        notifySameDestination(travelContext.dateKey, travelContext.destination, currentUser, travelContext.slot);
+        notifySameDestination(travelContext.dateKey, travelContext.destination, window.getCalendarEditingUser ? window.getCalendarEditingUser() : currentUser, travelContext.slot);
       }
     }
   }
@@ -6858,7 +6867,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.33">v2.3.33</span>
+<span id="app-version-indicator" aria-label="Version 2.3.37">v2.3.37</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
@@ -10360,6 +10369,136 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
   const priorSwitch=window.switchTab;
   window.switchTab=function(viewId){const result=priorSwitch.apply(this,arguments);if(viewId==='view-personal'){updateEditorUi();requestAnimationFrame(()=>renderPersonalCalendar(currentDate.getFullYear(),currentDate.getMonth()));}return result;};
   window.addEventListener('load',()=>{ensureSelector();updateEditorUi();});
+})();
+</script>
+
+
+<style id="brush-always-on-hide-toggle-v2335">
+  #brush-mode-toggle { display: none !important; }
+</style>
+<script id="brush-always-on-v2335-script">
+(function(){
+  'use strict';
+  function forceBrushAlwaysOn(){
+    brushModeEnabled = true;
+    brushDragging = false;
+    document.getElementById('view-personal')?.classList.add('brush-mode-active');
+    const button=document.getElementById('brush-mode-toggle');
+    if(button){
+      button.classList.add('active');
+      button.setAttribute('aria-pressed','true');
+      button.hidden=true;
+      button.tabIndex=-1;
+    }
+  }
+  window.toggleBrushMode=function(){ forceBrushAlwaysOn(); };
+  const priorLogin=window.loginSuccess;
+  window.loginSuccess=function(){const result=priorLogin.apply(this,arguments);forceBrushAlwaysOn();return result;};
+  const priorSwitch=window.switchTab;
+  window.switchTab=function(viewId){const result=priorSwitch.apply(this,arguments);if(viewId==='view-personal')forceBrushAlwaysOn();return result;};
+  forceBrushAlwaysOn();
+  window.addEventListener('load',forceBrushAlwaysOn);
+})();
+</script>
+
+<style id="travel-edit-modal-v2336-style">
+  #view-personal .toolbar .tool-PRESENT { display:none !important; }
+  #travel-edit-modal { z-index:9100; }
+  #travel-edit-modal .app-modal-card { width:min(520px,100%); }
+  #travel-edit-modal .travel-edit-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  #travel-edit-modal .travel-edit-field { display:grid; gap:6px; }
+  #travel-edit-modal .travel-edit-field.full { grid-column:1/-1; }
+  #travel-edit-modal label { color:var(--text-muted); font-size:.72rem; font-weight:800; }
+  #travel-edit-modal select { width:100% !important; min-height:42px !important; }
+  #travel-edit-modal .travel-edit-actions { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:22px; }
+  #travel-edit-modal .travel-edit-actions button { width:100%; min-height:44px; margin:0; }
+  #travel-edit-delete { color:var(--danger); border-color:var(--danger); background:color-mix(in srgb,var(--danger) 12%,transparent); }
+  #travel-edit-delete:hover { color:#fff; background:var(--danger); }
+  @media(max-width:600px){#travel-edit-modal .travel-edit-grid{grid-template-columns:1fr}#travel-edit-modal .travel-edit-field.full{grid-column:1}#travel-edit-modal .travel-edit-actions{grid-template-columns:1fr}.travel-edit-actions #travel-edit-delete{order:3}}
+</style>
+<div id="travel-edit-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="travel-edit-title">
+  <div class="app-modal-card">
+    <div class="app-modal-accent"></div>
+    <div class="app-modal-content">
+      <div class="app-modal-heading"><div class="app-modal-icon">✈️</div><div><h2 id="travel-edit-title" class="app-modal-title">Modifier le déplacement</h2><p id="travel-edit-subtitle" class="app-modal-subtitle"></p></div></div>
+      <div class="travel-edit-grid">
+        <div class="travel-edit-field full"><label for="travel-edit-destination">Destination</label><select id="travel-edit-destination"></select></div>
+        <div class="travel-edit-field"><label for="travel-edit-secondary">Code secondaire</label><select id="travel-edit-secondary"></select></div>
+        <div class="travel-edit-field"><label for="travel-edit-centre">Centre de coût</label><select id="travel-edit-centre"></select></div>
+        <div class="travel-edit-field"><label for="travel-edit-transport">Transport</label><select id="travel-edit-transport"><option value="Voiture">Voiture</option><option value="Avion">Avion</option><option value="MAS">MAS</option></select></div>
+      </div>
+      <p id="travel-edit-error" class="other-cost-error" aria-live="polite"></p>
+      <div class="travel-edit-actions"><button type="button" class="btn-secondary" id="travel-edit-cancel">Annuler</button><button type="button" id="travel-edit-delete">Supprimer</button><button type="button" class="btn-primary" id="travel-edit-save">Enregistrer</button></div>
+    </div>
+  </div>
+</div>
+<script id="travel-edit-modal-v2336-script">
+(function(){
+  'use strict';
+  let context=null;
+  const modal=document.getElementById('travel-edit-modal');
+  const destination=document.getElementById('travel-edit-destination');
+  const secondary=document.getElementById('travel-edit-secondary');
+  const centre=document.getElementById('travel-edit-centre');
+  const transport=document.getElementById('travel-edit-transport');
+  const error=document.getElementById('travel-edit-error');
+  function storedAt(source,slot){if(!source)return null;if(typeof source==='string')return source;if(slot)return source[slot]||null;return source.am===source.pm?source.am:(source.am||source.pm||null)}
+  function shiftDateKey(dateKey,days){const [y,m,d]=dateKey.split('-').map(Number);const date=new Date(y,m-1,d,12);date.setDate(date.getDate()+days);return formatDateKeyStatic(date)}
+  function sameTravelSegment(dateKey,user,slot,status){return getStatus(dateKey,user,slot)===status}
+  function collectTravelSegment(dateKey,user,slot,status){
+    const segment=[{dateKey,user,slot}];
+    let cursor=dateKey;
+    while(true){const previous=shiftDateKey(cursor,-1);if(!sameTravelSegment(previous,user,slot,status))break;segment.unshift({dateKey:previous,user,slot});cursor=previous}
+    cursor=dateKey;
+    while(true){const next=shiftDateKey(cursor,1);if(!sameTravelSegment(next,user,slot,status))break;segment.push({dateKey:next,user,slot});cursor=next}
+    return segment;
+  }
+  function fillSelect(select,values,current){select.innerHTML='';values.forEach(item=>{const value=typeof item==='string'?item:item.code;const label=typeof item==='string'?item:`${item.code} - ${item.label||item.code}`;select.add(new Option(label,value))});if([...select.options].some(option=>option.value===current))select.value=current}
+  function close(){modal.classList.remove('visible');document.body.style.overflow='';context=null;error.textContent=''}
+  function open(dateKey,user,slot,status){
+    context={dateKey,user,slot,status,segments:collectTravelSegment(dateKey,user,slot,status)};
+    const codes=(typeof adminConfig!=='undefined'&&Array.isArray(adminConfig.secondaryCodes))?adminConfig.secondaryCodes:SECONDARY_CODES.map(code=>({code,label:code}));
+    const centres=(typeof adminConfig!=='undefined'&&Array.isArray(adminConfig.costCentres))?adminConfig.costCentres:['Marche courante','Projet'];
+    fillSelect(destination,DISPLACEMENT_CODES.filter(code=>code!=='Autres'),status);
+    fillSelect(secondary,codes,storedAt(secondaryCodesData?.[dateKey]?.[user],slot));
+    fillSelect(centre,centres,storedAt(window.COST_CENTRE_DATA?.[dateKey]?.[user],slot));
+    transport.value=storedAt(window.TRANSPORT_DATA?.[dateKey]?.[user],slot)||'Voiture';
+    const member=getMemberByFirstName(user);
+    const [y,m,d]=dateKey.split('-').map(Number);
+    const dateText=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date(y,m-1,d));
+    const segmentCount=context.segments.length;
+    document.getElementById('travel-edit-subtitle').textContent=`${member?member.firstName+' '+member.lastName:user} · ${dateText}${slot==='am'?' · Matin':slot==='pm'?' · Après-midi':''}${segmentCount>1?' · '+segmentCount+' jours liés':''}`;
+    modal.classList.add('visible');document.body.style.overflow='hidden';
+  }
+  function refresh(){savePlanningAndSecondaryData();renderPersonalCalendar(currentDate.getFullYear(),currentDate.getMonth());if(document.getElementById('view-team')?.classList.contains('active'))renderTeamCalendar(currentDate.getFullYear(),currentDate.getMonth())}
+  document.getElementById('travel-edit-cancel').onclick=close;
+  modal.addEventListener('click',event=>{if(event.target===modal)close()});
+  document.getElementById('travel-edit-save').onclick=()=>{
+    if(!context)return;
+    if(!destination.value||!secondary.value||!centre.value||!transport.value){error.textContent='Tous les champs sont obligatoires.';return}
+    selectedSecondaryCode=secondary.value;selectedCostCentre=centre.value;window.selectedTransportChoice=transport.value;
+    for(const item of context.segments){if(!setStatus(item.dateKey,item.user,destination.value,item.slot))return;}
+    refresh();close();
+  };
+  document.getElementById('travel-edit-delete').onclick=async()=>{
+    if(!context)return;
+    const count=context.segments.length;
+    if(!await appConfirm(count>1?`Supprimer ce déplacement complet sur ${count} jours ?`:'Supprimer ce déplacement ?', {danger:true,confirmText:'Supprimer'}))return;
+    selectedSecondaryCode=null;selectedCostCentre=null;window.selectedTransportChoice=null;
+    for(const item of context.segments)setStatus(item.dateKey,item.user,'PRESENT',item.slot);
+    refresh();close();
+  };
+  document.addEventListener('click',event=>{
+    const target=event.target.closest('#view-personal [data-brush-date]');
+    if(!target||modal.classList.contains('visible'))return;
+    const user=window.getCalendarEditingUser?window.getCalendarEditingUser():currentUser;
+    const dateKey=target.dataset.brushDate,slot=target.dataset.brushSlot||null;
+    const status=getStatus(dateKey,user,slot);
+    if(!DISPLACEMENT_CODES.includes(status))return;
+    event.preventDefault();event.stopImmediatePropagation();open(dateKey,user,slot,status);
+  },true);
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&modal.classList.contains('visible'))close()});
+  window.openTravelEditModal=open;
 })();
 </script>
 
