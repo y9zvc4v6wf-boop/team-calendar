@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.37">
+  <meta name="application-version" content="2.3.38">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -4797,7 +4797,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
 </script>
 
 <style id="unified-app-modal-styles">
-  #unified-app-modal { z-index: 9000; }
+  #unified-app-modal { z-index: 9300; }
   #unified-app-modal .app-modal-card { width: min(470px, 100%); }
   #unified-modal-message { white-space: pre-line; overflow-wrap: anywhere; }
   #unified-modal-input-wrap { display:none; margin: 0 0 16px; }
@@ -6867,7 +6867,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.37">v2.3.37</span>
+<span id="app-version-indicator" aria-label="Version 2.3.38">v2.3.38</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
@@ -10483,10 +10483,27 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
   document.getElementById('travel-edit-delete').onclick=async()=>{
     if(!context)return;
     const count=context.segments.length;
-    if(!await appConfirm(count>1?`Supprimer ce déplacement complet sur ${count} jours ?`:'Supprimer ce déplacement ?', {danger:true,confirmText:'Supprimer'}))return;
+    const confirmed=await window.appConfirm(count>1?`Supprimer ce déplacement complet sur ${count} jours ?`:'Supprimer ce déplacement ?', {danger:true,confirmText:'Supprimer'});
+    if(!confirmed)return;
+    for(const item of context.segments){
+      const day=calendarData[item.dateKey];
+      if(day){
+        const current=day[item.user];
+        if(item.slot&&current&&typeof current==='object'){
+          const updated={...current};delete updated[item.slot];
+          if(!updated.am&&!updated.pm)delete day[item.user];else day[item.user]=updated;
+        }else delete day[item.user];
+        if(Object.keys(day).length===0)delete calendarData[item.dateKey];
+      }
+      [secondaryCodesData,window.COST_CENTRE_DATA,window.TRANSPORT_DATA,window.CUSTOM_TRAVEL_COSTS].forEach(store=>{
+        const entry=store?.[item.dateKey]?.[item.user];if(!entry)return;
+        if(item.slot&&typeof entry==='object'){delete entry[item.slot];if(!entry.am&&!entry.pm)delete store[item.dateKey][item.user];}
+        else delete store[item.dateKey][item.user];
+        if(store[item.dateKey]&&Object.keys(store[item.dateKey]).length===0)delete store[item.dateKey];
+      });
+    }
     selectedSecondaryCode=null;selectedCostCentre=null;window.selectedTransportChoice=null;
-    for(const item of context.segments)setStatus(item.dateKey,item.user,'PRESENT',item.slot);
-    refresh();close();
+    close();refresh();
   };
   document.addEventListener('click',event=>{
     const target=event.target.closest('#view-personal [data-brush-date]');
