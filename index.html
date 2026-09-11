@@ -10428,7 +10428,7 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
         <div class="travel-edit-field"><label for="travel-edit-transport">Transport</label><select id="travel-edit-transport"><option value="Voiture">Voiture</option><option value="Avion">Avion</option><option value="MAS">MAS</option></select></div>
       </div>
       <p id="travel-edit-error" class="other-cost-error" aria-live="polite"></p>
-      <div class="travel-edit-actions"><button type="button" class="btn-secondary" id="travel-edit-cancel">Annuler</button><button type="button" id="travel-edit-delete">Supprimer</button><button type="button" class="btn-primary" id="travel-edit-save">Enregistrer</button></div>
+      <div class="travel-edit-actions"><button type="button" class="btn-secondary" id="travel-edit-cancel">Annuler</button><button type="button" id="travel-edit-delete">Modifier/supprimer</button><button type="button" class="btn-primary" id="travel-edit-save">Enregistrer</button></div>
     </div>
   </div>
 </div>
@@ -10516,6 +10516,145 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
   },true);
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&modal.classList.contains('visible'))close()});
   window.openTravelEditModal=open;
+})();
+</script>
+
+
+<style id="travel-delete-range-v2339-style">
+  #travel-delete-choice-modal { z-index: 9200; }
+  #travel-delete-choice-modal .app-modal-card { width: min(520px, 100%); }
+  .travel-delete-choice-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+  .travel-delete-choice-actions button { width:100%; min-height:46px; margin:0; }
+  #travel-delete-all-choice { color:#fff; border-color:var(--danger); background:var(--danger); }
+  #travel-delete-range-panel { display:none; margin-top:16px; padding:13px; border:1px solid var(--border); border-radius:11px; background:var(--input-bg); }
+  #travel-delete-range-panel.visible { display:block; }
+  .travel-delete-range-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .travel-delete-range-field { display:grid; gap:6px; }
+  .travel-delete-range-field label { color:var(--text-muted); font-size:.72rem; font-weight:800; }
+  .travel-delete-range-field input { width:100%; min-height:42px; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font:inherit; }
+  .travel-delete-range-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:13px; }
+  .travel-delete-range-actions button { width:100%; min-height:42px; margin:0; }
+  @media(max-width:600px){
+    .travel-delete-choice-actions,.travel-delete-range-grid,.travel-delete-range-actions{grid-template-columns:1fr}
+  }
+</style>
+<div id="travel-delete-choice-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="travel-delete-choice-title">
+  <div class="app-modal-card">
+    <div class="app-modal-accent"></div>
+    <div class="app-modal-content">
+      <div class="app-modal-heading">
+        <div class="app-modal-icon">🗑️</div>
+        <div>
+          <h2 id="travel-delete-choice-title" class="app-modal-title">Supprimer ou ajuster le déplacement</h2>
+          <p id="travel-delete-choice-subtitle" class="app-modal-subtitle"></p>
+        </div>
+      </div>
+      <p class="app-modal-message">Choisissez de supprimer tout le déplacement ou de conserver le déplacement en modifiant ses dates de début et de fin.</p>
+      <div class="travel-delete-choice-actions">
+        <button type="button" class="btn-secondary" id="travel-delete-adjust-choice">Modifier les dates</button>
+        <button type="button" id="travel-delete-all-choice">Supprimer tout</button>
+      </div>
+      <div id="travel-delete-range-panel">
+        <div class="travel-delete-range-grid">
+          <div class="travel-delete-range-field"><label for="travel-delete-start-date">Date de début</label><input type="date" id="travel-delete-start-date"></div>
+          <div class="travel-delete-range-field"><label for="travel-delete-end-date">Date de fin</label><input type="date" id="travel-delete-end-date"></div>
+        </div>
+        <p id="travel-delete-range-error" class="other-cost-error" aria-live="polite"></p>
+        <div class="travel-delete-range-actions">
+          <button type="button" class="btn-secondary" id="travel-delete-range-cancel">Retour</button>
+          <button type="button" class="btn-primary" id="travel-delete-range-save">Enregistrer les nouvelles dates</button>
+        </div>
+      </div>
+      <div class="app-modal-actions" style="margin-top:14px"><button type="button" class="btn-secondary app-modal-ok" id="travel-delete-choice-cancel">Annuler</button></div>
+    </div>
+  </div>
+</div>
+<script id="travel-delete-range-v2339-script">
+(function(){
+  'use strict';
+  let clickedContext=null;
+  let activeContext=null;
+  const choiceModal=document.getElementById('travel-delete-choice-modal');
+  const editModal=document.getElementById('travel-edit-modal');
+  const rangePanel=document.getElementById('travel-delete-range-panel');
+  const startInput=document.getElementById('travel-delete-start-date');
+  const endInput=document.getElementById('travel-delete-end-date');
+  const rangeError=document.getElementById('travel-delete-range-error');
+
+  function shiftDateKey(dateKey,days){const [y,m,d]=dateKey.split('-').map(Number);const date=new Date(y,m-1,d,12);date.setDate(date.getDate()+days);return formatDateKeyStatic(date)}
+  function sameSegment(dateKey,user,slot,status){return getStatus(dateKey,user,slot)===status}
+  function collectSegment(dateKey,user,slot,status){
+    const items=[{dateKey,user,slot}];let cursor=dateKey;
+    while(true){const previous=shiftDateKey(cursor,-1);if(!sameSegment(previous,user,slot,status))break;items.unshift({dateKey:previous,user,slot});cursor=previous}
+    cursor=dateKey;
+    while(true){const next=shiftDateKey(cursor,1);if(!sameSegment(next,user,slot,status))break;items.push({dateKey:next,user,slot});cursor=next}
+    return items;
+  }
+  function valueAt(source,slot){if(!source)return null;if(typeof source==='string')return source;if(slot)return source[slot]||null;return source.am===source.pm?source.am:(source.am||source.pm||null)}
+  function setStoreValue(store,dateKey,user,slot,value){
+    if(!store)return;if(!store[dateKey])store[dateKey]={};
+    if(slot){const current=store[dateKey][user];const next=current&&typeof current==='object'?{...current}:{};if(value!==null&&value!==undefined&&value!=='')next[slot]=value;else delete next[slot];if(next.am||next.pm)store[dateKey][user]=next;else delete store[dateKey][user];}
+    else if(value!==null&&value!==undefined&&value!=='')store[dateKey][user]=value;else delete store[dateKey][user];
+    if(store[dateKey]&&!Object.keys(store[dateKey]).length)delete store[dateKey];
+  }
+  function removeItem(item){
+    const day=calendarData[item.dateKey];
+    if(day){const current=day[item.user];if(item.slot&&current&&typeof current==='object'){const next={...current};delete next[item.slot];if(next.am||next.pm)day[item.user]=next;else delete day[item.user];}else delete day[item.user];if(!Object.keys(day).length)delete calendarData[item.dateKey];}
+    [secondaryCodesData,window.COST_CENTRE_DATA,window.TRANSPORT_DATA,window.CUSTOM_TRAVEL_COSTS].forEach(store=>setStoreValue(store,item.dateKey,item.user,item.slot,null));
+  }
+  function dateRange(startKey,endKey){const result=[];let cursor=startKey;while(cursor<=endKey){result.push(cursor);cursor=shiftDateKey(cursor,1)}return result}
+  function closeChoice(){choiceModal.classList.remove('visible');rangePanel.classList.remove('visible');document.body.style.overflow='';rangeError.textContent='';activeContext=null}
+  function reopenEdit(){closeChoice();if(editModal)editModal.classList.add('visible');document.body.style.overflow='hidden'}
+  function openChoice(){
+    if(!clickedContext)return;
+    const {dateKey,user,slot,status}=clickedContext;const segments=collectSegment(dateKey,user,slot,status);
+    activeContext={dateKey,user,slot,status,segments};
+    startInput.value=segments[0].dateKey;endInput.value=segments[segments.length-1].dateKey;
+    startInput.max=endInput.value;endInput.min=startInput.value;
+    document.getElementById('travel-delete-choice-subtitle').textContent=`${status} · ${segments.length} jour${segments.length>1?'s':''} lié${segments.length>1?'s':''}`;
+    if(editModal)editModal.classList.remove('visible');choiceModal.classList.add('visible');document.body.style.overflow='hidden';
+  }
+  function finishAndRefresh(){selectedSecondaryCode=null;selectedCostCentre=null;window.selectedTransportChoice=null;closeChoice();savePlanningAndSecondaryData();renderPersonalCalendar(currentDate.getFullYear(),currentDate.getMonth());if(document.getElementById('view-team')?.classList.contains('active'))renderTeamCalendar(currentDate.getFullYear(),currentDate.getMonth())}
+
+  document.addEventListener('pointerdown',event=>{
+    const target=event.target.closest?.('#view-personal [data-brush-date]');if(!target)return;
+    const user=window.getCalendarEditingUser?window.getCalendarEditingUser():currentUser;
+    const dateKey=target.dataset.brushDate,slot=target.dataset.brushSlot||null,status=getStatus(dateKey,user,slot);
+    if(DISPLACEMENT_CODES.includes(status))clickedContext={dateKey,user,slot,status};
+  },true);
+  document.getElementById('travel-edit-delete').onclick=openChoice;
+  document.getElementById('travel-delete-choice-cancel').onclick=reopenEdit;
+  document.getElementById('travel-delete-range-cancel').onclick=()=>{rangePanel.classList.remove('visible');rangeError.textContent=''};
+  document.getElementById('travel-delete-adjust-choice').onclick=()=>{rangePanel.classList.add('visible');rangeError.textContent='';startInput.focus()};
+  startInput.addEventListener('change',()=>{endInput.min=startInput.value;if(endInput.value<startInput.value)endInput.value=startInput.value});
+  endInput.addEventListener('change',()=>{startInput.max=endInput.value});
+  choiceModal.addEventListener('click',event=>{if(event.target===choiceModal)reopenEdit()});
+  document.getElementById('travel-delete-all-choice').onclick=async()=>{
+    if(!activeContext)return;const confirmed=await appConfirm(`Supprimer tout le déplacement sur ${activeContext.segments.length} jour${activeContext.segments.length>1?'s':''} ?`,{danger:true,confirmText:'Supprimer tout'});if(!confirmed)return;
+    activeContext.segments.forEach(removeItem);finishAndRefresh();
+  };
+  document.getElementById('travel-delete-range-save').onclick=()=>{
+    if(!activeContext)return;const start=startInput.value,end=endInput.value;
+    if(!start||!end){rangeError.textContent='Renseignez une date de début et une date de fin.';return}
+    if(start>end){rangeError.textContent='La date de fin doit être postérieure ou égale à la date de début.';return}
+    const anchor=activeContext.segments[0];
+    const secondaryValue=valueAt(secondaryCodesData?.[anchor.dateKey]?.[anchor.user],anchor.slot);
+    const centreValue=valueAt(window.COST_CENTRE_DATA?.[anchor.dateKey]?.[anchor.user],anchor.slot);
+    const transportValue=valueAt(window.TRANSPORT_DATA?.[anchor.dateKey]?.[anchor.user],anchor.slot);
+    const customCostValue=valueAt(window.CUSTOM_TRAVEL_COSTS?.[anchor.dateKey]?.[anchor.user],anchor.slot);
+    activeContext.segments.forEach(removeItem);
+    dateRange(start,end).forEach(dateKey=>{
+      if(!calendarData[dateKey])calendarData[dateKey]={};
+      if(activeContext.slot){const old=calendarData[dateKey][activeContext.user];const next=old&&typeof old==='object'?{...old}:{};next[activeContext.slot]=activeContext.status;calendarData[dateKey][activeContext.user]=next;}
+      else calendarData[dateKey][activeContext.user]=activeContext.status;
+      setStoreValue(secondaryCodesData,dateKey,activeContext.user,activeContext.slot,secondaryValue);
+      setStoreValue(window.COST_CENTRE_DATA,dateKey,activeContext.user,activeContext.slot,centreValue);
+      setStoreValue(window.TRANSPORT_DATA,dateKey,activeContext.user,activeContext.slot,transportValue);
+      setStoreValue(window.CUSTOM_TRAVEL_COSTS,dateKey,activeContext.user,activeContext.slot,customCostValue);
+    });
+    finishAndRefresh();
+  };
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&choiceModal.classList.contains('visible'))reopenEdit()});
 })();
 </script>
 
