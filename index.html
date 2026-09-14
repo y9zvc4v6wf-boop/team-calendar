@@ -2750,8 +2750,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           Mois: exportMonth,
           Annee: exportYear,
           Prenom: firstName,
-          Nom: member ? member.lastName : '',
-          PIT: member ? member.pit : '',
+          Nom: member ? member.lastName : 'COMPTE INCOMPLET',
+          PIT: member ? member.pit : 'COMPTE INCOMPLET',
           Manager: member && member.isManager ? 'Oui' : 'Non'
         };
         if (typeof value === 'string') {
@@ -10655,6 +10655,179 @@ window.addEventListener('load',()=>{addTransportChoices();ensureSettingsPanel();
     finishAndRefresh();
   };
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&choiceModal.classList.contains('visible'))reopenEdit()});
+})();
+</script>
+
+
+<style id="github-orphan-profiles-fix-v1-style">
+  #orphan-users-panel{display:none;border:1px solid #f59e0b!important;background:color-mix(in srgb,#f59e0b 9%,var(--card))!important}
+  #orphan-users-panel.visible{display:block}
+  .orphan-user-list{display:grid;gap:8px;margin-top:12px}
+  .orphan-user-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card)}
+  .orphan-user-row strong{overflow-wrap:anywhere}.orphan-user-row button{width:auto!important;margin:0!important;white-space:nowrap}
+  #orphan-profile-modal{z-index:33000}
+  #orphan-profile-modal .app-modal-card{max-width:500px}
+  .orphan-repair-grid{display:grid;gap:10px;margin-top:14px}
+  .orphan-repair-grid label{display:grid;gap:5px;color:var(--text-muted);font-size:.75rem;font-weight:800}
+  .orphan-repair-grid input,.orphan-repair-grid select{width:100%;min-height:42px}
+  #orphan-profile-error{min-height:18px;margin:7px 0 0;color:var(--danger);font-size:.75rem;font-weight:700}
+  @media(max-width:560px){.orphan-user-row{align-items:stretch;flex-direction:column}.orphan-user-row button{width:100%!important}}
+</style>
+
+<div id="orphan-profile-modal" class="app-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="orphan-profile-title">
+  <div class="app-modal-card">
+    <div class="app-modal-accent"></div>
+    <div class="app-modal-content">
+      <div class="app-modal-heading">
+        <div class="app-modal-icon">🧩</div>
+        <div>
+          <h2 id="orphan-profile-title" class="app-modal-title">Compléter le profil Firebase</h2>
+          <p class="app-modal-subtitle">Les données existantes seront conservées.</p>
+        </div>
+      </div>
+      <div class="orphan-repair-grid">
+        <label>Prénom<input id="orphan-firstname" type="text" readonly></label>
+        <label>Nom<input id="orphan-lastname" type="text" autocomplete="off" placeholder="Nom obligatoire"></label>
+        <label>PIT<select id="orphan-pit"></select></label>
+      </div>
+      <p id="orphan-profile-error" aria-live="polite"></p>
+      <div class="app-modal-actions">
+        <button type="button" class="btn-secondary" id="orphan-profile-cancel">Annuler</button>
+        <button type="button" class="btn-primary" id="orphan-profile-save">Enregistrer le profil</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script id="github-orphan-profiles-fix-v1">
+(function(){
+  'use strict';
+  const modal=document.getElementById('orphan-profile-modal');
+  const firstInput=document.getElementById('orphan-firstname');
+  const lastInput=document.getElementById('orphan-lastname');
+  const pitInput=document.getElementById('orphan-pit');
+  const errorNode=document.getElementById('orphan-profile-error');
+
+  function asProfileArray(value){
+    if(Array.isArray(value)) return value.filter(Boolean);
+    if(value&&typeof value==='object') return Object.values(value).filter(Boolean);
+    return [];
+  }
+  function profileIsComplete(member){
+    return Boolean(member&&String(member.firstName||'').trim()&&String(member.lastName||'').trim()&&String(member.pit||'').trim());
+  }
+  function allKnownDataUsers(){
+    const names=new Set();
+    const collectTree=tree=>Object.values(tree||{}).forEach(day=>Object.keys(day||{}).forEach(name=>names.add(String(name).trim())));
+    collectTree(calendarData);collectTree(secondaryCodesData);collectTree(window.COST_CENTRE_DATA);collectTree(window.TRANSPORT_DATA);collectTree(window.CUSTOM_TRAVEL_COSTS);
+    Object.keys(usersPins||{}).forEach(name=>names.add(String(name).trim()));
+    return [...names].filter(Boolean);
+  }
+  window.detectOrphanUsers=function(){
+    return allKnownDataUsers().filter(name=>{
+      const member=typeof getMemberByFirstName==='function'?getMemberByFirstName(name):null;
+      return !profileIsComplete(member);
+    }).sort((a,b)=>a.localeCompare(b,'fr',{sensitivity:'base'}));
+  };
+  function ensurePanel(){
+    const form=document.querySelector('#view-settings .form-box');if(!form)return null;
+    let panel=document.getElementById('orphan-users-panel');
+    if(!panel){
+      panel=document.createElement('div');panel.id='orphan-users-panel';panel.className='settings-submenu-tile admin-config-panel';
+      panel.innerHTML='<h3>⚠️ Profils Firebase incomplets</h3><p>Ces personnes ont un PIN ou des données de calendrier, mais aucun profil complet dans <code>custom_users</code>. Complétez le nom et le PIT sans supprimer leurs données.</p><div class="orphan-user-list" id="orphan-user-list"></div>';
+      const exportButton=[...form.querySelectorAll('button')].find(button=>button.textContent.includes('Exporter'));
+      const exportTile=exportButton?.closest('.settings-submenu-tile');
+      if(exportTile)exportTile.insertAdjacentElement('beforebegin',panel);else form.appendChild(panel);
+    }
+    return panel;
+  }
+  window.renderOrphanUsersPanel=function(){
+    const panel=ensurePanel();if(!panel)return;
+    const member=typeof getMemberByFirstName==='function'?getMemberByFirstName(currentUser):null;
+    const allowed=typeof hasAdminAccess==='function'&&hasAdminAccess(member);
+    const orphans=allowed?window.detectOrphanUsers():[];
+    panel.classList.toggle('visible',allowed&&orphans.length>0);
+    const list=document.getElementById('orphan-user-list');if(!list)return;
+    list.innerHTML='';
+    orphans.forEach(name=>{
+      const row=document.createElement('div');row.className='orphan-user-row';
+      const label=document.createElement('strong');label.textContent=name;
+      const button=document.createElement('button');button.type='button';button.className='btn-secondary';button.textContent='Compléter';button.addEventListener('click',()=>window.openOrphanProfileRepair(name));
+      row.append(label,button);list.appendChild(row);
+    });
+  };
+  function fillPitOptions(){
+    pitInput.innerHTML='';
+    const source=document.getElementById('cp-pit');
+    const values=source?[...source.options].map(option=>({value:option.value,label:option.textContent})).filter(item=>item.value):[...new Set((ALL_MEMBERS||[]).map(member=>member.pit).filter(Boolean))].sort().map(value=>({value,label:value}));
+    const empty=document.createElement('option');empty.value='';empty.textContent='Sélectionner un PIT';pitInput.appendChild(empty);
+    values.forEach(item=>{const option=document.createElement('option');option.value=item.value;option.textContent=item.label;pitInput.appendChild(option)});
+  }
+  window.openOrphanProfileRepair=function(name){
+    fillPitOptions();firstInput.value=name;lastInput.value='';pitInput.value='';errorNode.textContent='';modal.classList.add('visible');document.body.style.overflow='hidden';lastInput.focus();
+  };
+  function closeRepair(){modal.classList.remove('visible');document.body.style.overflow='';errorNode.textContent=''}
+  document.getElementById('orphan-profile-cancel').addEventListener('click',closeRepair);
+  modal.addEventListener('click',event=>{if(event.target===modal)closeRepair()});
+
+  async function atomicUpsertProfile(profile,{rejectExisting=false}={}){
+    if(!db){
+      const list=asProfileArray(customMembers);const index=list.findIndex(item=>String(item.firstName||'').toLocaleLowerCase('fr-FR')===profile.firstName.toLocaleLowerCase('fr-FR'));
+      if(index>=0&&rejectExisting)throw new Error('DUPLICATE_PROFILE');
+      if(index>=0)list[index]={...list[index],...profile};else list.push(profile);
+      customMembers=list;localStorage.setItem('team_custom_users',JSON.stringify(list));return list;
+    }
+    const ref=db.ref('custom_users');
+    const result=await ref.transaction(current=>{
+      const list=asProfileArray(current);const index=list.findIndex(item=>String(item.firstName||'').toLocaleLowerCase('fr-FR')===profile.firstName.toLocaleLowerCase('fr-FR'));
+      if(index>=0&&rejectExisting)return;
+      if(index>=0)list[index]={...list[index],...profile};else list.push(profile);
+      return list;
+    });
+    if(!result.committed)throw new Error('DUPLICATE_PROFILE');
+    customMembers=asProfileArray(result.snapshot.val());return customMembers;
+  }
+  window.atomicUpsertProfile=atomicUpsertProfile;
+
+  document.getElementById('orphan-profile-save').addEventListener('click',async()=>{
+    const firstName=formatPersonName(firstInput.value),lastName=formatPersonName(lastInput.value),pit=pitInput.value;
+    if(!firstName||!lastName||!pit){errorNode.textContent='Le nom et le PIT sont obligatoires.';return}
+    const saveButton=document.getElementById('orphan-profile-save');saveButton.disabled=true;errorNode.textContent='';
+    try{
+      await atomicUpsertProfile({firstName,lastName,pit,isManager:false,isAdmin:false});
+      updateAllMembersList();closeRepair();window.renderOrphanUsersPanel();alert(`Profil de ${firstName} complété avec succès.`);
+    }catch(error){console.error('[Profils] Réparation impossible',error);errorNode.textContent="Impossible d'enregistrer le profil. Réessayez."}
+    finally{saveButton.disabled=false}
+  });
+
+  // Remplace la création historique basée sur .set(customMembers) par une transaction.
+  // Cela empêche deux créations simultanées d'écraser mutuellement custom_users.
+  window.handleCreateProfile=async function(){
+    const firstName=formatPersonName(document.getElementById('cp-firstname').value);
+    const lastName=formatPersonName(document.getElementById('cp-lastname').value);
+    const pit=document.getElementById('cp-pit').value;
+    const pin=document.getElementById('cp-pin').value;
+    if(!firstName||!lastName||!pit){alert('Veuillez remplir le prénom, le nom et le PIT.');return}
+    if(typeof assertFourDigitPin==='function'&&!assertFourDigitPin(pin))return;
+    if(!/^\d{4}$/.test(pin)){alert('Le code PIN doit contenir exactement 4 chiffres.');return}
+    const button=document.querySelector('button[onclick="handleCreateProfile()"]');if(button)button.disabled=true;
+    try{
+      await atomicUpsertProfile({pit,firstName,lastName,isManager:false,isAdmin:false},{rejectExisting:true});
+      const protectedPin=typeof createProtectedSecret==='function'?await createProtectedSecret(pin):pin;
+      usersPins[firstName]=protectedPin;
+      if(db)await db.ref(`users_pins/${firstName}`).set(protectedPin);else localStorage.setItem('team_users_pins',JSON.stringify(usersPins));
+      ['cp-firstname','cp-lastname','cp-pin'].forEach(id=>document.getElementById(id).value='');
+      updateAllMembersList();alert('Profil utilisateur créé avec succès.');document.getElementById('login-name').value=firstName;switchTab('view-login');
+    }catch(error){
+      console.error('[Profils] Création impossible',error);
+      alert(error.message==='DUPLICATE_PROFILE'?'Un utilisateur avec ce prénom existe déjà.':"Échec de la création du profil. Vérifiez la connexion et réessayez.");
+    }finally{if(button)button.disabled=false}
+  };
+
+  const previousSwitchTab=window.switchTab;
+  if(typeof previousSwitchTab==='function')window.switchTab=function(viewId){const result=previousSwitchTab.apply(this,arguments);if(viewId==='view-settings')setTimeout(window.renderOrphanUsersPanel,0);return result};
+  db?.ref('custom_users').on('value',()=>{if(document.getElementById('view-settings')?.classList.contains('active'))setTimeout(window.renderOrphanUsersPanel,0)});
+  window.addEventListener('load',()=>setTimeout(window.renderOrphanUsersPanel,250));
 })();
 </script>
 
