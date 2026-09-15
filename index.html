@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="application-version" content="2.3.38">
+  <meta name="application-version" content="2.3.39">
   <script id="early-role-overrides-store">
     window.planningRoleOverrides = window.planningRoleOverrides || {};
   </script>
@@ -3614,8 +3614,8 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
           if (isHoliday) td.classList.add('holiday-cell');
           if (isTodayDate) td.classList.add('today-cell');
 
-          if (!isWeekend) {
-            const useHalves = isCurrentOrNextWeek(dayDate) && !document.documentElement.classList.contains('option-half-days-disabled');
+          {
+            const useHalves = !isWeekend && isCurrentOrNextWeek(dayDate) && !document.documentElement.classList.contains('option-half-days-disabled');
 
             if (useHalves) {
               const halvesCont = document.createElement('div');
@@ -6867,7 +6867,7 @@ th.today-header { background: var(--accent); color: #fff; font-weight: bold; bor
   }
 </style>
 
-<span id="app-version-indicator" aria-label="Version 2.3.38">v2.3.38</span>
+<span id="app-version-indicator" aria-label="Version 2.3.39">v2.3.39</span>
 <style id="login-copyright-styles">
   #view-login .login-copyright {
     width: 100%;
